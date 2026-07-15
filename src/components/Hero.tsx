@@ -28,7 +28,7 @@ export default function Hero() {
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Button
-              href="mailto:paul@datara-lab.com?subject=Solicitud%20de%20demo%20Datara"
+              href="mailto:ventas@datara-lab.com?subject=Solicitud%20de%20demo%20Datara"
               size="lg"
             >
               Solicitar una demo
@@ -51,17 +51,14 @@ export default function Hero() {
 
           <div className="relative rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-2xl shadow-blue-950/10 backdrop-blur-xl">
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-950 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-                    Datara Platform
-                  </p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                  Datara
+                </p>
 
-                  <h2 className="mt-2 text-xl font-bold text-white">
-                    Resumen ejecutivo
-                  </h2>
-                </div>
-                
+                <h2 className="mt-2 text-xl font-bold text-white">
+                  Resumen ejecutivo
+                </h2>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4">
@@ -84,6 +81,7 @@ export default function Hero() {
                     <p className="text-sm font-semibold text-slate-900">
                       Rendimiento mensual
                     </p>
+
                     <p className="mt-1 text-xs text-slate-500">
                       Ventas y oportunidades
                     </p>
@@ -117,7 +115,9 @@ export default function Hero() {
 
                 <div>
                   <p className="font-bold text-slate-900">Analytics</p>
-                  <p className="text-xs text-slate-500">KPIs y dashboards</p>
+                  <p className="text-xs text-slate-500">
+                    KPIs y dashboards
+                  </p>
                 </div>
               </div>
             </div>
@@ -133,7 +133,9 @@ export default function Hero() {
 
                 <div>
                   <p className="font-bold text-slate-900">CRM</p>
-                  <p className="text-xs text-slate-500">Ventas y clientes</p>
+                  <p className="text-xs text-slate-500">
+                    Ventas y clientes
+                  </p>
                 </div>
               </div>
             </div>
