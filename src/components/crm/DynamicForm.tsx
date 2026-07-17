@@ -148,6 +148,37 @@ function getInitialValue(
 
   if (recordValue !== undefined) {
     if (
+      field.type === "multiselect" &&
+      Array.isArray(recordValue)
+    ) {
+      return recordValue
+        .map((item) => {
+          if (typeof item === "string") {
+            return item;
+          }
+
+          if (
+            typeof item === "object" &&
+            item !== null
+          ) {
+            const option = item as {
+              id?: string;
+              value?: string;
+            };
+
+            return option.id ?? option.value;
+          }
+
+          return undefined;
+        })
+        .filter(
+          (item): item is string =>
+            typeof item === "string" &&
+            item.length > 0,
+        );
+    }
+
+    if (
       field.type === "lookup" &&
       typeof recordValue === "object" &&
       recordValue !== null &&
@@ -307,6 +338,23 @@ function validateBusinessRules(
 ): CRMFormErrors {
   const errors: CRMFormErrors = {};
 
+  const benefitsThatRequireValue = [
+    "Descuento (%)",
+    "Descuento ($)",
+    "Meses sin intereses",
+    "Bono",
+  ];
+
+  if (
+    typeof values.benefitType === "string" &&
+    benefitsThatRequireValue.includes(
+      values.benefitType,
+    ) &&
+    isEmptyValue(values.value)
+  ) {
+    errors.value = `El valor es obligatorio para el beneficio "${values.benefitType}".`;
+  }
+
   const promotionStart =
     values.promotionStart;
 
@@ -407,6 +455,25 @@ function getDynamicField(
   field: CRMFieldConfig,
   values: CRMFormValues,
 ): CRMFieldConfig {
+  if (field.key === "value") {
+    const benefitsThatRequireValue = [
+      "Descuento (%)",
+      "Descuento ($)",
+      "Meses sin intereses",
+      "Bono",
+    ];
+
+    return {
+      ...field,
+      required:
+        typeof values.benefitType ===
+          "string" &&
+        benefitsThatRequireValue.includes(
+          values.benefitType,
+        ),
+    };
+  }
+
   if (field.key === "paymentMethod") {
     if (
       values.benefitType ===

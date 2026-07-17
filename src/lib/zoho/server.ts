@@ -29,17 +29,28 @@ type CachedAccessToken = {
 };
 
 type ZohoRequestOptions = {
-  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method?:
+    | "GET"
+    | "POST"
+    | "PUT"
+    | "PATCH"
+    | "DELETE";
+
   body?: unknown;
+
   query?: Record<
     string,
     string | number | boolean | undefined
   >;
 };
 
-let cachedAccessToken: CachedAccessToken | null = null;
+let cachedAccessToken:
+  | CachedAccessToken
+  | null = null;
 
-function requireEnvironmentVariable(name: string): string {
+function requireEnvironmentVariable(
+  name: string,
+): string {
   const value = process.env[name];
 
   if (!value) {
@@ -80,20 +91,24 @@ function getZohoErrorMessage(
     return "Zoho devolvió un error inesperado.";
   }
 
-  const firstError = Array.isArray(payload.data)
+  const firstError = Array.isArray(
+    payload.data,
+  )
     ? payload.data[0]
     : undefined;
 
   if (isZohoApiError(firstError)) {
     if (
-      typeof firstError.message === "string" &&
+      typeof firstError.message ===
+        "string" &&
       firstError.message
     ) {
       return firstError.message;
     }
 
     if (
-      typeof firstError.code === "string" &&
+      typeof firstError.code ===
+        "string" &&
       firstError.code
     ) {
       return firstError.code;
@@ -125,29 +140,37 @@ async function getZohoAccessToken(): Promise<{
 
   if (
     cachedAccessToken &&
-    cachedAccessToken.expiresAt > now + 60_000
+    cachedAccessToken.expiresAt >
+      now + 60_000
   ) {
     return {
-      accessToken: cachedAccessToken.value,
-      apiDomain: cachedAccessToken.apiDomain,
+      accessToken:
+        cachedAccessToken.value,
+
+      apiDomain:
+        cachedAccessToken.apiDomain,
     };
   }
 
-  const accountsUrl = requireEnvironmentVariable(
-    "ZOHO_ACCOUNTS_URL",
-  );
+  const accountsUrl =
+    requireEnvironmentVariable(
+      "ZOHO_ACCOUNTS_URL",
+    );
 
-  const clientId = requireEnvironmentVariable(
-    "ZOHO_CLIENT_ID",
-  );
+  const clientId =
+    requireEnvironmentVariable(
+      "ZOHO_CLIENT_ID",
+    );
 
-  const clientSecret = requireEnvironmentVariable(
-    "ZOHO_CLIENT_SECRET",
-  );
+  const clientSecret =
+    requireEnvironmentVariable(
+      "ZOHO_CLIENT_SECRET",
+    );
 
-  const refreshToken = requireEnvironmentVariable(
-    "ZOHO_REFRESH_TOKEN",
-  );
+  const refreshToken =
+    requireEnvironmentVariable(
+      "ZOHO_REFRESH_TOKEN",
+    );
 
   const body = new URLSearchParams({
     refresh_token: refreshToken,
@@ -160,10 +183,12 @@ async function getZohoAccessToken(): Promise<{
     `${accountsUrl}/oauth/v2/token`,
     {
       method: "POST",
+
       headers: {
         "Content-Type":
           "application/x-www-form-urlencoded",
       },
+
       body,
       cache: "no-store",
     },
@@ -172,7 +197,10 @@ async function getZohoAccessToken(): Promise<{
   const payload =
     (await response.json()) as ZohoTokenResponse;
 
-  if (!response.ok || !payload.access_token) {
+  if (
+    !response.ok ||
+    !payload.access_token
+  ) {
     throw new Error(
       payload.error ??
         "No fue posible obtener el access token de Zoho.",
@@ -189,13 +217,18 @@ async function getZohoAccessToken(): Promise<{
 
   cachedAccessToken = {
     value: payload.access_token,
+
     apiDomain,
+
     expiresAt:
-      now + expiresInSeconds * 1000,
+      now +
+      expiresInSeconds * 1000,
   };
 
   return {
-    accessToken: payload.access_token,
+    accessToken:
+      payload.access_token,
+
     apiDomain,
   };
 }
@@ -204,40 +237,67 @@ export async function zohoRequest<T>(
   path: string,
   options: ZohoRequestOptions = {},
 ): Promise<T> {
-  const { accessToken, apiDomain } =
-    await getZohoAccessToken();
+  const {
+    accessToken,
+    apiDomain,
+  } = await getZohoAccessToken();
 
-  const normalizedPath = path.replace(/^\/+/, "");
+  const normalizedPath =
+    path.replace(/^\/+/, "");
 
   const url = new URL(
     `${apiDomain}/crm/v8/${normalizedPath}`,
   );
 
-  Object.entries(options.query ?? {}).forEach(
-    ([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.set(key, String(value));
-      }
-    },
-  );
+  Object.entries(
+    options.query ?? {},
+  ).forEach(([key, value]) => {
+    if (value !== undefined) {
+      url.searchParams.set(
+        key,
+        String(value),
+      );
+    }
+  });
 
   const response = await fetch(url, {
-    method: options.method ?? "GET",
+    method:
+      options.method ?? "GET",
+
     headers: {
-      Authorization: `Zoho-oauthtoken ${accessToken}`,
-      "Content-Type": "application/json",
+      Authorization:
+        `Zoho-oauthtoken ${accessToken}`,
+
+      "Content-Type":
+        "application/json",
     },
+
     body:
       options.body === undefined
         ? undefined
-        : JSON.stringify(options.body),
+        : JSON.stringify(
+            options.body,
+          ),
+
     cache: "no-store",
   });
 
-  const payload: unknown = await response.json();
+  const payload: unknown =
+    await response.json();
 
   if (!response.ok) {
-    throw new Error(getZohoErrorMessage(payload));
+    console.error(
+      "Respuesta completa de error de Zoho:",
+      JSON.stringify(
+        payload,
+        null,
+        2,
+      ),
+    );
+
+    throw new Error(
+      getZohoErrorMessage(payload),
+    );
   }
 
   return payload as T;

@@ -372,7 +372,7 @@ export const promotionsModule: CRMModuleConfig = {
         "Motocicletas a las que puede aplicarse esta promoción.",
       placeholder: "Buscar motocicletas",
 
-      type: "lookup",
+      type: "multiselect",
       required: false,
 
       /*
@@ -392,7 +392,7 @@ export const promotionsModule: CRMModuleConfig = {
       formRow: 1,
       formColumn: 1,
       formSpan: 1,
-      formVariant: "searchable",
+      formVariant: "tags",
     },
 
     {
