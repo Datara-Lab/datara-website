@@ -23,7 +23,7 @@ export default function Footer() {
             className="transition hover:text-blue-600"
             href="mailto:ventas@datara-lab.com"
           >
-            ventas@datara-lab.com
+            soporte@datara-lab.com
           </a>
         </div>
 
