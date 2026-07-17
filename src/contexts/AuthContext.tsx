@@ -22,10 +22,10 @@ const mockUser: User = {
   firstName: "Paul",
   lastName: "Augdey",
   email: "paul@datara-lab.com",
-  role: "owner",
+  role: "admin",
   tenantId: "tenant_datara",
   tenantName: "Datara Lab",
-  products: ["analytics", "crm"],
+  products: ["crm", 'analytics'],
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);

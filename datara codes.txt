@@ -1,0 +1,12 @@
+
+client_id     = 1000.0K79DVL7IUXBEUSK16PPKXLTQ05PUU
+client_secret = a62452658014a1190f835c272bc20487e5485f5434
+access_token  : 1000.e473d2d7e2ebab2ceb3c332611b888fe.f4d7028422ade5b2a98a6a755cf17c0a
+refresh_token : 1000.5de36079d2fd2e041dc6595b07d67a54.eeb6157c6e49587ec85802a4ca58d891
+scope         : ZohoCRM.modules.ALL ZohoCRM.settings.ALL
+api_domain    : https://www.zohoapis.com
+token_type    : Bearer
+expires_in    : 3600
+
+
+Llave resend: re_K2pgndZp_6Ks5cG9LVPn9wM2Df24dsbEE

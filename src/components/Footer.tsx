@@ -21,9 +21,9 @@ export default function Footer() {
 
           <a
             className="transition hover:text-blue-600"
-            href="mailto:paul@datara-lab.com"
+            href="mailto:ventas@datara-lab.com"
           >
-            paul@datara-lab.com
+            ventas@datara-lab.com
           </a>
         </div>
 
