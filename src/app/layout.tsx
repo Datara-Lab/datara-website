@@ -1,5 +1,9 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+} from "next/font/google";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -16,9 +20,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Datara Lab | Analytics & CRM",
+  title:
+    "Datara Lab | Analytics, CRM & Cloud",
   description:
-    "Construimos soluciones de Analytics y CRM para empresas que quieren crecer mediante datos.",
+    "Construimos soluciones de Analytics, CRM y Cloud para empresas que quieren crecer mediante datos.",
   icons: {
     icon: "/logos/lab-icon.png",
   },
@@ -30,11 +35,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>{children}</AuthProvider>
+    <html
+      lang="es"
+      className={[
+        geistSans.variable,
+        geistMono.variable,
+      ].join(" ")}
+    >
+      <body className="antialiased">
+        <ClerkProvider
+          afterSignOutUrl="/login"
+          signInForceRedirectUrl="/portal"
+          signUpForceRedirectUrl="/portal"
+        >
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

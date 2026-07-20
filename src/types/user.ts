@@ -1,6 +1,13 @@
-export type ProductAccess = "analytics" | "crm";
+export type ProductAccess =
+  | "analytics"
+  | "crm"
+  | "cloud";
 
-export type UserRole = "owner" | "admin" | "manager" | "user";
+export type UserRole =
+  | "owner"
+  | "admin"
+  | "manager"
+  | "user";
 
 export type User = {
   id: string;

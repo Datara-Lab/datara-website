@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { useMemo } from "react";
+import {
+  type ReactNode,
+  useMemo,
+} from "react";
 
 import AppShell from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
@@ -20,7 +22,11 @@ export default function CRMLayout({
 }: CRMLayoutProps) {
   const router = useRouter();
 
-  const { user, isAuthenticated } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+  } = useAuth();
 
   const {
     tenantConfig,
@@ -28,21 +34,47 @@ export default function CRMLayout({
     isConfigured,
   } = useCRMConfig();
 
-  const appNavigation = useMemo<NavigationItem[]>(() => {
-    return navigation
-      .filter(
-        (
-          item,
-        ): item is typeof item & {
-          route: string;
-        } => typeof item.route === "string" && item.route.length > 0,
-      )
-      .map((item) => ({
-        id: item.id,
-        label: item.label,
-        href: item.route,
-      }));
-  }, [navigation]);
+  const appNavigation =
+    useMemo<NavigationItem[]>(() => {
+      return navigation
+        .filter(
+          (
+            item,
+          ): item is typeof item & {
+            route: string;
+          } =>
+            typeof item.route ===
+              "string" &&
+            item.route.length > 0,
+        )
+        .map((item) => ({
+          id: item.id,
+          label: item.label,
+          href: item.route,
+        }));
+    }, [navigation]);
+
+  /*
+   * Esperamos a que Clerk cargue la sesión,
+   * el usuario y la organización.
+   */
+  if (isLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
+
+          <p className="mt-5 font-semibold text-slate-700">
+            Cargando Datara CRM...
+          </p>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Estamos preparando tu espacio de trabajo.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return (
@@ -59,7 +91,9 @@ export default function CRMLayout({
           <Button
             className="mt-8 w-full justify-center"
             size="lg"
-            onClick={() => router.push("/login")}
+            onClick={() =>
+              router.push("/login")
+            }
           >
             Ir al inicio de sesión
           </Button>
@@ -68,7 +102,8 @@ export default function CRMLayout({
     );
   }
 
-  const hasCRMAccess = user.products.includes("crm");
+  const hasCRMAccess =
+    user.products.includes("crm");
 
   if (!hasCRMAccess) {
     return (
@@ -94,7 +129,9 @@ export default function CRMLayout({
           <Button
             className="mt-8 w-full justify-center"
             size="lg"
-            onClick={() => router.push("/portal")}
+            onClick={() =>
+              router.push("/portal")
+            }
           >
             Volver al portal
           </Button>
@@ -132,7 +169,9 @@ export default function CRMLayout({
           <Button
             className="mt-8 w-full justify-center"
             size="lg"
-            onClick={() => router.push("/portal")}
+            onClick={() =>
+              router.push("/portal")
+            }
           >
             Volver al portal
           </Button>

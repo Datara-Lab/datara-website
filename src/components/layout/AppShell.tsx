@@ -1,14 +1,20 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import {
+  usePathname,
+  useRouter,
+} from "next/navigation";
 import type { ReactNode } from "react";
 
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import type { NavigationItem } from "@/lib/navigation";
 
-type ProductTheme = "analytics" | "crm";
+type ProductTheme =
+  | "analytics"
+  | "crm";
 
 type AppShellProps = {
   children: ReactNode;
@@ -26,11 +32,13 @@ const productStyles: Record<
   }
 > = {
   analytics: {
-    activeItem: "bg-blue-50 text-blue-700",
+    activeItem:
+      "bg-blue-50 text-blue-700",
     eyebrow: "text-blue-600",
   },
   crm: {
-    activeItem: "bg-emerald-50 text-emerald-700",
+    activeItem:
+      "bg-emerald-50 text-emerald-700",
     eyebrow: "text-emerald-600",
   },
 };
@@ -44,16 +52,13 @@ export default function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const styles = productStyles[product];
 
-  function handleLogout() {
-    logout();
-    router.push("/login");
-  }
-
-  function isNavigationItemActive(href: string) {
+  function isNavigationItemActive(
+    href: string,
+  ) {
     if (href === `/${product}`) {
       return pathname === href;
     }
@@ -67,7 +72,9 @@ export default function AppShell({
         <div className="flex min-h-20 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <button
             type="button"
-            onClick={() => router.push("/portal")}
+            onClick={() =>
+              router.push("/portal")
+            }
             className="flex min-w-0 items-center gap-3 text-left"
           >
             <Image
@@ -85,7 +92,8 @@ export default function AppShell({
               </p>
 
               <p className="truncate text-sm text-slate-500">
-                {user?.tenantName ?? "Datara"}
+                {user?.tenantName ??
+                  "Datara"}
               </p>
             </div>
           </button>
@@ -93,7 +101,8 @@ export default function AppShell({
           <div className="flex shrink-0 items-center gap-4">
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-slate-900">
-                {user?.firstName} {user?.lastName}
+                {user?.firstName}{" "}
+                {user?.lastName}
               </p>
 
               <p className="text-xs capitalize text-slate-500">
@@ -101,26 +110,40 @@ export default function AppShell({
               </p>
             </div>
 
-            <Button variant="secondary" onClick={handleLogout}>
-              Cerrar sesión
-            </Button>
+            <UserButton
+              showName={false}
+              appearance={{
+                elements: {
+                  avatarBox:
+                    "h-10 w-10",
+                },
+              }}
+            />
           </div>
         </div>
 
         <nav className="border-t border-slate-200 px-4 py-3 lg:hidden">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {navigation.map((item) => {
-              const isActive = isNavigationItemActive(item.href);
+              const isActive =
+                isNavigationItemActive(
+                  item.href,
+                );
 
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => router.push(item.href)}
+                  onClick={() =>
+                    router.push(
+                      item.href,
+                    )
+                  }
                   className={[
                     "min-h-11 rounded-xl px-3 py-2 text-center text-xs font-semibold transition sm:text-sm",
                     isActive
-                      ? product === "analytics"
+                      ? product ===
+                        "analytics"
                         ? "bg-blue-600 text-white shadow-sm"
                         : "bg-emerald-600 text-white shadow-sm"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950",
@@ -138,25 +161,34 @@ export default function AppShell({
         <aside className="sticky top-20 hidden h-[calc(100vh-80px)] self-start border-r border-slate-200 bg-white lg:flex lg:flex-col">
           <nav className="flex-1 overflow-y-auto px-4 py-6">
             <div className="space-y-1.5">
-              {navigation.map((item) => {
-                const isActive = isNavigationItemActive(item.href);
+              {navigation.map(
+                (item) => {
+                  const isActive =
+                    isNavigationItemActive(
+                      item.href,
+                    );
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => router.push(item.href)}
-                    className={[
-                      "flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-semibold transition",
-                      isActive
-                        ? styles.activeItem
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
-                    ].join(" ")}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          item.href,
+                        )
+                      }
+                      className={[
+                        "flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-semibold transition",
+                        isActive
+                          ? styles.activeItem
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                      ].join(" ")}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                },
+              )}
             </div>
           </nav>
 
@@ -164,7 +196,9 @@ export default function AppShell({
             <Button
               variant="secondary"
               className="w-full justify-center"
-              onClick={() => router.push("/portal")}
+              onClick={() =>
+                router.push("/portal")
+              }
             >
               Volver al portal
             </Button>
@@ -172,7 +206,9 @@ export default function AppShell({
         </aside>
 
         <section className="min-w-0">
-          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+          <div className="p-4 sm:p-6 lg:p-8">
+            {children}
+          </div>
         </section>
       </div>
     </main>

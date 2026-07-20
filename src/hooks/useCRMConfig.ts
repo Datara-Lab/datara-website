@@ -12,13 +12,16 @@ import {
 const demoTenantMap: Record<string, string> = {
   "bajaj-izcalli": "bajaj-izcalli",
   "bajaj izcalli": "bajaj-izcalli",
+  "datara-lab": "bajaj-izcalli",
   motoraton: "bajaj-izcalli",
   "datara lab": "bajaj-izcalli",
   datara: "bajaj-izcalli",
   tenant_datara: "bajaj-izcalli",
 };
 
-function normalizeTenantValue(value?: string): string {
+function normalizeTenantValue(
+  value?: string,
+): string {
   return value?.trim().toLowerCase() ?? "";
 }
 
@@ -30,29 +33,34 @@ export function useCRMConfig() {
       return null;
     }
 
-    const normalizedTenantId = normalizeTenantValue(user.tenantId);
+    const normalizedTenantId =
+      normalizeTenantValue(user.tenantId);
 
-    /*
-     * Primero revisamos si el tenantId recibido corresponde
-     * directamente a una configuración registrada.
-     */
-    if (getCRMTenantConfig(normalizedTenantId)) {
+    if (
+      getCRMTenantConfig(
+        normalizedTenantId,
+      )
+    ) {
       return normalizedTenantId;
     }
 
-    /*
-     * Compatibilidad temporal para los usuarios simulados
-     * utilizados durante el desarrollo de la demo.
-     */
-    const tenantFromId = demoTenantMap[normalizedTenantId];
+    const tenantFromId =
+      demoTenantMap[normalizedTenantId];
 
     if (tenantFromId) {
       return tenantFromId;
     }
 
-    const normalizedTenantName = normalizeTenantValue(user.tenantName);
+    const normalizedTenantName =
+      normalizeTenantValue(
+        user.tenantName,
+      );
 
-    return demoTenantMap[normalizedTenantName] ?? null;
+    return (
+      demoTenantMap[
+        normalizedTenantName
+      ] ?? null
+    );
   }, [user]);
 
   const tenantConfig = useMemo(() => {
@@ -60,7 +68,9 @@ export function useCRMConfig() {
       return null;
     }
 
-    return getCRMTenantConfig(resolvedTenantId);
+    return getCRMTenantConfig(
+      resolvedTenantId,
+    );
   }, [resolvedTenantId]);
 
   const navigation = useMemo(() => {
@@ -68,15 +78,26 @@ export function useCRMConfig() {
       return [];
     }
 
-    return getCRMNavigationConfig(resolvedTenantId);
-  }, [resolvedTenantId]);
+    return getCRMNavigationConfig(
+      resolvedTenantId,
+      user?.role,
+    );
+  }, [
+    resolvedTenantId,
+    user?.role,
+  ]);
 
-  function getModule(moduleId: string) {
+  function getModule(
+    moduleId: string,
+  ) {
     if (!resolvedTenantId) {
       return null;
     }
 
-    return getCRMModuleConfig(resolvedTenantId, moduleId);
+    return getCRMModuleConfig(
+      resolvedTenantId,
+      moduleId,
+    );
   }
 
   return {
@@ -84,6 +105,7 @@ export function useCRMConfig() {
     tenantConfig,
     navigation,
     getModule,
-    isConfigured: Boolean(tenantConfig),
+    isConfigured:
+      Boolean(tenantConfig),
   };
 }
