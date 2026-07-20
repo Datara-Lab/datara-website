@@ -140,6 +140,32 @@ function getUnsectionedFields(
   );
 }
 
+function formatDateTimeLocalValue(
+  value: unknown,
+): string {
+  if (
+    typeof value !== "string" ||
+    value.trim() === ""
+  ) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value.slice(0, 16);
+  }
+
+  const timezoneOffset =
+    date.getTimezoneOffset() * 60_000;
+
+  return new Date(
+    date.getTime() - timezoneOffset,
+  )
+    .toISOString()
+    .slice(0, 16);
+}
+
 function getInitialValue(
   field: CRMFieldConfig,
   record?: CRMRecord | null,
@@ -147,6 +173,14 @@ function getInitialValue(
   const recordValue = record?.[field.key];
 
   if (recordValue !== undefined) {
+    if (
+      field.type === "datetime"
+    ) {
+      return formatDateTimeLocalValue(
+        recordValue,
+      );
+    }
+
     if (
       field.type === "multiselect" &&
       Array.isArray(recordValue)

@@ -1,72 +1,108 @@
+import { auth } from "@clerk/nextjs/server";
+import {
+  and,
+  asc,
+  eq,
+} from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { zohoRequest } from "@/lib/zoho/server";
+import { db } from "@/db";
+import {
+  crmProducts,
+  tenants,
+} from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
-type ZohoProduct = {
-  id: string;
-  Product_Name?: string;
-  Product_Code?: string;
-};
-
-type ZohoProductsResponse = {
-  data?: ZohoProduct[];
-  info?: {
-    more_records?: boolean;
-  };
-};
-
-function getModuleApiName(): string {
-  return (
-    process.env.ZOHO_PRODUCTS_MODULE_API_NAME ??
-    "Products"
-  );
-}
-
 export async function GET() {
+  const {
+    userId,
+    orgId,
+  } = await auth();
+
+  if (!userId) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "No autenticado.",
+      },
+      {
+        status: 401,
+      },
+    );
+  }
+
+  if (!orgId) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "No hay una organización activa.",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
   try {
-    const products: ZohoProduct[] = [];
-    let page = 1;
-    let hasMoreRecords = true;
+    const [tenant] = await db
+      .select({
+        id: tenants.id,
+      })
+      .from(tenants)
+      .where(
+        eq(
+          tenants.clerkOrganizationId,
+          orgId,
+        ),
+      )
+      .limit(1);
 
-    while (hasMoreRecords) {
-      const response =
-        await zohoRequest<ZohoProductsResponse>(
-          getModuleApiName(),
-          {
-            method: "GET",
-            query: {
-              fields:
-                "id,Product_Name,Product_Code",
-              page,
-              per_page: 200,
-            },
-          },
-        );
-
-      products.push(...(response.data ?? []));
-      hasMoreRecords =
-        response.info?.more_records === true;
-      page += 1;
+    if (!tenant) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "La empresa aún no está sincronizada.",
+        },
+        {
+          status: 404,
+        },
+      );
     }
 
-    const data = products
-      .filter(
-        (product) =>
-          product.id && product.Product_Name,
+    const products = await db
+      .select({
+        id: crmProducts.id,
+        name: crmProducts.name,
+        code: crmProducts.code,
+      })
+      .from(crmProducts)
+      .where(
+        and(
+          eq(
+            crmProducts.tenantId,
+            tenant.id,
+          ),
+          eq(
+            crmProducts.active,
+            true,
+          ),
+        ),
       )
-      .map((product) => ({
-        value: product.id,
-        label: product.Product_Code
-          ? `${product.Product_Name} (${product.Product_Code})`
-          : product.Product_Name as string,
-      }))
-      .sort((a, b) =>
-        a.label.localeCompare(b.label, "es", {
-          sensitivity: "base",
-        }),
+      .orderBy(
+        asc(crmProducts.name),
       );
+
+    const data = products.map(
+      (product) => ({
+        value: product.id,
+        label: product.code
+          ? `${product.name} (${product.code})`
+          : product.name,
+      }),
+    );
 
     return NextResponse.json({
       success: true,
@@ -74,7 +110,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error(
-      "No fue posible cargar Products desde Zoho CRM:",
+      "No fue posible cargar los productos desde PostgreSQL:",
       error,
     );
 
@@ -82,11 +118,11 @@ export async function GET() {
       {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "No fue posible cargar el catálogo de productos desde Zoho CRM.",
+          "No fue posible cargar el catálogo de productos.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

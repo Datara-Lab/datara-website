@@ -233,16 +233,51 @@ function formatFieldValue(
         );
       }
 
+      function getItemLabel(
+        item: unknown,
+      ): string {
+        if (typeof item === "string") {
+          return item;
+        }
+
+        if (
+          typeof item === "object" &&
+          item !== null
+        ) {
+          const option = item as {
+            id?: string;
+            name?: string;
+            label?: string;
+            value?: string;
+          };
+
+          return (
+            option.name ??
+            option.label ??
+            option.value ??
+            option.id ??
+            "Registro relacionado"
+          );
+        }
+
+        return String(item);
+      }
+
       return (
         <div className="flex flex-wrap gap-2">
-          {values.map((item, index) => (
-            <span
-              key={`${String(item)}-${index}`}
-              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
-            >
-              {String(item)}
-            </span>
-          ))}
+          {values.map((item, index) => {
+            const label =
+              getItemLabel(item);
+
+            return (
+              <span
+                key={`${label}-${index}`}
+                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
+              >
+                {label}
+              </span>
+            );
+          })}
         </div>
       );
     }

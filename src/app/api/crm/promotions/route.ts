@@ -1,124 +1,59 @@
+import {
+  auth,
+  currentUser,
+} from "@clerk/nextjs/server";
+import {
+  and,
+  eq,
+  inArray,
+} from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { zohoRequest } from "@/lib/zoho/server";
+import { db } from "@/db";
+import {
+  crmPromotionProducts,
+  crmPromotions,
+  crmProducts,
+  tenants,
+} from "@/db/schema";
 
 export const dynamic = "force-dynamic";
-
-type ZohoPromotionRecord = {
-  id: string;
-
-  Name?: string;
-  Estado?: string;
-  Prioridad?: number;
-
-  Inicio_de_promoci_n?: string;
-  Fin_de_promoci_n?: string;
-
-  Tipo_de_beneficio?: string;
-  Forma_de_pago?: string;
-  Grupo_de_Promoci_n?: string;
-
-  Meses_disponibles?: string[];
-  Canal_aplicable?: string[];
-
-  Enganche_m_nimo1?: number;
-  M_ximo_de_beneficios?: number;
-  Beneficios_entregados?: number;
-
-  Limitar_promoci_n?: boolean;
-  Pausada?: boolean;
-  Requiere_elecci_n?: boolean;
-
-  Productos_aplicables?:
-    | {
-        id?: string;
-        name?: string;
-      }
-    | Array<{
-        id?: string;
-        name?: string;
-      }>;
-
-  Tipo_de_cliente?: string;
-  Valor?: number;
-  Mensaje_comercial?: string;
-  Descripci_n?: string;
-
-  Owner?: {
-    id?: string;
-    name?: string;
-    email?: string;
-  };
-
-  Created_Time?: string;
-  Modified_Time?: string;
-};
-
-type ZohoGetPromotionsResponse = {
-  data?: ZohoPromotionRecord[];
-
-  info?: {
-    per_page?: number;
-    count?: number;
-    page?: number;
-    more_records?: boolean;
-  };
-};
 
 type PromotionFormPayload = {
   id?: unknown;
   promotionName?: unknown;
   status?: unknown;
   priority?: unknown;
-
   promotionStart?: unknown;
   promotionEnd?: unknown;
-
   benefitType?: unknown;
   paymentMethod?: unknown;
   promotionGroup?: unknown;
-
   availableMonths?: unknown;
   channel?: unknown;
-
   minimumDownPayment?: unknown;
   maximumBenefits?: unknown;
   usedBenefits?: unknown;
-
   limitPromotion?: unknown;
   paused?: unknown;
   requiresSelection?: unknown;
-
   applicableProducts?: unknown;
-
   customerType?: unknown;
   value?: unknown;
   commercialMessage?: unknown;
   conditions?: unknown;
 };
 
-type ZohoWriteResult = {
-  code?: string;
-  message?: string;
-  status?: string;
+class ApiError extends Error {
+  status: number;
 
-  details?: {
-    id?: string;
-    Created_Time?: string;
-    Modified_Time?: string;
-    api_name?: string;
-  };
-};
-
-type ZohoWriteResponse = {
-  data?: ZohoWriteResult[];
-};
-
-function getModuleApiName(): string {
-  return (
-    process.env.ZOHO_PROMOTIONS_MODULE_API_NAME ??
-    "Promoci_n"
-  );
+  constructor(
+    message: string,
+    status: number,
+  ) {
+    super(message);
+    this.status = status;
+  }
 }
 
 function isRecord(
@@ -138,34 +73,9 @@ function getOptionalString(
     return undefined;
   }
 
-  const normalizedValue = value.trim();
+  const normalized = value.trim();
 
-  return normalizedValue || undefined;
-}
-
-/**
- * Normaliza valores de controles datetime-local o fechas ISO al formato
- * DateTime aceptado por Zoho CRM: yyyy-MM-ddTHH:mm:ss+00:00.
- */
-function getOptionalDateTime(
-  value: unknown,
-): string | undefined {
-  const normalizedValue =
-    getOptionalString(value);
-
-  if (!normalizedValue) {
-    return undefined;
-  }
-
-  const date = new Date(normalizedValue);
-
-  if (Number.isNaN(date.getTime())) {
-    return undefined;
-  }
-
-  return date
-    .toISOString()
-    .replace(/\.\d{3}Z$/, "+00:00");
+  return normalized || undefined;
 }
 
 function getOptionalNumber(
@@ -179,14 +89,53 @@ function getOptionalNumber(
     return undefined;
   }
 
-  const normalizedValue =
+  const normalized =
     typeof value === "number"
       ? value
       : Number(value);
 
-  return Number.isFinite(normalizedValue)
-    ? normalizedValue
+  return Number.isFinite(normalized)
+    ? normalized
     : undefined;
+}
+
+function getOptionalInteger(
+  value: unknown,
+): number | null {
+  const number =
+    getOptionalNumber(value);
+
+  return number === undefined
+    ? null
+    : Math.trunc(number);
+}
+
+function getNumericString(
+  value: unknown,
+): string | null {
+  const number =
+    getOptionalNumber(value);
+
+  return number === undefined
+    ? null
+    : String(number);
+}
+
+function getOptionalDate(
+  value: unknown,
+): Date | null {
+  const normalized =
+    getOptionalString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  const date = new Date(normalized);
+
+  return Number.isNaN(date.getTime())
+    ? null
+    : date;
 }
 
 function getBoolean(
@@ -195,158 +144,59 @@ function getBoolean(
   return value === true;
 }
 
-function calculatePromotionStatus(
-  promotionStart: unknown,
-  promotionEnd: unknown,
-  paused: unknown,
-): "Activa" | "Programada" | "Inactiva" | "Expirada" {
-  if (getBoolean(paused)) {
-    return "Inactiva";
-  }
-
-  const startValue =
-    getOptionalString(promotionStart);
-  const endValue =
-    getOptionalString(promotionEnd);
-
-  const startDate = startValue
-    ? new Date(startValue)
-    : null;
-  const endDate = endValue
-    ? new Date(endValue)
-    : null;
-
-  if (
-    !startDate ||
-    !endDate ||
-    Number.isNaN(startDate.getTime()) ||
-    Number.isNaN(endDate.getTime())
-  ) {
-    return "Inactiva";
-  }
-
-  const now = Date.now();
-
-  if (now < startDate.getTime()) {
-    return "Programada";
-  }
-
-  if (now >= endDate.getTime()) {
-    return "Expirada";
-  }
-
-  return "Activa";
-}
-
 function getStringArray(
   value: unknown,
-): string[] | undefined {
+): string[] {
   if (!Array.isArray(value)) {
-    return undefined;
+    return [];
   }
 
-  const normalizedValues = value
-    .filter(
-      (item): item is string =>
-        typeof item === "string",
-    )
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  return normalizedValues.length > 0
-    ? normalizedValues
-    : undefined;
+  return Array.from(
+    new Set(
+      value
+        .filter(
+          (
+            item,
+          ): item is string =>
+            typeof item === "string",
+        )
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
 }
 
-function getLookupArray(
+function getIdArray(
   value: unknown,
-):
-  | Array<{
-      id: string;
-    }>
-  | undefined {
+): string[] {
   if (!Array.isArray(value)) {
-    return undefined;
+    return [];
   }
 
-  const lookupRecords = value
+  const ids = value
     .map((item) => {
       if (
-        typeof item === "string" &&
-        item.trim()
+        typeof item === "string"
       ) {
-        return {
-          id: item.trim(),
-        };
+        return item.trim();
       }
 
       if (isRecord(item)) {
-        const id = item.id;
-
-        if (
-          typeof id === "string" &&
-          id.trim()
-        ) {
-          return {
-            id: id.trim(),
-          };
-        }
+        return getOptionalString(
+          item.id,
+        );
       }
 
-      return null;
+      return undefined;
     })
     .filter(
       (
-        item,
-      ): item is {
-        id: string;
-      } => item !== null,
+        id,
+      ): id is string =>
+        Boolean(id),
     );
 
-  return lookupRecords.length > 0
-    ? lookupRecords
-    : undefined;
-}
-
-function normalizeLookupValues(
-  value: unknown,
-): Array<{
-  id: string;
-  name: string;
-}> {
-  const products = new Map<
-    string,
-    string
-  >();
-
-  function visit(item: unknown): void {
-    if (Array.isArray(item)) {
-      item.forEach(visit);
-      return;
-    }
-
-    if (!isRecord(item)) {
-      return;
-    }
-
-    const id = getOptionalString(item.id);
-    const name =
-      getOptionalString(item.name);
-
-    if (id && name) {
-      products.set(id, name);
-      return;
-    }
-
-    Object.values(item).forEach(visit);
-  }
-
-  visit(value);
-
-  return Array.from(
-    products,
-    ([id, name]) => ({ id, name }),
-  );
+  return Array.from(new Set(ids));
 }
 
 function normalizeOptionValue(
@@ -354,129 +204,80 @@ function normalizeOptionValue(
 ): string | undefined {
   return getOptionalString(value)
     ?.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(
+      /[\u0300-\u036f]/g,
+      "",
+    )
     .toLowerCase()
     .replace(/\s+/g, " ");
 }
 
-function removeUndefinedValues(
-  record: Record<string, unknown>,
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(record).filter(
-      ([, value]) => value !== undefined,
-    ),
-  );
+function calculatePromotionStatus(
+  promotionStart:
+    | Date
+    | string
+    | null,
+  promotionEnd:
+    | Date
+    | string
+    | null,
+  paused: boolean,
+):
+  | "Activa"
+  | "Programada"
+  | "Inactiva"
+  | "Expirada" {
+  if (paused) {
+    return "Inactiva";
+  }
+
+  const startDate =
+    promotionStart instanceof Date
+      ? promotionStart
+      : promotionStart
+        ? new Date(promotionStart)
+        : null;
+
+  const endDate =
+    promotionEnd instanceof Date
+      ? promotionEnd
+      : promotionEnd
+        ? new Date(promotionEnd)
+        : null;
+
+  if (
+    !startDate ||
+    !endDate ||
+    Number.isNaN(
+      startDate.getTime(),
+    ) ||
+    Number.isNaN(
+      endDate.getTime(),
+    )
+  ) {
+    return "Inactiva";
+  }
+
+  const now = Date.now();
+
+  if (
+    now <
+    startDate.getTime()
+  ) {
+    return "Programada";
+  }
+
+  if (
+    now >=
+    endDate.getTime()
+  ) {
+    return "Expirada";
+  }
+
+  return "Activa";
 }
 
-function mapFormValuesToZoho(
-  values: PromotionFormPayload,
-  forUpdate = false,
-): Record<string, unknown> {
-  return removeUndefinedValues({
-    Name: getOptionalString(
-      values.promotionName,
-    ),
-
-    Estado: calculatePromotionStatus(
-      values.promotionStart,
-      values.promotionEnd,
-      values.paused,
-    ),
-
-    Prioridad: getOptionalNumber(
-      values.priority,
-    ),
-
-    Inicio_de_promoci_n:
-      getOptionalDateTime(
-        values.promotionStart,
-      ),
-
-    Fin_de_promoci_n:
-      getOptionalDateTime(
-        values.promotionEnd,
-      ),
-
-    Tipo_de_beneficio:
-      getOptionalString(
-        values.benefitType,
-      ),
-
-    Forma_de_pago:
-      getOptionalString(
-        values.paymentMethod,
-      ),
-
-    Grupo_de_Promoci_n:
-      getOptionalString(
-        values.promotionGroup,
-      ),
-
-    Meses_disponibles:
-      getStringArray(values.availableMonths) ??
-      (forUpdate ? [] : undefined),
-
-    Canal_aplicable:
-      getStringArray(values.channel) ??
-      (forUpdate ? [] : undefined),
-
-    Enganche_m_nimo1:
-      getOptionalNumber(
-        values.minimumDownPayment,
-      ) ?? (forUpdate ? null : undefined),
-
-    M_ximo_de_beneficios:
-      getOptionalNumber(
-        values.maximumBenefits,
-      ) ?? (forUpdate ? null : undefined),
-
-    Beneficios_entregados:
-      getOptionalNumber(
-        values.usedBenefits,
-      ) ?? 0,
-
-    Limitar_promoci_n:
-      getBoolean(
-        values.limitPromotion,
-      ),
-
-    Pausada: getBoolean(
-      values.paused,
-    ),
-
-    Requiere_elecci_n:
-      getBoolean(
-        values.requiresSelection,
-      ),
-
-    Productos_aplicables:
-      getLookupArray(
-        values.applicableProducts,
-      ) ?? (forUpdate ? [] : undefined),
-
-    Tipo_de_cliente:
-      getOptionalString(
-        values.customerType,
-      ),
-
-    Valor:
-      getOptionalNumber(values.value) ??
-      (forUpdate ? null : undefined),
-
-    Mensaje_comercial:
-      getOptionalString(
-        values.commercialMessage,
-      ) ?? (forUpdate ? null : undefined),
-
-    Descripci_n:
-      getOptionalString(
-        values.conditions,
-      ) ?? (forUpdate ? null : undefined),
-  });
-}
-
-function validateCreatePayload(
+function validatePayload(
   values: PromotionFormPayload,
 ): string | null {
   const promotionName =
@@ -493,7 +294,7 @@ function validateCreatePayload(
       values.benefitType,
     );
 
-  const benefitTypesThatRequireValue =
+  const typesThatRequireValue =
     new Set([
       "descuento(%)",
       "descuento (%)",
@@ -505,11 +306,12 @@ function validateCreatePayload(
 
   if (
     benefitType &&
-    benefitTypesThatRequireValue.has(
+    typesThatRequireValue.has(
       benefitType,
     ) &&
-    getOptionalNumber(values.value) ===
-      undefined
+    getOptionalNumber(
+      values.value,
+    ) === undefined
   ) {
     return `El valor es obligatorio para el beneficio "${getOptionalString(values.benefitType)}".`;
   }
@@ -517,264 +319,349 @@ function validateCreatePayload(
   return null;
 }
 
+async function getTenantContext() {
+  const {
+    userId,
+    orgId,
+  } = await auth();
+
+  if (!userId) {
+    throw new ApiError(
+      "No autenticado.",
+      401,
+    );
+  }
+
+  if (!orgId) {
+    throw new ApiError(
+      "No hay una organización activa.",
+      400,
+    );
+  }
+
+  const [tenant] = await db
+    .select({
+      id: tenants.id,
+    })
+    .from(tenants)
+    .where(
+      eq(
+        tenants.clerkOrganizationId,
+        orgId,
+      ),
+    )
+    .limit(1);
+
+  if (!tenant) {
+    throw new ApiError(
+      "La empresa aún no está sincronizada.",
+      404,
+    );
+  }
+
+  return {
+    userId,
+    tenantId: tenant.id,
+  };
+}
+
+async function validateProductIds(
+  tenantId: string,
+  productIds: string[],
+) {
+  if (productIds.length === 0) {
+    return [];
+  }
+
+  const products = await db
+    .select({
+      id: crmProducts.id,
+    })
+    .from(crmProducts)
+    .where(
+      and(
+        eq(
+          crmProducts.tenantId,
+          tenantId,
+        ),
+        eq(
+          crmProducts.active,
+          true,
+        ),
+        inArray(
+          crmProducts.id,
+          productIds,
+        ),
+      ),
+    );
+
+  if (
+    products.length !==
+    productIds.length
+  ) {
+    throw new ApiError(
+      "Uno o más productos no pertenecen al catálogo de la empresa.",
+      400,
+    );
+  }
+
+  return products.map(
+    (product) => product.id,
+  );
+}
+
+function createErrorResponse(
+  error: unknown,
+  fallback: string,
+) {
+  if (error instanceof ApiError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      {
+        status: error.status,
+      },
+    );
+  }
+
+  console.error(fallback, error);
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: fallback,
+    },
+    {
+      status: 500,
+    },
+  );
+}
+
 export async function GET() {
   try {
-    const moduleApiName =
-      getModuleApiName();
+    const {
+      tenantId,
+    } = await getTenantContext();
 
-    const response =
-      await zohoRequest<ZohoGetPromotionsResponse>(
-        moduleApiName,
-        {
-          method: "GET",
-          query: {
-            fields: [
-              "id",
-              "Name",
-              "Estado",
-              "Prioridad",
-              "Inicio_de_promoci_n",
-              "Fin_de_promoci_n",
-              "Tipo_de_beneficio",
-              "Forma_de_pago",
-              "Grupo_de_Promoci_n",
-              "Meses_disponibles",
-              "Canal_aplicable",
-              "Enganche_m_nimo1",
-              "M_ximo_de_beneficios",
-              "Beneficios_entregados",
-              "Limitar_promoci_n",
-              "Pausada",
-              "Requiere_elecci_n",
-              "Productos_aplicables",
-              "Tipo_de_cliente",
-              "Valor",
-              "Mensaje_comercial",
-              "Descripci_n",
-              "Owner",
-              "Created_Time",
-              "Modified_Time",
-            ].join(","),
-            page: 1,
-            per_page: 200,
-            sort_by: "id",
-            sort_order: "desc",
-          },
-        },
-      );
-
-    // Zoho omite los valores de los lookups multiselección al listar
-    // registros. Esos valores se recuperan consultando cada registro.
     const promotionRecords =
-      response.data ?? [];
-
-    const detailedRecords:
-      ZohoPromotionRecord[] = [];
-
-    const detailBatchSize = 10;
-
-    for (
-      let index = 0;
-      index < promotionRecords.length;
-      index += detailBatchSize
-    ) {
-      const batch = promotionRecords.slice(
-        index,
-        index + detailBatchSize,
-      );
-
-      const batchDetails =
-        await Promise.all(
-          batch.map(async (promotion) => {
-            try {
-              const detail =
-                await zohoRequest<ZohoGetPromotionsResponse>(
-                  `${moduleApiName}/${promotion.id}`,
-                  {
-                    method: "GET",
-                    query: {
-                      fields:
-                        "Productos_aplicables",
-                    },
-                  },
-                );
-
-              return {
-                ...promotion,
-                ...(detail.data?.[0] ?? {}),
-              };
-            } catch (error) {
-              console.warn(
-                `No fue posible cargar los productos de la promoción ${promotion.id}:`,
-                error,
-              );
-
-              return promotion;
-            }
-          }),
+      await db
+        .select()
+        .from(crmPromotions)
+        .where(
+          eq(
+            crmPromotions.tenantId,
+            tenantId,
+          ),
         );
 
-      detailedRecords.push(
-        ...batchDetails,
+    const promotionIds =
+      promotionRecords.map(
+        (promotion) =>
+          promotion.id,
+      );
+
+    const relations =
+      promotionIds.length > 0
+        ? await db
+            .select({
+              promotionId:
+                crmPromotionProducts.promotionId,
+              productId:
+                crmProducts.id,
+              productName:
+                crmProducts.name,
+            })
+            .from(
+              crmPromotionProducts,
+            )
+            .innerJoin(
+              crmProducts,
+              eq(
+                crmPromotionProducts.productId,
+                crmProducts.id,
+              ),
+            )
+            .where(
+              inArray(
+                crmPromotionProducts.promotionId,
+                promotionIds,
+              ),
+            )
+        : [];
+
+    const productsByPromotion =
+      new Map<
+        string,
+        Array<{
+          id: string;
+          name: string;
+        }>
+      >();
+
+    for (
+      const relation of relations
+    ) {
+      const products =
+        productsByPromotion.get(
+          relation.promotionId,
+        ) ?? [];
+
+      products.push({
+        id: relation.productId,
+        name:
+          relation.productName,
+      });
+
+      productsByPromotion.set(
+        relation.promotionId,
+        products,
       );
     }
 
-    const promotions = detailedRecords
-      .map((promotion) => ({
-        id: promotion.id,
+    const promotions =
+      promotionRecords
+        .map((promotion) => ({
+          id: promotion.id,
 
-        promotionName:
-          promotion.Name ??
-          "Promoción sin nombre",
+          promotionName:
+            promotion.name,
 
-        status:
-          calculatePromotionStatus(
-            promotion.Inicio_de_promoci_n,
-            promotion.Fin_de_promoci_n,
-            promotion.Pausada,
-          ),
+          status:
+            calculatePromotionStatus(
+              promotion.promotionStart,
+              promotion.promotionEnd,
+              promotion.paused,
+            ),
 
-        priority:
-          promotion.Prioridad ??
-          null,
+          priority:
+            promotion.priority,
 
-        promotionStart:
-          promotion.Inicio_de_promoci_n ??
-          null,
+          promotionStart:
+            promotion.promotionStart
+              ?.toISOString() ??
+            null,
 
-        promotionEnd:
-          promotion.Fin_de_promoci_n ??
-          null,
+          promotionEnd:
+            promotion.promotionEnd
+              ?.toISOString() ??
+            null,
 
-        benefitType:
-          promotion.Tipo_de_beneficio ??
-          null,
+          benefitType:
+            promotion.benefitType,
 
-        paymentMethod:
-          promotion.Forma_de_pago ??
-          null,
+          paymentMethod:
+            promotion.paymentMethod,
 
-        promotionGroup:
-          promotion.Grupo_de_Promoci_n ??
-          null,
+          promotionGroup:
+            promotion.promotionGroup,
 
-        availableMonths:
-          promotion.Meses_disponibles ??
-          [],
+          availableMonths:
+            promotion.availableMonths,
 
-        channel:
-          promotion.Canal_aplicable ??
-          [],
+          channel:
+            promotion.channels,
 
-        minimumDownPayment:
-          promotion.Enganche_m_nimo1 ??
-          null,
+          minimumDownPayment:
+            promotion.minimumDownPayment ===
+            null
+              ? null
+              : Number(
+                  promotion.minimumDownPayment,
+                ),
 
-        maximumBenefits:
-          promotion.M_ximo_de_beneficios ??
-          null,
+          maximumBenefits:
+            promotion.maximumBenefits,
 
-        usedBenefits:
-          promotion.Beneficios_entregados ??
-          0,
+          usedBenefits:
+            promotion.usedBenefits,
 
-        limitPromotion:
-          promotion.Limitar_promoci_n ??
-          false,
+          limitPromotion:
+            promotion.limitPromotion,
 
-        paused:
-          promotion.Pausada ??
-          false,
+          paused:
+            promotion.paused,
 
-        requiresSelection:
-          promotion.Requiere_elecci_n ??
-          false,
+          requiresSelection:
+            promotion.requiresSelection,
 
-        applicableProducts:
-          normalizeLookupValues(
-            promotion.Productos_aplicables,
-          ),
+          applicableProducts:
+            productsByPromotion.get(
+              promotion.id,
+            ) ?? [],
 
-        customerType:
-          promotion.Tipo_de_cliente ??
-          null,
+          customerType:
+            promotion.customerType,
 
-        value:
-          promotion.Valor ??
-          null,
+          value:
+            promotion.value === null
+              ? null
+              : Number(
+                  promotion.value,
+                ),
 
-        commercialMessage:
-          promotion.Mensaje_comercial ??
-          null,
+          commercialMessage:
+            promotion.commercialMessage,
 
-        conditions:
-          promotion.Descripci_n ??
-          null,
+          conditions:
+            promotion.conditions,
 
-        owner:
-          promotion.Owner ??
-          null,
+          owner:
+            promotion.ownerName ||
+            promotion.ownerEmail ||
+            promotion.ownerClerkUserId
+              ? {
+                  id:
+                    promotion.ownerClerkUserId ??
+                    undefined,
+                  name:
+                    promotion.ownerName ??
+                    undefined,
+                  email:
+                    promotion.ownerEmail ??
+                    undefined,
+                }
+              : null,
 
-        createdTime:
-          promotion.Created_Time ??
-          null,
+          createdTime:
+            promotion.createdAt
+              .toISOString(),
 
-        modifiedTime:
-          promotion.Modified_Time ??
-          null,
-      }))
-      .sort((a, b) => {
-        const aPriority =
-          a.priority ??
-          Number.MAX_SAFE_INTEGER;
+          modifiedTime:
+            promotion.updatedAt
+              .toISOString(),
+        }))
+        .sort((a, b) => {
+          const aPriority =
+            a.priority ??
+            Number.MAX_SAFE_INTEGER;
 
-        const bPriority =
-          b.priority ??
-          Number.MAX_SAFE_INTEGER;
+          const bPriority =
+            b.priority ??
+            Number.MAX_SAFE_INTEGER;
 
-        return aPriority - bPriority;
-      });
+          return (
+            aPriority -
+            bPriority
+          );
+        });
 
     return NextResponse.json({
       success: true,
       data: promotions,
       meta: {
         count:
-          response.info?.count ??
           promotions.length,
-
-        page:
-          response.info?.page ??
-          1,
-
-        perPage:
-          response.info?.per_page ??
-          200,
-
-        moreRecords:
-          response.info?.more_records ??
-          false,
+        page: 1,
+        perPage: 200,
+        moreRecords: false,
       },
     });
   } catch (error) {
-    console.error(
-      "Error loading Zoho promotions:",
+    return createErrorResponse(
       error,
-    );
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No fue posible consultar las promociones.";
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      {
-        status: 500,
-      },
+      "No fue posible consultar las promociones.",
     );
   }
 }
@@ -783,76 +670,177 @@ export async function POST(
   request: Request,
 ) {
   try {
-    const requestBody: unknown =
+    const {
+      tenantId,
+      userId,
+    } = await getTenantContext();
+
+    const body: unknown =
       await request.json();
 
-    if (!isRecord(requestBody)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "La información enviada no tiene un formato válido.",
-        },
-        {
-          status: 400,
-        },
+    if (!isRecord(body)) {
+      throw new ApiError(
+        "La información enviada no tiene un formato válido.",
+        400,
       );
     }
 
     const values =
-      requestBody as PromotionFormPayload;
+      body as PromotionFormPayload;
 
     const validationError =
-      validateCreatePayload(values);
+      validatePayload(values);
 
     if (validationError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: validationError,
-        },
-        {
-          status: 400,
-        },
+      throw new ApiError(
+        validationError,
+        400,
       );
     }
 
-    const zohoRecord =
-      mapFormValuesToZoho(values);
-
-    const moduleApiName =
-      getModuleApiName();
-
-
-    const response =
-      await zohoRequest<ZohoWriteResponse>(
-        moduleApiName,
-        {
-          method: "POST",
-          body: {
-            data: [zohoRecord],
-            trigger: [
-              "workflow",
-              "approval",
-              "blueprint",
-            ],
-          },
-        },
+    const productIds =
+      await validateProductIds(
+        tenantId,
+        getIdArray(
+          values.applicableProducts,
+        ),
       );
 
-    const result = response.data?.[0];
+    const clerkUser =
+      await currentUser();
 
-    if (
-      !result ||
-      result.status?.toLowerCase() !==
-        "success" ||
-      !result.details?.id
-    ) {
+    const ownerEmail =
+      clerkUser
+        ?.primaryEmailAddress
+        ?.emailAddress ??
+      null;
+
+    const ownerName =
+      clerkUser
+        ? [
+            clerkUser.firstName,
+            clerkUser.lastName,
+          ]
+            .filter(Boolean)
+            .join(" ") || null
+        : null;
+
+    const now = new Date();
+
+    const [promotion] =
+      await db
+        .insert(crmPromotions)
+        .values({
+          tenantId,
+          name:
+            getOptionalString(
+              values.promotionName,
+            ) as string,
+          priority:
+            getOptionalInteger(
+              values.priority,
+            ),
+          promotionStart:
+            getOptionalDate(
+              values.promotionStart,
+            ),
+          promotionEnd:
+            getOptionalDate(
+              values.promotionEnd,
+            ),
+          benefitType:
+            getOptionalString(
+              values.benefitType,
+            ) ?? null,
+          paymentMethod:
+            getOptionalString(
+              values.paymentMethod,
+            ) ?? null,
+          promotionGroup:
+            getOptionalString(
+              values.promotionGroup,
+            ) ?? null,
+          availableMonths:
+            getStringArray(
+              values.availableMonths,
+            ),
+          channels:
+            getStringArray(
+              values.channel,
+            ),
+          minimumDownPayment:
+            getNumericString(
+              values.minimumDownPayment,
+            ),
+          maximumBenefits:
+            getOptionalInteger(
+              values.maximumBenefits,
+            ),
+          usedBenefits:
+            getOptionalInteger(
+              values.usedBenefits,
+            ) ?? 0,
+          limitPromotion:
+            getBoolean(
+              values.limitPromotion,
+            ),
+          paused:
+            getBoolean(
+              values.paused,
+            ),
+          requiresSelection:
+            getBoolean(
+              values.requiresSelection,
+            ),
+          customerType:
+            getOptionalString(
+              values.customerType,
+            ) ?? null,
+          value:
+            getNumericString(
+              values.value,
+            ),
+          commercialMessage:
+            getOptionalString(
+              values.commercialMessage,
+            ) ?? null,
+          conditions:
+            getOptionalString(
+              values.conditions,
+            ) ?? null,
+          ownerClerkUserId:
+            userId,
+          ownerName,
+          ownerEmail,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({
+          id: crmPromotions.id,
+          createdAt:
+            crmPromotions.createdAt,
+        });
+
+    if (!promotion) {
       throw new Error(
-        result?.message ??
-          result?.code ??
-          "Zoho no confirmó la creación de la promoción.",
+        "No fue posible crear la promoción.",
       );
+    }
+
+    if (productIds.length > 0) {
+      await db
+        .insert(
+          crmPromotionProducts,
+        )
+        .values(
+          productIds.map(
+            (productId) => ({
+              promotionId:
+                promotion.id,
+              productId,
+            }),
+          ),
+        );
     }
 
     return NextResponse.json(
@@ -861,10 +849,10 @@ export async function POST(
         message:
           "La promoción fue creada correctamente.",
         data: {
-          id: result.details.id,
+          id: promotion.id,
           createdTime:
-            result.details.Created_Time ??
-            null,
+            promotion.createdAt
+              .toISOString(),
         },
       },
       {
@@ -872,24 +860,9 @@ export async function POST(
       },
     );
   } catch (error) {
-    console.error(
-      "Error creating Zoho promotion:",
+    return createErrorResponse(
       error,
-    );
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No fue posible crear la promoción.";
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      {
-        status: 500,
-      },
+      "No fue posible crear la promoción.",
     );
   }
 }
@@ -898,81 +871,187 @@ export async function PATCH(
   request: Request,
 ) {
   try {
-    const requestBody: unknown =
+    const {
+      tenantId,
+    } = await getTenantContext();
+
+    const body: unknown =
       await request.json();
 
-    if (!isRecord(requestBody)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "La información enviada no tiene un formato válido.",
-        },
-        { status: 400 },
+    if (!isRecord(body)) {
+      throw new ApiError(
+        "La información enviada no tiene un formato válido.",
+        400,
       );
     }
 
     const values =
-      requestBody as PromotionFormPayload;
+      body as PromotionFormPayload;
 
     const recordId =
-      getOptionalString(values.id);
+      getOptionalString(
+        values.id,
+      );
 
     if (!recordId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "No fue posible identificar la promoción que se desea actualizar.",
-        },
-        { status: 400 },
+      throw new ApiError(
+        "No fue posible identificar la promoción que se desea actualizar.",
+        400,
       );
     }
 
     const validationError =
-      validateCreatePayload(values);
+      validatePayload(values);
 
     if (validationError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: validationError,
-        },
-        { status: 400 },
+      throw new ApiError(
+        validationError,
+        400,
       );
     }
 
-    const zohoRecord =
-      mapFormValuesToZoho(values, true);
-
-    const response =
-      await zohoRequest<ZohoWriteResponse>(
-        `${getModuleApiName()}/${recordId}`,
-        {
-          method: "PUT",
-          body: {
-            data: [zohoRecord],
-            trigger: [
-              "workflow",
-              "approval",
-              "blueprint",
-            ],
-          },
-        },
+    const productIds =
+      await validateProductIds(
+        tenantId,
+        getIdArray(
+          values.applicableProducts,
+        ),
       );
 
-    const result = response.data?.[0];
+    const now = new Date();
 
-    if (
-      !result ||
-      result.status?.toLowerCase() !==
-        "success"
-    ) {
-      throw new Error(
-        result?.message ??
-          result?.code ??
-          "Zoho no confirmó la actualización de la promoción.",
+    const [promotion] =
+      await db
+        .update(crmPromotions)
+        .set({
+          name:
+            getOptionalString(
+              values.promotionName,
+            ) as string,
+          priority:
+            getOptionalInteger(
+              values.priority,
+            ),
+          promotionStart:
+            getOptionalDate(
+              values.promotionStart,
+            ),
+          promotionEnd:
+            getOptionalDate(
+              values.promotionEnd,
+            ),
+          benefitType:
+            getOptionalString(
+              values.benefitType,
+            ) ?? null,
+          paymentMethod:
+            getOptionalString(
+              values.paymentMethod,
+            ) ?? null,
+          promotionGroup:
+            getOptionalString(
+              values.promotionGroup,
+            ) ?? null,
+          availableMonths:
+            getStringArray(
+              values.availableMonths,
+            ),
+          channels:
+            getStringArray(
+              values.channel,
+            ),
+          minimumDownPayment:
+            getNumericString(
+              values.minimumDownPayment,
+            ),
+          maximumBenefits:
+            getOptionalInteger(
+              values.maximumBenefits,
+            ),
+          usedBenefits:
+            getOptionalInteger(
+              values.usedBenefits,
+            ) ?? 0,
+          limitPromotion:
+            getBoolean(
+              values.limitPromotion,
+            ),
+          paused:
+            getBoolean(
+              values.paused,
+            ),
+          requiresSelection:
+            getBoolean(
+              values.requiresSelection,
+            ),
+          customerType:
+            getOptionalString(
+              values.customerType,
+            ) ?? null,
+          value:
+            getNumericString(
+              values.value,
+            ),
+          commercialMessage:
+            getOptionalString(
+              values.commercialMessage,
+            ) ?? null,
+          conditions:
+            getOptionalString(
+              values.conditions,
+            ) ?? null,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(
+              crmPromotions.id,
+              recordId,
+            ),
+            eq(
+              crmPromotions.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .returning({
+          id: crmPromotions.id,
+          updatedAt:
+            crmPromotions.updatedAt,
+        });
+
+    if (!promotion) {
+      throw new ApiError(
+        "La promoción no existe o no pertenece a esta empresa.",
+        404,
       );
+    }
+
+    await db
+      .delete(
+        crmPromotionProducts,
+      )
+      .where(
+        eq(
+          crmPromotionProducts.promotionId,
+          promotion.id,
+        ),
+      );
+
+    if (productIds.length > 0) {
+      await db
+        .insert(
+          crmPromotionProducts,
+        )
+        .values(
+          productIds.map(
+            (productId) => ({
+              promotionId:
+                promotion.id,
+              productId,
+            }),
+          ),
+        );
     }
 
     return NextResponse.json({
@@ -980,27 +1059,16 @@ export async function PATCH(
       message:
         "La promoción fue actualizada correctamente.",
       data: {
-        id: result.details?.id ?? recordId,
+        id: promotion.id,
         modifiedTime:
-          result.details?.Modified_Time ??
-          null,
+          promotion.updatedAt
+            .toISOString(),
       },
     });
   } catch (error) {
-    console.error(
-      "Error updating Zoho promotion:",
+    return createErrorResponse(
       error,
-    );
-
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "No fue posible actualizar la promoción.",
-      },
-      { status: 500 },
+      "No fue posible actualizar la promoción.",
     );
   }
 }

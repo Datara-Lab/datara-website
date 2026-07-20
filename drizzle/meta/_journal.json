@@ -8,6 +8,20 @@
       "when": 1784570032061,
       "tag": "0000_yielding_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784577676698,
+      "tag": "0001_lovely_eternity",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784578718677,
+      "tag": "0002_moaning_jigsaw",
+      "breakpoints": true
     }
   ]
 }

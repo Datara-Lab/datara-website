@@ -3,6 +3,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   primaryKey,
@@ -139,6 +140,325 @@ export const tenants = pgTable(
     ).on(table.crmProvider),
   ],
 );
+
+export const crmProducts = pgTable(
+  "crm_products",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    code: text("code"),
+
+    description: text("description"),
+
+    category: text("category"),
+
+    unitPrice: numeric(
+      "unit_price",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    currency: text("currency")
+      .notNull()
+      .default("mxn"),
+
+    active: boolean("active")
+      .notNull()
+      .default(true),
+
+    sourceExternalId: text(
+      "source_external_id",
+    ),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex(
+      "crm_products_tenant_code_unique",
+    ).on(
+      table.tenantId,
+      table.code,
+    ),
+
+    uniqueIndex(
+      "crm_products_tenant_external_unique",
+    ).on(
+      table.tenantId,
+      table.sourceExternalId,
+    ),
+
+    index(
+      "crm_products_tenant_active_idx",
+    ).on(
+      table.tenantId,
+      table.active,
+    ),
+
+    index(
+      "crm_products_tenant_name_idx",
+    ).on(
+      table.tenantId,
+      table.name,
+    ),
+  ],
+);
+
+export const crmPromotions = pgTable(
+  "crm_promotions",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    priority: integer("priority"),
+
+    promotionStart: timestamp(
+      "promotion_start",
+      {
+        withTimezone: true,
+      },
+    ),
+
+    promotionEnd: timestamp(
+      "promotion_end",
+      {
+        withTimezone: true,
+      },
+    ),
+
+    benefitType: text(
+      "benefit_type",
+    ),
+
+    paymentMethod: text(
+      "payment_method",
+    ),
+
+    promotionGroup: text(
+      "promotion_group",
+    ),
+
+    availableMonths: jsonb(
+      "available_months",
+    )
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+
+    channels: jsonb("channels")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+
+    minimumDownPayment: numeric(
+      "minimum_down_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    maximumBenefits: integer(
+      "maximum_benefits",
+    ),
+
+    usedBenefits: integer(
+      "used_benefits",
+    )
+      .notNull()
+      .default(0),
+
+    limitPromotion: boolean(
+      "limit_promotion",
+    )
+      .notNull()
+      .default(false),
+
+    paused: boolean("paused")
+      .notNull()
+      .default(false),
+
+    requiresSelection: boolean(
+      "requires_selection",
+    )
+      .notNull()
+      .default(false),
+
+    customerType: text(
+      "customer_type",
+    ),
+
+    value: numeric(
+      "value",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    commercialMessage: text(
+      "commercial_message",
+    ),
+
+    conditions: text("conditions"),
+
+    ownerClerkUserId: text(
+      "owner_clerk_user_id",
+    ),
+
+    ownerName: text("owner_name"),
+
+    ownerEmail: text("owner_email"),
+
+    sourceExternalId: text(
+      "source_external_id",
+    ),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex(
+      "crm_promotions_tenant_external_unique",
+    ).on(
+      table.tenantId,
+      table.sourceExternalId,
+    ),
+
+    index(
+      "crm_promotions_tenant_priority_idx",
+    ).on(
+      table.tenantId,
+      table.priority,
+    ),
+
+    index(
+      "crm_promotions_tenant_dates_idx",
+    ).on(
+      table.tenantId,
+      table.promotionStart,
+      table.promotionEnd,
+    ),
+
+    index(
+      "crm_promotions_tenant_paused_idx",
+    ).on(
+      table.tenantId,
+      table.paused,
+    ),
+  ],
+);
+
+export const crmPromotionProducts =
+  pgTable(
+    "crm_promotion_products",
+    {
+      promotionId: uuid(
+        "promotion_id",
+      )
+        .notNull()
+        .references(
+          () => crmPromotions.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      productId: uuid("product_id")
+        .notNull()
+        .references(
+          () => crmProducts.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      primaryKey({
+        name: "crm_promotion_products_pk",
+        columns: [
+          table.promotionId,
+          table.productId,
+        ],
+      }),
+
+      index(
+        "crm_promotion_products_product_idx",
+      ).on(table.productId),
+    ],
+  );
 
 export const tenantProducts =
   pgTable(
