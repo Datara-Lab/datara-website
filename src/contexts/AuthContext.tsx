@@ -13,6 +13,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 
 import type {
@@ -109,6 +110,9 @@ function SignedInAuthProvider({
     signOut,
   } = useClerk();
 
+  const syncedOrganizationId =
+    useRef<string | null>(null);
+
   const firstMembership =
     userMemberships.data?.[0] ?? null;
 
@@ -131,6 +135,57 @@ function SignedInAuthProvider({
     isOrganizationListLoaded,
     setActive,
     firstMembership,
+  ]);
+
+  useEffect(() => {
+    if (
+      !clerkUser ||
+      !organization ||
+      syncedOrganizationId.current ===
+        organization.id
+    ) {
+      return;
+    }
+
+    syncedOrganizationId.current =
+      organization.id;
+
+    async function synchronizeOrganization() {
+      try {
+        const response = await fetch(
+          "/api/onboarding/sync",
+          {
+            method: "POST",
+          },
+        );
+
+        if (!response.ok) {
+          const result = (await response
+            .json()
+            .catch(() => null)) as {
+            error?: string;
+          } | null;
+
+          throw new Error(
+            result?.error ??
+              "No fue posible sincronizar la organización.",
+          );
+        }
+      } catch (error) {
+        syncedOrganizationId.current =
+          null;
+
+        console.error(
+          "Error al sincronizar Datara:",
+          error,
+        );
+      }
+    }
+
+    void synchronizeOrganization();
+  }, [
+    clerkUser,
+    organization,
   ]);
 
   const resolvedOrganization =
@@ -339,8 +394,7 @@ export function AuthProvider({
 }
 
 export function useAuth() {
-  const context =
-    useContext(AuthContext);
+  const context = useContext(AuthContext);
 
   if (!context) {
     throw new Error(
