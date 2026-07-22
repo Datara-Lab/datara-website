@@ -34,6 +34,7 @@ type PromotionWriteResponse = {
 type ProductOption = {
   label: string;
   value: string;
+  disabled?: boolean;
 };
 
 type ProductsResponse = {
@@ -62,7 +63,7 @@ export default function PromocionesPage() {
         setProductsError(null);
 
         const response = await fetch(
-          "/api/crm/products",
+          "/api/crm/products?includeInactive=true",
           {
             signal: controller.signal,
           },
@@ -141,7 +142,7 @@ export default function PromocionesPage() {
   /*
    * Al incrementar esta llave,
    * React vuelve a montar la tabla
-   * y consulta nuevamente Zoho.
+   * y consulta nuevamente PostgreSQL.
    */
   const [tableVersion, setTableVersion] =
     useState(0);
@@ -272,7 +273,7 @@ useEffect(() => {
 
       /*
        * Cerramos el formulario después
-       * de que Zoho confirmó la creación.
+       * de que PostgreSQL confirmó la creación.
        */
       setIsDrawerOpen(false);
 
@@ -344,7 +345,7 @@ useEffect(() => {
             <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
 
-              Conectado con Zoho CRM
+              Datos administrados por Datara
             </span>
           }
         />

@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import Button from "@/components/ui/Button";
+
+import { useAuth } from "@/contexts/AuthContext";
+
 import type {
   CRMFieldConfig,
   CRMModuleConfig,
@@ -54,6 +62,33 @@ function getTableFields(
       (a, b) =>
         (a.tableOrder ?? Number.MAX_SAFE_INTEGER) -
         (b.tableOrder ?? Number.MAX_SAFE_INTEGER),
+    );
+}
+
+function getAvailableTableFields(
+  module: CRMModuleConfig,
+): CRMFieldConfig[] {
+  return [...module.fields]
+    .filter(
+      (field) =>
+        field.hidden !== true &&
+        (
+          field.showInTable === true ||
+          field.showInDetail === true
+        ),
+    )
+    .sort(
+      (a, b) =>
+        (
+          a.tableOrder ??
+          a.detailOrder ??
+          Number.MAX_SAFE_INTEGER
+        ) -
+        (
+          b.tableOrder ??
+          b.detailOrder ??
+          Number.MAX_SAFE_INTEGER
+        ),
     );
 }
 
@@ -358,6 +393,51 @@ export default function CRMDataTable({
     CRMRecord[]
   >([]);
 
+  const {
+    user,
+  } = useAuth();
+
+  const columnMenuRef =
+    useRef<HTMLDivElement>(null);
+
+  const [
+    isColumnMenuOpen,
+    setIsColumnMenuOpen,
+  ] = useState(false);
+
+  const [
+    visibleColumnKeys,
+    setVisibleColumnKeys,
+  ] = useState<string[]>(() =>
+    getTableFields(module).map(
+      (field) => field.key,
+    ),
+  );
+
+  const [
+    columnPreferencesLoaded,
+    setColumnPreferencesLoaded,
+  ] = useState(false);
+
+  const columnStorageKey =
+    useMemo(() => {
+      if (!user) {
+        return null;
+      }
+
+      return [
+        "datara",
+        "crm",
+        "columns",
+        user.tenantId,
+        user.id,
+        module.id,
+      ].join(":");
+    }, [
+      module.id,
+      user,
+    ]);
+
   const [isLoading, setIsLoading] =
     useState(true);
 
@@ -381,6 +461,263 @@ export default function CRMDataTable({
     () => getTableFields(module),
     [module],
   );
+
+    const availableTableFields =
+    useMemo(
+      () =>
+        getAvailableTableFields(
+          module,
+        ),
+      [module],
+    );
+
+  useEffect(() => {
+    setColumnPreferencesLoaded(false);
+
+    const availableKeys =
+      availableTableFields.map(
+        (field) => field.key,
+      );
+
+    if (!columnStorageKey) {
+      setVisibleColumnKeys(
+        tableFields.map(
+          (field) => field.key,
+        ),
+      );
+      setColumnPreferencesLoaded(
+        true,
+      );
+      return;
+    }
+
+    try {
+      const storedValue =
+        window.localStorage.getItem(
+          columnStorageKey,
+        );
+
+      if (!storedValue) {
+        setVisibleColumnKeys(
+          tableFields.map(
+            (field) => field.key,
+          ),
+        );
+      } else {
+        const parsedValue: unknown =
+          JSON.parse(storedValue);
+
+        const validKeys =
+          Array.isArray(parsedValue)
+            ? parsedValue.filter(
+                (
+                  key,
+                ): key is string =>
+                  typeof key ===
+                    "string" &&
+                  availableKeys.includes(
+                    key,
+                  ),
+              )
+            : [];
+
+        setVisibleColumnKeys(
+          validKeys.length > 0
+            ? validKeys
+            : availableKeys,
+        );
+      }
+    } catch {
+      setVisibleColumnKeys(
+        tableFields.map(
+          (field) => field.key,
+        ),
+      );
+    }
+
+    setColumnPreferencesLoaded(true);
+      }, [
+        columnStorageKey,
+        availableTableFields,
+        tableFields,
+      ]);
+
+  useEffect(() => {
+    if (
+      !columnStorageKey ||
+      !columnPreferencesLoaded
+    ) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      columnStorageKey,
+      JSON.stringify(
+        visibleColumnKeys,
+      ),
+    );
+  }, [
+    columnPreferencesLoaded,
+    columnStorageKey,
+    visibleColumnKeys,
+  ]);
+
+  useEffect(() => {
+    function handleOutsideClick(
+      event: MouseEvent,
+    ) {
+      if (
+        columnMenuRef.current &&
+        !columnMenuRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setIsColumnMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(
+      event: KeyboardEvent,
+    ) {
+      if (event.key === "Escape") {
+        setIsColumnMenuOpen(false);
+      }
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick,
+    );
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick,
+      );
+
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+    };
+  }, []);
+
+      const visibleTableFields =
+        useMemo(() => {
+          const fieldsByKey =
+            new Map(
+              availableTableFields.map(
+                (field) => [
+                  field.key,
+                  field,
+                ],
+              ),
+            );
+
+          return visibleColumnKeys
+            .map((fieldKey) =>
+              fieldsByKey.get(
+                fieldKey,
+              ),
+            )
+            .filter(
+              (
+                field,
+              ): field is CRMFieldConfig =>
+                field !== undefined,
+            );
+        }, [
+          availableTableFields,
+          visibleColumnKeys,
+        ]);
+
+  function toggleColumn(
+    fieldKey: string,
+  ) {
+    setVisibleColumnKeys(
+      (currentKeys) => {
+        const isVisible =
+          currentKeys.includes(
+            fieldKey,
+          );
+
+        if (
+          isVisible &&
+          currentKeys.length === 1
+        ) {
+          return currentKeys;
+        }
+
+        return isVisible
+          ? currentKeys.filter(
+              (key) =>
+                key !== fieldKey,
+            )
+          : [
+              ...currentKeys,
+              fieldKey,
+            ];
+      },
+    );
+  }
+
+    function moveColumn(
+      fieldKey: string,
+      direction: "left" | "right",
+    ) {
+      setVisibleColumnKeys(
+        (currentKeys) => {
+          const currentIndex =
+            currentKeys.indexOf(
+              fieldKey,
+            );
+
+          if (currentIndex < 0) {
+            return currentKeys;
+          }
+
+          const targetIndex =
+            direction === "left"
+              ? currentIndex - 1
+              : currentIndex + 1;
+
+          if (
+            targetIndex < 0 ||
+            targetIndex >=
+              currentKeys.length
+          ) {
+            return currentKeys;
+          }
+
+          const nextKeys = [
+            ...currentKeys,
+          ];
+
+          [
+            nextKeys[currentIndex],
+            nextKeys[targetIndex],
+          ] = [
+            nextKeys[targetIndex],
+            nextKeys[currentIndex],
+          ];
+
+          return nextKeys;
+        },
+      );
+    }
+
+  function resetColumns() {
+    setVisibleColumnKeys(
+      tableFields.map(
+        (field) => field.key,
+      ),
+    );
+  }
 
   async function loadRecords() {
     try {
@@ -491,11 +828,11 @@ export default function CRMDataTable({
   );
 
   const totalColumns =
-    tableFields.length +
+    visibleTableFields.length +
     (hasActions ? 1 : 0);
 
   return (
-    <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 p-5 sm:p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
@@ -538,6 +875,188 @@ export default function CRMDataTable({
                 >
                   ×
                 </button>
+              )}
+            </div>
+
+            <div
+              ref={columnMenuRef}
+              className="relative"
+            >
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setIsColumnMenuOpen(
+                    (current) => !current,
+                  )
+                }
+              >
+                Columnas
+              </Button>
+
+              {isColumnMenuOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                  <div className="border-b border-slate-100 px-4 py-3">
+                    <p className="font-semibold text-slate-900">
+                      Columnas visibles
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Selecciona los campos que quieres ver.
+                    </p>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto p-2">
+                    {[
+                      ...visibleTableFields,
+
+                      ...availableTableFields.filter(
+                        (field) =>
+                          !visibleColumnKeys.includes(
+                            field.key,
+                          ),
+                      ),
+                    ].map((field) => {
+                      const isVisible =
+                        visibleColumnKeys.includes(
+                          field.key,
+                        );
+
+                      const visibleIndex =
+                        visibleColumnKeys.indexOf(
+                          field.key,
+                        );
+
+                      const isLastVisible =
+                        isVisible &&
+                        visibleColumnKeys.length === 1;
+
+                      const canMoveLeft =
+                        isVisible &&
+                        visibleIndex > 0;
+
+                      const canMoveRight =
+                        isVisible &&
+                        visibleIndex <
+                          visibleColumnKeys.length - 1;
+
+                      return (
+                        <div
+                          key={field.key}
+                          className={[
+                            "mb-1 flex items-center gap-1 rounded-xl p-1 transition",
+                            isVisible
+                              ? "bg-emerald-50"
+                              : "hover:bg-slate-50",
+                          ].join(" ")}
+                        >
+                          <button
+                            type="button"
+                            disabled={isLastVisible}
+                            className={[
+                              "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left text-sm transition",
+                              isVisible
+                                ? "font-semibold text-emerald-800"
+                                : "text-slate-700",
+                              isLastVisible
+                                ? "cursor-not-allowed opacity-60"
+                                : "",
+                            ].join(" ")}
+                            onClick={() =>
+                              toggleColumn(
+                                field.key,
+                              )
+                            }
+                          >
+                            <span
+                              className={[
+                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs",
+                                isVisible
+                                  ? "border-emerald-600 bg-emerald-600 text-white"
+                                  : "border-slate-300 bg-white",
+                              ].join(" ")}
+                            >
+                              {isVisible ? "✓" : ""}
+                            </span>
+
+                            <span className="truncate">
+                              {field.label}
+                            </span>
+                          </button>
+
+                          {isVisible && (
+                            <div className="flex shrink-0 items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={!canMoveLeft}
+                                aria-label={`Mover ${field.label} a la izquierda`}
+                                title="Mover a la izquierda"
+                                className={[
+                                  "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold transition",
+                                  canMoveLeft
+                                    ? "text-slate-600 hover:bg-white hover:text-emerald-700"
+                                    : "cursor-not-allowed text-slate-300",
+                                ].join(" ")}
+                                onClick={() =>
+                                  moveColumn(
+                                    field.key,
+                                    "left",
+                                  )
+                                }
+                              >
+                                ←
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={!canMoveRight}
+                                aria-label={`Mover ${field.label} a la derecha`}
+                                title="Mover a la derecha"
+                                className={[
+                                  "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold transition",
+                                  canMoveRight
+                                    ? "text-slate-600 hover:bg-white hover:text-emerald-700"
+                                    : "cursor-not-allowed text-slate-300",
+                                ].join(" ")}
+                                onClick={() =>
+                                  moveColumn(
+                                    field.key,
+                                    "right",
+                                  )
+                                }
+                              >
+                                →
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-slate-100 p-3">
+                    <button
+                      type="button"
+                      className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                      onClick={
+                        resetColumns
+                      }
+                    >
+                      Restablecer
+                    </button>
+
+                    <button
+                      type="button"
+                      className="rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                      onClick={() =>
+                        setIsColumnMenuOpen(
+                          false,
+                        )
+                      }
+                    >
+                      Listo
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -591,7 +1110,7 @@ export default function CRMDataTable({
         <table className="min-w-full">
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
-              {tableFields.map((field) => (
+              {visibleTableFields.map((field) => (
                 <th
                   key={field.key}
                   scope="col"
@@ -645,7 +1164,7 @@ export default function CRMDataTable({
                     key={record.id}
                     className="border-b border-slate-100 transition hover:bg-slate-50/80"
                   >
-                    {tableFields.map(
+                    {visibleTableFields.map(
                       (field) => (
                         <td
                           key={`${record.id}-${field.key}`}

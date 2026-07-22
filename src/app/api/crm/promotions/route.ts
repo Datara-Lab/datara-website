@@ -368,6 +368,7 @@ async function getTenantContext() {
 async function validateProductIds(
   tenantId: string,
   productIds: string[],
+  allowedInactiveIds: string[] = [],
 ) {
   if (productIds.length === 0) {
     return [];
@@ -376,6 +377,7 @@ async function validateProductIds(
   const products = await db
     .select({
       id: crmProducts.id,
+      active: crmProducts.active,
     })
     .from(crmProducts)
     .where(
@@ -383,10 +385,6 @@ async function validateProductIds(
         eq(
           crmProducts.tenantId,
           tenantId,
-        ),
-        eq(
-          crmProducts.active,
-          true,
         ),
         inArray(
           crmProducts.id,
@@ -401,6 +399,25 @@ async function validateProductIds(
   ) {
     throw new ApiError(
       "Uno o más productos no pertenecen al catálogo de la empresa.",
+      400,
+    );
+  }
+
+  const allowedInactiveSet =
+    new Set(allowedInactiveIds);
+
+  const hasUnauthorizedInactive =
+    products.some(
+      (product) =>
+        !product.active &&
+        !allowedInactiveSet.has(
+          product.id,
+        ),
+    );
+
+  if (hasUnauthorizedInactive) {
+    throw new ApiError(
+      "No es posible agregar productos inactivos a una promoción.",
       400,
     );
   }
@@ -910,12 +927,48 @@ export async function PATCH(
       );
     }
 
+    const existingRelations =
+      await db
+        .select({
+          productId:
+            crmPromotionProducts.productId,
+        })
+        .from(
+          crmPromotionProducts,
+        )
+        .innerJoin(
+          crmPromotions,
+          eq(
+            crmPromotionProducts.promotionId,
+            crmPromotions.id,
+          ),
+        )
+        .where(
+          and(
+            eq(
+              crmPromotionProducts.promotionId,
+              recordId,
+            ),
+            eq(
+              crmPromotions.tenantId,
+              tenantId,
+            ),
+          ),
+        );
+
+    const existingProductIds =
+      existingRelations.map(
+        (relation) =>
+          relation.productId,
+      );
+
     const productIds =
       await validateProductIds(
         tenantId,
         getIdArray(
           values.applicableProducts,
         ),
+        existingProductIds,
       );
 
     const now = new Date();

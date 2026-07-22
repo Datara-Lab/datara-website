@@ -372,11 +372,15 @@ function MultiSelectDropdown({
                       <button
                         key={option.value}
                         type="button"
+                        disabled={option.disabled}
                         className={[
                           "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition",
-                          isSelected
-                            ? "bg-emerald-50 font-semibold text-emerald-800"
-                            : "text-slate-700 hover:bg-slate-50",
+
+                          option.disabled
+                            ? "cursor-not-allowed bg-slate-50 text-slate-400"
+                            : isSelected
+                              ? "bg-emerald-50 font-semibold text-emerald-800"
+                              : "text-slate-700 hover:bg-slate-50",
                         ].join(" ")}
                         onClick={() =>
                           toggleOption(
@@ -387,9 +391,12 @@ function MultiSelectDropdown({
                         <span
                           className={[
                             "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs",
-                            isSelected
-                              ? "border-emerald-600 bg-emerald-600 text-white"
-                              : "border-slate-300 bg-white",
+
+                            option.disabled
+                              ? "border-slate-200 bg-slate-100 text-slate-400"
+                              : isSelected
+                                ? "border-emerald-600 bg-emerald-600 text-white"
+                                : "border-slate-300 bg-white",
                           ].join(" ")}
                         >
                           {isSelected ? "✓" : ""}
@@ -431,10 +438,19 @@ function MultiSelectDropdown({
                   item.value === selectedValue,
               );
 
+              const isDisabled =
+                option?.disabled === true;
+
               return (
                 <span
                   key={selectedValue}
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800"
+                  className={[
+                    "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold",
+
+                    isDisabled
+                      ? "bg-slate-100 text-slate-500"
+                      : "bg-emerald-50 text-emerald-800",
+                  ].join(" ")}
                 >
                   {option?.label ??
                     selectedValue}
@@ -446,7 +462,13 @@ function MultiSelectDropdown({
                         option?.label ??
                         selectedValue
                       }`}
-                      className="text-base leading-none text-emerald-600 transition hover:text-red-600"
+                      className={[
+                        "text-base leading-none transition hover:text-red-600",
+
+                        isDisabled
+                          ? "text-slate-400"
+                          : "text-emerald-600",
+                      ].join(" ")}
                       onClick={() =>
                         removeValue(
                           selectedValue,
@@ -638,7 +660,7 @@ function SearchableLookup({
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     Este campo se alimentará con
                     los registros relacionados de
-                    Zoho CRM.
+                    Datara CRM.
                   </p>
                 </div>
               )}

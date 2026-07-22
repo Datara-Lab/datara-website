@@ -238,6 +238,130 @@ export const crmProducts = pgTable(
   ],
 );
 
+export const crmLeads = pgTable(
+  "crm_leads",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    firstName: text(
+      "first_name",
+    ).notNull(),
+
+    lastName: text("last_name"),
+
+    email: text("email"),
+
+    phone: text("phone"),
+
+    mobile: text("mobile"),
+
+    company: text("company"),
+
+    source: text("source"),
+
+    status: text("status")
+      .notNull()
+      .default("Nuevo"),
+
+    productId: uuid("product_id")
+      .references(
+        () => crmProducts.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+    ownerClerkUserId: text(
+      "owner_clerk_user_id",
+    ),
+
+    ownerName: text(
+      "owner_name",
+    ),
+
+    ownerEmail: text(
+      "owner_email",
+    ),
+
+    commercialConsent: boolean(
+      "commercial_consent",
+    )
+      .notNull()
+      .default(false),
+
+    notes: text("notes"),
+
+    metadata: jsonb("metadata")
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index(
+      "crm_leads_tenant_status_idx",
+    ).on(
+      table.tenantId,
+      table.status,
+    ),
+
+    index(
+      "crm_leads_tenant_owner_idx",
+    ).on(
+      table.tenantId,
+      table.ownerClerkUserId,
+    ),
+
+    index(
+      "crm_leads_tenant_email_idx",
+    ).on(
+      table.tenantId,
+      table.email,
+    ),
+
+    index(
+      "crm_leads_tenant_phone_idx",
+    ).on(
+      table.tenantId,
+      table.phone,
+    ),
+
+    index(
+      "crm_leads_tenant_created_idx",
+    ).on(
+      table.tenantId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const crmPromotions = pgTable(
   "crm_promotions",
   {

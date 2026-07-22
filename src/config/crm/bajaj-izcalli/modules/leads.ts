@@ -270,7 +270,7 @@ export const leadsModule: CRMModuleConfig = {
 
       /*
        * Las opciones se cargarán desde el módulo Motocicletas
-       * cuando conectemos Datara con Zoho.
+       * mediante la configuración de Datara.
        */
       options: [],
 
@@ -338,7 +338,7 @@ export const leadsModule: CRMModuleConfig = {
 
       /*
        * Se llenará con los usuarios disponibles en la
-       * organización correspondiente de Zoho CRM.
+       * empresa correspondiente en Datara.
        */
       options: [],
 

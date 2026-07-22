@@ -461,8 +461,8 @@ export default function CRMRecordDrawer({
 
     window.alert(
       mode === "create"
-        ? "Formulario validado. El guardado en Zoho se conectará en el siguiente paso."
-        : "Cambios validados. La actualización en Zoho se conectará en el siguiente paso.",
+        ? "Formulario validado. El registro está listo para guardarse en Datara."
+        : "Cambios validados. Los cambios están listos para guardarse en Datara.",
     );
   }
 

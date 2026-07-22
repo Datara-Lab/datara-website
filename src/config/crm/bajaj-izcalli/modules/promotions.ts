@@ -376,7 +376,7 @@ export const promotionsModule: CRMModuleConfig = {
       required: false,
 
       /*
-       * Se llenará desde el módulo Products de Zoho.
+       * Se llenará desde el catálogo de productos de Datara.
        */
       options: [],
 

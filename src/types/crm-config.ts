@@ -16,6 +16,8 @@ export type CRMFieldType =
 export type CRMFieldOption = {
   label: string;
   value: string;
+
+  disabled?: boolean;
 };
 
 export type CRMFieldValidation = {
@@ -135,7 +137,7 @@ export type CRMFormSectionConfig = {
 
   /*
    * Por ahora trabajaremos con dos columnas,
-   * como el layout de Zoho.
+   * como el layout del CRM.
    */
   columns?: 1 | 2;
 };
@@ -238,11 +240,57 @@ export type CRMNavigationSectionConfig = {
   allowedRoles?: CRMNavigationRole[];
 };
 
+export type CRMIndustry =
+  | "motorcycle_dealership"
+  | "automotive_dealership"
+  | "veterinary"
+  | "real_estate"
+  | "retail"
+  | "professional_services"
+  | "other";
+
+export type CRMModuleTerminologyConfig = {
+  singular: string;
+  plural: string;
+  description?: string;
+};
+
+export type CRMTerminologyConfig = {
+  modules: Record<
+    string,
+    CRMModuleTerminologyConfig
+  >;
+
+  fields: Record<string, string>;
+};
+
+export type CRMIndustryTemplateConfig = {
+  id: CRMIndustry;
+  name: string;
+  description: string;
+
+  terminology: CRMTerminologyConfig;
+
+  defaultModules: string[];
+
+  defaultCatalogs: Record<
+    string,
+    CRMFieldOption[]
+  >;
+};
+
 export type CRMTenantConfig = {
   tenantId: string;
   tenantName: string;
 
-  zohoOrganizationId?: string;
+  industry?: CRMIndustry;
+
+  terminology?: CRMTerminologyConfig;
+
+  catalogs?: Record<
+    string,
+    CRMFieldOption[]
+  >;
 
   modules: CRMModuleConfig[];
   pipelines?: CRMPipelineConfig[];

@@ -137,13 +137,43 @@ function SignedInAuthProvider({
     firstMembership,
   ]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (
       !clerkUser ||
       !organization ||
       syncedOrganizationId.current ===
         organization.id
     ) {
+      return;
+    }
+
+    const synchronizationKey = [
+      "datara",
+      "onboarding-sync",
+      organization.id,
+      clerkUser.id,
+    ].join(":");
+
+    const lastSynchronization =
+      Number(
+        window.sessionStorage.getItem(
+          synchronizationKey,
+        ),
+      );
+
+    const synchronizationLifetime =
+      15 * 60 * 1000;
+
+    if (
+      Number.isFinite(
+        lastSynchronization,
+      ) &&
+      Date.now() -
+        lastSynchronization <
+        synchronizationLifetime
+    ) {
+      syncedOrganizationId.current =
+        organization.id;
       return;
     }
 
@@ -171,9 +201,18 @@ function SignedInAuthProvider({
               "No fue posible sincronizar la organización.",
           );
         }
+
+        window.sessionStorage.setItem(
+          synchronizationKey,
+          String(Date.now()),
+        );
       } catch (error) {
         syncedOrganizationId.current =
           null;
+
+        window.sessionStorage.removeItem(
+          synchronizationKey,
+        );
 
         console.error(
           "Error al sincronizar Datara:",

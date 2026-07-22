@@ -652,7 +652,7 @@ function FormSection({
     group.section.columns ?? 2;
 
   return (
-    <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
       <header className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
         <h3 className="text-base font-bold text-slate-950">
           {group.section.title}
@@ -916,7 +916,7 @@ export default function DynamicForm({
       ))}
 
       {unsectionedFields.length > 0 && (
-        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
           <header className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
             <h3 className="text-base font-bold text-slate-950">
               Información adicional
