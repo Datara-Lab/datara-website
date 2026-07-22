@@ -63,10 +63,25 @@ function shouldShowDetailField(
     return true;
   }
 
-  return (
+  const relatedValue =
     record[
       field.visibleWhen.fieldKey
-    ] === field.visibleWhen.equals
+    ];
+
+  if (
+    "hasValue" in
+    field.visibleWhen
+  ) {
+    return (
+      relatedValue !== null &&
+      relatedValue !== undefined &&
+      relatedValue !== ""
+    );
+  }
+
+  return (
+    relatedValue ===
+    field.visibleWhen.equals
   );
 }
 
@@ -294,9 +309,23 @@ function formatFieldValue(
         return String(item);
       }
 
+      const sortedValues =
+        field.key ===
+        "availableMonths"
+          ? [...values].sort(
+              (a, b) =>
+                Number(
+                  getItemLabel(a),
+                ) -
+                Number(
+                  getItemLabel(b),
+                ),
+            )
+          : values;
+
       return (
         <div className="flex flex-wrap gap-2">
-          {values.map((item, index) => {
+          {sortedValues.map((item, index) => {
             const label =
               getItemLabel(item);
 
@@ -385,6 +414,265 @@ function getRecordTitle(
   }
 
   return module.singularLabel;
+}
+
+function DealSummaryDetail({
+  record,
+}: {
+  record: CRMRecord;
+}) {
+  const items = Array.isArray(
+    record.items,
+  )
+    ? (record.items as Array<
+        Record<string, unknown>
+      >)
+    : [];
+
+  const promotions = Array.isArray(
+    record.promotions,
+  )
+    ? (record.promotions as Array<
+        Record<string, unknown>
+      >)
+    : [];
+
+  function getNumber(
+    value: unknown,
+  ): number {
+    const numericValue =
+      typeof value === "number"
+        ? value
+        : Number(value);
+
+    return Number.isFinite(
+      numericValue,
+    )
+      ? numericValue
+      : 0;
+  }
+
+  return (
+    <div className="rounded-[28px] bg-slate-950 p-6 text-white shadow-sm">
+      <h3 className="text-lg font-bold">
+        Resumen de la oportunidad
+      </h3>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div>
+          <p className="text-sm text-slate-400">
+            Subtotal
+          </p>
+
+          <p className="mt-1 text-xl font-black">
+            {formatCurrency(
+              record.baseAmount,
+            )}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-400">
+            Descuentos
+          </p>
+
+          <p className="mt-1 text-xl font-black text-emerald-400">
+            -
+            {formatCurrency(
+              record.discountAmount,
+            )}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-400">
+            Total
+          </p>
+
+          <p className="mt-1 text-2xl font-black">
+            {formatCurrency(
+              record.totalAmount,
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-slate-700 pt-5">
+        <p className="text-sm font-semibold text-slate-300">
+          Condiciones de pago
+        </p>
+
+        <div className="mt-3 space-y-4">
+          {items.map(
+            (item, index) => {
+              const itemId =
+                typeof item.id ===
+                "string"
+                  ? item.id
+                  : String(index);
+
+              const itemName =
+                typeof item.name ===
+                "string"
+                  ? item.name
+                  : "Partida";
+
+              const financingMonths =
+                getNumber(
+                  item.financingMonths,
+                );
+
+              const itemPromotions =
+                promotions.filter(
+                  (promotion) =>
+                    promotion.dealItemId ===
+                    item.id,
+                );
+
+              return (
+                <div
+                  key={itemId}
+                  className="rounded-2xl bg-slate-900 p-4"
+                >
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="font-semibold">
+                      {itemName}
+                    </p>
+
+                    <span className="text-sm font-semibold text-emerald-400">
+                      {typeof item.paymentMethod ===
+                      "string"
+                        ? item.paymentMethod
+                        : "Por definir"}
+                    </span>
+                  </div>
+
+                  {financingMonths >
+                  0 ? (
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Plazo
+                        </p>
+
+                        <p className="mt-1 font-bold">
+                          {financingMonths}{" "}
+                          meses
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Enganche mínimo
+                        </p>
+
+                        <p className="mt-1 font-bold">
+                          {formatCurrency(
+                            item.minimumDownPayment,
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Enganche del cliente
+                        </p>
+
+                        <p className="mt-1 font-bold">
+                          {formatCurrency(
+                            item.customerDownPayment,
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Saldo a financiar
+                        </p>
+
+                        <p className="mt-1 font-bold">
+                          {formatCurrency(
+                            item.financedAmount,
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Mensualidad estimada
+                        </p>
+
+                        <p className="mt-1 text-lg font-black text-emerald-400">
+                          {formatCurrency(
+                            item.estimatedPayment,
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <p className="text-xs text-slate-400">
+                        Importe de la partida
+                      </p>
+
+                      <p className="mt-1 font-bold">
+                        {formatCurrency(
+                          item.totalAmount,
+                        )}
+                      </p>
+                    </div>
+                  )}
+
+                  {itemPromotions.length >
+                    0 && (
+                    <div className="mt-4 border-t border-slate-700 pt-3">
+                      <p className="text-xs font-semibold text-slate-400">
+                        Promociones aplicadas
+                      </p>
+
+                      <div className="mt-2 space-y-1">
+                        {itemPromotions.map(
+                          (
+                            promotion,
+                            promotionIndex,
+                          ) => (
+                            <div
+                              key={`${itemId}-${promotionIndex}`}
+                              className="flex justify-between gap-3 text-sm"
+                            >
+                              <span>
+                                {typeof promotion.name ===
+                                "string"
+                                  ? promotion.name
+                                  : "Promoción"}
+                              </span>
+
+                              <span className="font-semibold text-emerald-400">
+                                {getNumber(
+                                  promotion.calculatedBenefit,
+                                ) > 0
+                                  ? `-${formatCurrency(
+                                      promotion.calculatedBenefit,
+                                    )}`
+                                  : typeof promotion.benefitType ===
+                                      "string"
+                                    ? promotion.benefitType
+                                    : "Beneficio"}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            },
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function CRMRecordDrawer({
@@ -569,7 +857,14 @@ export default function CRMRecordDrawer({
         onClick={onClose}
       />
 
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-2xl flex-col border-l border-slate-200 bg-white shadow-2xl">
+      <aside
+        className={[
+          "absolute right-0 top-0 flex h-full w-full flex-col border-l border-slate-200 bg-white shadow-2xl",
+          module.id === "deals"
+            ? "max-w-5xl"
+            : "max-w-2xl",
+        ].join(" ")}
+      >
         <header className="border-b border-slate-200 px-6 py-5 sm:px-8">
           <div className="flex items-start justify-between gap-5">
             <div className="min-w-0">
@@ -608,9 +903,22 @@ export default function CRMRecordDrawer({
                 }) => (
                   <section
                     key={section.id}
-                    className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm"
+                    className={
+                      module.id === "deals" &&
+                      section.id === "deal-summary"
+                        ? "overflow-visible"
+                        : "overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm"
+                    }
                   >
-                    <header className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+                    <header
+                      className={[
+                        "border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6",
+                        module.id === "deals" &&
+                        section.id === "deal-summary"
+                          ? "hidden"
+                          : "",
+                      ].join(" ")}
+                    >
                       <h3 className="text-base font-bold text-slate-950">
                         {section.title}
                       </h3>
@@ -624,61 +932,72 @@ export default function CRMRecordDrawer({
                       )}
                     </header>
 
-                    <div
-                      className={[
-                        "grid gap-x-6 gap-y-5 p-5 sm:p-6",
-                        section.columns ===
-                        1
-                          ? "grid-cols-1"
-                          : "sm:grid-cols-2",
-                      ].join(" ")}
-                    >
-                      {fields.map(
-                        (field) => (
-                          <article
-                            key={
-                              field.key
-                            }
-                            className={[
-                              "rounded-2xl border border-slate-200 bg-slate-50 p-5",
-                              getDetailFieldClassName(
-                                field,
-                              ),
-                            ].join(
-                              " ",
-                            )}
-                            style={{
-                              gridRow:
-                                field.formRow ??
-                                undefined,
-
-                              gridColumn:
-                                field.formSpan ===
-                                2
-                                  ? "1 / -1"
-                                  : field.formColumn ??
-                                    undefined,
-                            }}
-                          >
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                              {
-                                field.label
+                    {module.id ===
+                      "deals" &&
+                    section.id ===
+                      "deal-summary" ? (
+                      <div>
+                        <DealSummaryDetail
+                          record={record}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={[
+                          "grid gap-x-6 gap-y-5 p-5 sm:p-6",
+                          section.columns ===
+                          1
+                            ? "grid-cols-1"
+                            : "sm:grid-cols-2",
+                        ].join(" ")}
+                      >
+                        {fields.map(
+                          (field) => (
+                            <article
+                              key={
+                                field.key
                               }
-                            </p>
-
-                            <div className="mt-3 text-sm font-medium text-slate-900">
-                              {formatFieldValue(
-                                field,
-                                record[
-                                  field
-                                    .key
-                                ],
+                              className={[
+                                "rounded-2xl border border-slate-200 bg-slate-50 p-5",
+                                getDetailFieldClassName(
+                                  field,
+                                ),
+                              ].join(
+                                " ",
                               )}
-                            </div>
-                          </article>
-                        ),
-                      )}
-                    </div>
+                              style={{
+                                gridRow:
+                                  field.formRow ??
+                                  undefined,
+
+                                gridColumn:
+                                  field.formSpan ===
+                                  2
+                                    ? "1 / -1"
+                                    : field.formColumn ??
+                                      undefined,
+                              }}
+                            >
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                {
+                                  field.label
+                                }
+                              </p>
+
+                              <div className="mt-3 text-sm font-medium text-slate-900">
+                                {formatFieldValue(
+                                  field,
+                                  record[
+                                    field
+                                      .key
+                                  ],
+                                )}
+                              </div>
+                            </article>
+                          ),
+                        )}
+                      </div>
+                    )}
                   </section>
                 ),
               )}

@@ -472,6 +472,23 @@ function shouldShowField(
       ];
 
     if (
+      "hasValue" in
+      field.visibleWhen
+    ) {
+      const hasValue =
+        Array.isArray(
+          dependentValue,
+        )
+          ? dependentValue.length > 0
+          : dependentValue !== null &&
+            dependentValue !==
+              undefined &&
+            dependentValue !== "";
+
+      if (!hasValue) {
+        return false;
+      }
+    } else if (
       dependentValue !==
       field.visibleWhen.equals
     ) {
@@ -480,6 +497,12 @@ function shouldShowField(
   }
 
   switch (field.key) {
+    case "value":
+      return (
+        values.benefitType !==
+        "Meses sin intereses"
+      );
+
     case "availableMonths":
       return (
         values.benefitType ===
@@ -512,7 +535,6 @@ function getDynamicField(
     const benefitsThatRequireValue = [
       "Descuento (%)",
       "Descuento ($)",
-      "Meses sin intereses",
       "Bono",
     ];
 
@@ -632,15 +654,10 @@ function renderField(
         dynamicField,
       )}
       style={{
-        gridRow:
-          dynamicField.formRow ??
-          undefined,
-
         gridColumn:
           dynamicField.formSpan === 2
             ? "1 / -1"
-            : dynamicField.formColumn ??
-              undefined,
+            : undefined,
       }}
     >
       <DynamicField

@@ -531,6 +531,418 @@ export const crmCustomers = pgTable(
   ],
 );
 
+export const crmDeals = pgTable(
+  "crm_deals",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    customerId: uuid(
+      "customer_id",
+    ).references(
+      () => crmCustomers.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    sourceLeadId: uuid(
+      "source_lead_id",
+    ).references(
+      () => crmLeads.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    ownerClerkUserId: text(
+      "owner_clerk_user_id",
+    ),
+
+    ownerName: text("owner_name"),
+
+    ownerEmail: text("owner_email"),
+
+    stage: text("stage")
+      .notNull()
+      .default("Nueva"),
+
+    status: text("status")
+      .notNull()
+      .default("Abierta"),
+
+    acquisitionChannel: text(
+      "acquisition_channel",
+    ),
+
+    currency: text("currency")
+      .notNull()
+      .default("mxn"),
+
+    baseAmount: numeric(
+      "base_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    discountAmount: numeric(
+      "discount_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    totalAmount: numeric(
+      "total_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    paymentMethod: text(
+      "payment_method",
+    ),
+
+    minimumDownPayment: numeric(
+      "minimum_down_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    customerDownPayment: numeric(
+      "customer_down_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    financedAmount: numeric(
+      "financed_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    financingMonths: integer(
+      "financing_months",
+    ),
+
+    estimatedPayment: numeric(
+      "estimated_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    probability: integer(
+      "probability",
+    ),
+
+    expectedCloseAt: timestamp(
+      "expected_close_at",
+      {
+        withTimezone: true,
+      },
+    ),
+
+    closedAt: timestamp(
+      "closed_at",
+      {
+        withTimezone: true,
+      },
+    ),
+
+    nextStep: text("next_step"),
+
+    notes: text("notes"),
+
+    calculationSnapshot: jsonb(
+      "calculation_snapshot",
+    )
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    metadata: jsonb("metadata")
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index(
+      "crm_deals_tenant_stage_idx",
+    ).on(
+      table.tenantId,
+      table.stage,
+    ),
+
+    index(
+      "crm_deals_tenant_status_idx",
+    ).on(
+      table.tenantId,
+      table.status,
+    ),
+
+    index(
+      "crm_deals_tenant_customer_idx",
+    ).on(
+      table.tenantId,
+      table.customerId,
+    ),
+
+    index(
+      "crm_deals_tenant_lead_idx",
+    ).on(
+      table.tenantId,
+      table.sourceLeadId,
+    ),
+
+    index(
+      "crm_deals_tenant_owner_idx",
+    ).on(
+      table.tenantId,
+      table.ownerClerkUserId,
+    ),
+
+    index(
+      "crm_deals_tenant_close_idx",
+    ).on(
+      table.tenantId,
+      table.expectedCloseAt,
+    ),
+
+    index(
+      "crm_deals_tenant_created_idx",
+    ).on(
+      table.tenantId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const crmDealItems = pgTable(
+  "crm_deal_items",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => crmDeals.id, {
+        onDelete: "cascade",
+      }),
+
+    productId: uuid(
+      "product_id",
+    ).references(
+      () => crmProducts.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    name: text("name").notNull(),
+
+    description: text("description"),
+
+    quantity: numeric(
+      "quantity",
+      {
+        precision: 14,
+        scale: 3,
+      },
+    )
+      .notNull()
+      .default("1"),
+
+    unitPrice: numeric(
+      "unit_price",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    discountAmount: numeric(
+      "discount_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    totalAmount: numeric(
+      "total_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+        paymentMethod: text(
+      "payment_method",
+    ),
+
+    minimumDownPayment: numeric(
+      "minimum_down_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    customerDownPayment: numeric(
+      "customer_down_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    )
+      .notNull()
+      .default("0"),
+
+    financedAmount: numeric(
+      "financed_amount",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    financingMonths: integer(
+      "financing_months",
+    ),
+
+    estimatedPayment: numeric(
+      "estimated_payment",
+      {
+        precision: 14,
+        scale: 2,
+      },
+    ),
+
+    calculationSnapshot: jsonb(
+      "calculation_snapshot",
+    )
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    position: integer("position")
+      .notNull()
+      .default(0),
+
+    metadata: jsonb("metadata")
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index(
+      "crm_deal_items_tenant_deal_idx",
+    ).on(
+      table.tenantId,
+      table.dealId,
+    ),
+
+    index(
+      "crm_deal_items_tenant_product_idx",
+    ).on(
+      table.tenantId,
+      table.productId,
+    ),
+
+    index(
+      "crm_deal_items_deal_position_idx",
+    ).on(
+      table.dealId,
+      table.position,
+    ),
+  ],
+);
+
+
 export const crmPromotions = pgTable(
   "crm_promotions",
   {
@@ -752,6 +1164,127 @@ export const crmPromotionProducts =
       ).on(table.productId),
     ],
   );
+
+export const crmDealPromotions =
+  pgTable(
+    "crm_deal_promotions",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      dealId: uuid("deal_id")
+        .notNull()
+        .references(() => crmDeals.id, {
+          onDelete: "cascade",
+        }),
+
+      dealItemId: uuid(
+        "deal_item_id",
+      ).references(
+        () => crmDealItems.id,
+        {
+          onDelete: "cascade",
+        },
+      ),
+
+      promotionId: uuid(
+        "promotion_id",
+      ).references(
+        () => crmPromotions.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      scope: text("scope")
+        .notNull()
+        .default("item"),
+
+      promotionName: text(
+        "promotion_name",
+      ).notNull(),
+
+      promotionGroup: text(
+        "promotion_group",
+      ),
+
+      benefitType: text(
+        "benefit_type",
+      ),
+
+      paymentMethod: text(
+        "payment_method",
+      ),
+
+      requiresSelection: boolean(
+        "requires_selection",
+      )
+        .notNull()
+        .default(false),
+
+      promotionValue: numeric(
+        "promotion_value",
+        {
+          precision: 14,
+          scale: 2,
+        },
+      ),
+
+      calculatedBenefit: numeric(
+        "calculated_benefit",
+        {
+          precision: 14,
+          scale: 2,
+        },
+      )
+        .notNull()
+        .default("0"),
+
+      snapshot: jsonb("snapshot")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      appliedAt: timestamp(
+        "applied_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      index(
+        "crm_deal_promotions_tenant_deal_idx",
+      ).on(
+        table.tenantId,
+        table.dealId,
+      ),
+
+      index(
+        "crm_deal_promotions_item_idx",
+      ).on(
+        table.dealItemId,
+      ),
+
+      index(
+        "crm_deal_promotions_promotion_idx",
+      ).on(
+        table.promotionId,
+      ),
+    ],
+  );
+
 
 export const tenantProducts =
   pgTable(

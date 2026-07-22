@@ -300,7 +300,6 @@ function validatePayload(
       "descuento (%)",
       "descuento($)",
       "descuento ($)",
-      "meses sin intereses",
       "bono",
     ]);
 

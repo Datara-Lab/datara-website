@@ -57,15 +57,20 @@ export type CRMFieldConfig = {
    * Permite mostrar u ocultar un campo
    * según el valor de otro campo.
    */
-  visibleWhen?: {
-    fieldKey: string;
+  visibleWhen?:
+  | {
+      fieldKey: string;
 
-    equals:
-      | string
-      | number
-      | boolean
-      | null;
-  };
+      equals:
+        | string
+        | number
+        | boolean
+        | null;
+    }
+  | {
+      fieldKey: string;
+      hasValue: true;
+    };
 
   defaultValue?:
     | string

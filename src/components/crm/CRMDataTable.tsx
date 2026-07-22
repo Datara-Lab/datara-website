@@ -528,6 +528,14 @@ export default function CRMDataTable({
     setIsColumnMenuOpen,
   ] = useState(false);
 
+  const exportMenuRef =
+    useRef<HTMLDivElement>(null);
+
+  const [
+    isExportMenuOpen,
+    setIsExportMenuOpen,
+  ] = useState(false);
+
   const [
     visibleColumnKeys,
     setVisibleColumnKeys,
@@ -697,6 +705,15 @@ export default function CRMDataTable({
       ) {
         setIsColumnMenuOpen(false);
       }
+
+            if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setIsExportMenuOpen(false);
+      }
     }
 
     function handleKeyDown(
@@ -704,6 +721,7 @@ export default function CRMDataTable({
     ) {
       if (event.key === "Escape") {
         setIsColumnMenuOpen(false);
+        setIsExportMenuOpen(false);
       }
     }
 
@@ -1584,53 +1602,81 @@ export default function CRMDataTable({
 
             {module.allowExport !==
               false && (
-              <details className="group relative">
-                <summary
-                  className={[
-                    "flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition",
-                    visibleRecords.length >
+              <div
+                ref={exportMenuRef}
+                className="relative"
+              >
+                <Button
+                  variant="secondary"
+                  disabled={
+                    visibleRecords.length ===
                     0
-                      ? "hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
-                      : "pointer-events-none cursor-not-allowed opacity-50",
-                  ].join(" ")}
+                  }
+                  onClick={() => {
+                    setIsColumnMenuOpen(
+                      false,
+                    );
+
+                    setIsExportMenuOpen(
+                      (current) =>
+                        !current,
+                    );
+                  }}
                 >
                   Exportar
 
-                  <span className="text-xs transition group-open:rotate-180">
+                  <span
+                    className={[
+                      "ml-2 text-xs transition",
+                      isExportMenuOpen
+                        ? "rotate-180"
+                        : "",
+                    ].join(" ")}
+                  >
                     ▼
                   </span>
-                </summary>
+                </Button>
 
-                <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
-                    onClick={
-                      handleExportCsv
-                    }
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-xs font-black text-emerald-700">
-                      CSV
-                    </span>
+                {isExportMenuOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                      onClick={() => {
+                        setIsExportMenuOpen(
+                          false,
+                        );
 
-                    Exportar para Excel
-                  </button>
+                        handleExportCsv();
+                      }}
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-xs font-black text-emerald-700">
+                        CSV
+                      </span>
 
-                  <button
-                    type="button"
-                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-red-50 hover:text-red-700"
-                    onClick={
-                      handleExportPdf
-                    }
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-xs font-black text-red-700">
-                      PDF
-                    </span>
+                      Exportar para Excel
+                    </button>
 
-                    Exportar PDF
-                  </button>
-                </div>
-              </details>
+                    <button
+                      type="button"
+                      className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-red-50 hover:text-red-700"
+                      onClick={() => {
+                        setIsExportMenuOpen(
+                          false,
+                        );
+
+                        handleExportPdf();
+                      }}
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-xs font-black text-red-700">
+                        PDF
+                      </span>
+
+                      Exportar PDF
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             <Button

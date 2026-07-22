@@ -124,6 +124,98 @@ export const motorcycleDealershipTemplate:
       value: "Otro",
     },
   ],
+  "deals.stage": [
+    {
+      label: "Prospecto",
+      value: "Prospecto",
+    },
+    {
+      label: "Contactado",
+      value: "Contactado",
+    },
+    {
+      label: "Prueba de manejo agendada",
+      value: "Prueba de manejo agendada",
+    },
+    {
+      label: "Prueba de manejo realizada",
+      value: "Prueba de manejo realizada",
+    },
+    {
+      label: "Cotización",
+      value: "Cotización",
+    },
+    {
+      label: "Negociación",
+      value: "Negociación",
+    },
+    {
+      label: "Venta ganada",
+      value: "Venta ganada",
+    },
+    {
+      label: "Venta perdida",
+      value: "Venta perdida",
+    },
+  ],
+
+  "deals.acquisitionChannel": [
+    {
+      label: "Tienda física",
+      value: "Tienda física",
+    },
+    {
+      label: "Sitio web",
+      value: "Sitio web",
+    },
+    {
+      label: "Facebook",
+      value: "Facebook",
+    },
+    {
+      label: "Instagram",
+      value: "Instagram",
+    },
+    {
+      label: "WhatsApp",
+      value: "WhatsApp",
+    },
+    {
+      label: "Llamada",
+      value: "Llamada",
+    },
+    {
+      label: "Referido",
+      value: "Referido",
+    },
+    {
+      label: "Evento",
+      value: "Evento",
+    },
+    {
+      label: "Otro",
+      value: "Otro",
+    },
+  ],
+
+  "deals.paymentMethod": [
+    {
+      label: "Contado",
+      value: "Contado",
+    },
+    {
+      label: "Financiamiento",
+      value: "Financiamiento",
+    },
+    {
+      label: "Mixto",
+      value: "Mixto",
+    },
+    {
+      label: "Por definir",
+      value: "Por definir",
+    },
+  ],
 },
 
   terminology: {

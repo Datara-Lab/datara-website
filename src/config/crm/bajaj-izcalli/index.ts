@@ -7,6 +7,11 @@ import {
 } from "@/config/crm/modules/customers";
 
 import {
+  createDealsModule,
+} from "@/config/crm/modules/deals";
+
+
+import {
   createLeadsModule,
 } from "@/config/crm/modules/leads";
 
@@ -19,9 +24,8 @@ import type {
 } from "@/types/crm-config";
 
 import {
-  bajajIzcalliNavigation,
-  bajajIzcalliNavigationSections,
-} from "./navigation";
+  createCRMNavigation,
+} from "@/config/crm/navigation";
 
 import {
   bajajIzcalliModules,
@@ -32,9 +36,18 @@ const industryTemplate =
     "motorcycle_dealership",
   );
 
+const navigation =
+  createCRMNavigation(
+    industryTemplate.terminology,
+  );
+
 const leadsTerminology =
   industryTemplate.terminology
     .modules.leads;
+
+const dealsTerminology =
+  industryTemplate.terminology
+    .modules.deals;
 
 export const bajajIzcalliCRMConfig:
   CRMTenantConfig = {
@@ -51,10 +64,10 @@ export const bajajIzcalliCRMConfig:
     industryTemplate.defaultCatalogs,
 
   navigationSections:
-    bajajIzcalliNavigationSections,
+    navigation.sections,
 
   navigation:
-    bajajIzcalliNavigation,
+    navigation.items,
 
   modules: [
     createProductsModule(
@@ -102,6 +115,46 @@ export const bajajIzcalliCRMConfig:
     ),
 
     ...bajajIzcalliModules,
+
+        createDealsModule({
+      singularLabel:
+        dealsTerminology?.singular,
+
+      pluralLabel:
+        dealsTerminology?.plural,
+
+      description:
+        dealsTerminology?.description,
+
+      itemSingularLabel:
+        industryTemplate.terminology
+          .modules.products
+          ?.singular,
+
+      itemPluralLabel:
+        industryTemplate.terminology
+          .modules.products
+          ?.plural,
+
+      stageOptions:
+        industryTemplate
+          .defaultCatalogs[
+            "deals.stage"
+          ],
+
+      acquisitionChannelOptions:
+        industryTemplate
+          .defaultCatalogs[
+            "deals.acquisitionChannel"
+          ],
+
+      paymentMethodOptions:
+        industryTemplate
+          .defaultCatalogs[
+            "deals.paymentMethod"
+          ],
+    }),
+
   ],
 
   pipelines: [],
