@@ -362,6 +362,175 @@ export const crmLeads = pgTable(
   ],
 );
 
+export const crmCustomers = pgTable(
+  "crm_customers",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    customerType: text(
+      "customer_type",
+    )
+      .notNull()
+      .default("Persona"),
+
+    name: text("name").notNull(),
+
+    lastName: text("last_name"),
+
+    companyName: text(
+      "company_name",
+    ),
+
+    legalName: text("legal_name"),
+
+    taxId: text("tax_id"),
+
+    email: text("email"),
+
+    phone: text("phone"),
+
+    mobile: text("mobile"),
+
+    status: text("status")
+      .notNull()
+      .default("Activo"),
+
+    sourceLeadId: uuid(
+      "source_lead_id",
+    ).references(() => crmLeads.id, {
+      onDelete: "set null",
+    }),
+
+    productId: uuid(
+      "product_id",
+    ).references(() => crmProducts.id, {
+      onDelete: "set null",
+    }),
+
+    ownerClerkUserId: text(
+      "owner_clerk_user_id",
+    ),
+
+    ownerName: text("owner_name"),
+
+    ownerEmail: text("owner_email"),
+
+    addressLine: text(
+      "address_line",
+    ),
+
+    city: text("city"),
+
+    state: text("state"),
+
+    postalCode: text(
+      "postal_code",
+    ),
+
+    country: text("country")
+      .notNull()
+      .default("MX"),
+
+    commercialConsent: boolean(
+      "commercial_consent",
+    )
+      .notNull()
+      .default(false),
+
+    notes: text("notes"),
+
+    metadata: jsonb("metadata")
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex(
+      "crm_customers_tenant_tax_id_unique",
+    ).on(
+      table.tenantId,
+      table.taxId,
+    ),
+
+    index(
+      "crm_customers_tenant_status_idx",
+    ).on(
+      table.tenantId,
+      table.status,
+    ),
+
+    index(
+      "crm_customers_tenant_type_idx",
+    ).on(
+      table.tenantId,
+      table.customerType,
+    ),
+
+    index(
+      "crm_customers_tenant_name_idx",
+    ).on(
+      table.tenantId,
+      table.name,
+    ),
+
+    index(
+      "crm_customers_tenant_email_idx",
+    ).on(
+      table.tenantId,
+      table.email,
+    ),
+
+    index(
+      "crm_customers_tenant_phone_idx",
+    ).on(
+      table.tenantId,
+      table.phone,
+    ),
+
+    index(
+      "crm_customers_tenant_owner_idx",
+    ).on(
+      table.tenantId,
+      table.ownerClerkUserId,
+    ),
+
+    index(
+      "crm_customers_tenant_created_idx",
+    ).on(
+      table.tenantId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const crmPromotions = pgTable(
   "crm_promotions",
   {

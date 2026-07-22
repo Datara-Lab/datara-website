@@ -3,6 +3,10 @@ import {
 } from "@/config/crm/industries";
 
 import {
+  createCustomersModule,
+} from "@/config/crm/modules/customers";
+
+import {
   createLeadsModule,
 } from "@/config/crm/modules/leads";
 
@@ -92,6 +96,10 @@ export const bajajIzcalliCRMConfig:
             "leads.status"
           ],
     }),
+
+    createCustomersModule(
+      industryTemplate.terminology,
+    ),
 
     ...bajajIzcalliModules,
   ],

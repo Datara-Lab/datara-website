@@ -55,6 +55,37 @@ function getDetailFields(
     );
 }
 
+function shouldShowDetailField(
+  field: CRMFieldConfig,
+  record: CRMRecord,
+): boolean {
+  if (!field.visibleWhen) {
+    return true;
+  }
+
+  return (
+    record[
+      field.visibleWhen.fieldKey
+    ] === field.visibleWhen.equals
+  );
+}
+
+function getDetailFieldClassName(
+  field: CRMFieldConfig,
+): string {
+  if (
+    field.formSpan === 2 ||
+    field.type === "textarea" ||
+    field.type === "multiselect" ||
+    field.key ===
+      "applicableProducts"
+  ) {
+    return "sm:col-span-2";
+  }
+
+  return "";
+}
+
 function formatDate(
   value: unknown,
   includeTime: boolean,
@@ -369,6 +400,68 @@ export default function CRMRecordDrawer({
   const detailFields =
     getDetailFields(module);
 
+  const visibleDetailFields =
+    record
+      ? detailFields.filter(
+          (field) =>
+            shouldShowDetailField(
+              field,
+              record,
+            ),
+        )
+      : detailFields;
+
+  const detailSections = [
+    ...(module.formSections ?? []),
+  ]
+    .filter(
+      (section) =>
+        section.visible !== false,
+    )
+    .sort(
+      (a, b) =>
+        a.order - b.order,
+    )
+    .map((section) => ({
+      section,
+
+      fields:
+        visibleDetailFields
+          .filter(
+            (field) =>
+              field.formSectionId ===
+              section.id,
+          )
+          .sort((a, b) => {
+            const rowDifference =
+              (a.formRow ??
+                Number.MAX_SAFE_INTEGER) -
+              (b.formRow ??
+                Number.MAX_SAFE_INTEGER);
+
+            if (rowDifference !== 0) {
+              return rowDifference;
+            }
+
+            return (
+              (a.formColumn ??
+                Number.MAX_SAFE_INTEGER) -
+              (b.formColumn ??
+                Number.MAX_SAFE_INTEGER)
+            );
+          }),
+    }))
+    .filter(
+      (group) =>
+        group.fields.length > 0,
+    );
+
+  const unsectionedDetailFields =
+    visibleDetailFields.filter(
+      (field) =>
+        !field.formSectionId,
+    );
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -507,32 +600,134 @@ export default function CRMRecordDrawer({
 
         <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
           {mode === "view" && record ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {detailFields.map((field) => (
-                <article
-                  key={field.key}
-                  className={[
-                    "rounded-2xl border border-slate-200 bg-slate-50 p-5",
-                    field.type === "textarea" ||
-                    field.type === "multiselect" ||
-                    field.key ===
-                      "applicableProducts"
-                      ? "sm:col-span-2"
-                      : "",
-                  ].join(" ")}
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                    {field.label}
-                  </p>
+            <div className="space-y-6">
+              {detailSections.map(
+                ({
+                  section,
+                  fields,
+                }) => (
+                  <section
+                    key={section.id}
+                    className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm"
+                  >
+                    <header className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+                      <h3 className="text-base font-bold text-slate-950">
+                        {section.title}
+                      </h3>
 
-                  <div className="mt-3 text-sm font-medium text-slate-900">
-                    {formatFieldValue(
-                      field,
-                      record[field.key],
+                      {section.description && (
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {
+                            section.description
+                          }
+                        </p>
+                      )}
+                    </header>
+
+                    <div
+                      className={[
+                        "grid gap-x-6 gap-y-5 p-5 sm:p-6",
+                        section.columns ===
+                        1
+                          ? "grid-cols-1"
+                          : "sm:grid-cols-2",
+                      ].join(" ")}
+                    >
+                      {fields.map(
+                        (field) => (
+                          <article
+                            key={
+                              field.key
+                            }
+                            className={[
+                              "rounded-2xl border border-slate-200 bg-slate-50 p-5",
+                              getDetailFieldClassName(
+                                field,
+                              ),
+                            ].join(
+                              " ",
+                            )}
+                            style={{
+                              gridRow:
+                                field.formRow ??
+                                undefined,
+
+                              gridColumn:
+                                field.formSpan ===
+                                2
+                                  ? "1 / -1"
+                                  : field.formColumn ??
+                                    undefined,
+                            }}
+                          >
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              {
+                                field.label
+                              }
+                            </p>
+
+                            <div className="mt-3 text-sm font-medium text-slate-900">
+                              {formatFieldValue(
+                                field,
+                                record[
+                                  field
+                                    .key
+                                ],
+                              )}
+                            </div>
+                          </article>
+                        ),
+                      )}
+                    </div>
+                  </section>
+                ),
+              )}
+
+              {unsectionedDetailFields.length >
+                0 && (
+                <section className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                  <header className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+                    <h3 className="text-base font-bold text-slate-950">
+                      Información adicional
+                    </h3>
+                  </header>
+
+                  <div className="grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
+                    {unsectionedDetailFields.map(
+                      (field) => (
+                        <article
+                          key={
+                            field.key
+                          }
+                          className={[
+                            "rounded-2xl border border-slate-200 bg-slate-50 p-5",
+                            getDetailFieldClassName(
+                              field,
+                            ),
+                          ].join(
+                            " ",
+                          )}
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            {
+                              field.label
+                            }
+                          </p>
+
+                          <div className="mt-3 text-sm font-medium text-slate-900">
+                            {formatFieldValue(
+                              field,
+                              record[
+                                field.key
+                              ],
+                            )}
+                          </div>
+                        </article>
+                      ),
                     )}
                   </div>
-                </article>
-              ))}
+                </section>
+              )}
             </div>
           ) : (
             <DynamicForm

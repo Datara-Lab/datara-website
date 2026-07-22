@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  useOrganization,
+} from "@clerk/nextjs";
+
+import {
   useEffect,
   useMemo,
   useRef,
@@ -378,6 +382,122 @@ function LoadingRows({
   );
 }
 
+function getExportValue(
+  field: CRMFieldConfig,
+  value: unknown,
+): string {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        getExportValue(
+          field,
+          item,
+        ),
+      )
+      .filter(Boolean)
+      .join(" | ");
+  }
+
+  if (
+    typeof value === "object"
+  ) {
+    const relatedValue =
+      value as {
+        name?: string;
+        label?: string;
+        email?: string;
+        value?: string;
+        id?: string;
+      };
+
+    return (
+      relatedValue.name ??
+      relatedValue.label ??
+      relatedValue.email ??
+      relatedValue.value ??
+      relatedValue.id ??
+      ""
+    );
+  }
+
+  if (field.type === "checkbox") {
+    return Boolean(value)
+      ? "Sí"
+      : "No";
+  }
+
+  if (field.type === "date") {
+    return formatDateValue(
+      value,
+      false,
+    );
+  }
+
+  if (field.type === "datetime") {
+    return formatDateValue(
+      value,
+      true,
+    );
+  }
+
+  return String(value);
+}
+
+function escapeCsvValue(
+  value: string,
+): string {
+  return `"${value.replace(
+    /"/g,
+    "\"\"",
+  )}"`;
+}
+
+function escapeHtml(
+  value: string,
+): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getExportFileName(
+  label: string,
+  extension: "csv" | "pdf",
+): string {
+  const normalizedLabel = label
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      "",
+    )
+    .toLowerCase()
+    .replace(
+      /[^a-z0-9]+/g,
+      "-",
+    )
+    .replace(
+      /^-|-$/g,
+      "",
+    );
+
+  const date = new Date()
+    .toISOString()
+    .slice(0, 10);
+
+  return `${normalizedLabel || "registros"}-${date}.${extension}`;
+}
+
 export default function CRMDataTable({
   module,
   endpoint,
@@ -389,6 +509,9 @@ export default function CRMDataTable({
   onView,
   onEdit,
 }: CRMDataTableProps) {
+  const {
+    organization,
+  } = useOrganization();
   const [records, setRecords] = useState<
     CRMRecord[]
   >([]);
@@ -823,6 +946,405 @@ export default function CRMDataTable({
     setSortDirection("asc");
   }
 
+  function handleExportCsv() {
+    if (
+      visibleRecords.length === 0 ||
+      visibleTableFields.length === 0
+    ) {
+      return;
+    }
+
+    const header = visibleTableFields
+      .map((field) =>
+        escapeCsvValue(field.label),
+      )
+      .join(",");
+
+    const rows = visibleRecords.map(
+      (record) =>
+        visibleTableFields
+          .map((field) =>
+            escapeCsvValue(
+              getExportValue(
+                field,
+                record[field.key],
+              ),
+            ),
+          )
+          .join(","),
+    );
+
+    const csvContent = [
+      header,
+      ...rows,
+    ].join("\r\n");
+
+    const blob = new Blob(
+      [
+        "\uFEFF",
+        csvContent,
+      ],
+      {
+        type:
+          "text/csv;charset=utf-8",
+      },
+    );
+
+    const downloadUrl =
+      URL.createObjectURL(blob);
+
+    const downloadLink =
+      document.createElement("a");
+
+    downloadLink.href =
+      downloadUrl;
+
+    downloadLink.download =
+      getExportFileName(
+        module.pluralLabel,
+        "csv",
+      );
+
+    document.body.appendChild(
+      downloadLink,
+    );
+
+    downloadLink.click();
+    downloadLink.remove();
+
+    URL.revokeObjectURL(
+      downloadUrl,
+    );
+  }
+
+  function handleExportPdf() {
+    if (
+      visibleRecords.length === 0 ||
+      visibleTableFields.length === 0
+    ) {
+      return;
+    }
+
+    const printWindow =
+      window.open(
+        "",
+        "_blank",
+      );
+
+    if (!printWindow) {
+      window.alert(
+        "El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo nuevamente.",
+      );
+      return;
+    }
+
+    printWindow.opener = null;
+
+    const companyName =
+      organization?.name ??
+      "Datara CRM";
+
+    const companyLogo =
+      organization?.imageUrl ??
+      `${window.location.origin}/logos/lab.png`;
+
+    const generatedAt =
+      new Intl.DateTimeFormat(
+        "es-MX",
+        {
+          dateStyle: "long",
+          timeStyle: "short",
+        },
+      ).format(new Date());
+
+    const tableHeader =
+      visibleTableFields
+        .map(
+          (field) =>
+            `<th>${escapeHtml(field.label)}</th>`,
+        )
+        .join("");
+
+    const tableRows =
+      visibleRecords
+        .map((record) => {
+          const cells =
+            visibleTableFields
+              .map((field) => {
+                const value =
+                  getExportValue(
+                    field,
+                    record[field.key],
+                  );
+
+                return `<td>${escapeHtml(value || "—")}</td>`;
+              })
+              .join("");
+
+          return `<tr>${cells}</tr>`;
+        })
+        .join("");
+
+    const appliedFilter =
+      searchTerm.trim()
+        ? `
+          <p class="filter">
+            Filtro aplicado:
+            <strong>${escapeHtml(
+              searchTerm.trim(),
+            )}</strong>
+          </p>
+        `
+        : "";
+
+    const documentTitle =
+      getExportFileName(
+        module.pluralLabel,
+        "pdf",
+      ).replace(/\.pdf$/, "");
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html lang="es">
+        <head>
+          <meta charset="utf-8" />
+          <title>${escapeHtml(documentTitle)}</title>
+
+          <style>
+            @page {
+              size: landscape;
+              margin: 12mm;
+            }
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              color: #0f172a;
+              background: #ffffff;
+              font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+              font-size: 11px;
+            }
+
+            .report {
+              width: 100%;
+            }
+
+            .header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 24px;
+              margin-bottom: 20px;
+              padding-bottom: 16px;
+              border-bottom: 2px solid #10b981;
+            }
+
+            .brand {
+              display: flex;
+              align-items: center;
+              gap: 14px;
+              min-width: 0;
+            }
+
+            .logo {
+              width: 64px;
+              height: 64px;
+              object-fit: contain;
+              border-radius: 12px;
+            }
+
+            .company {
+              margin: 0;
+              color: #0f172a;
+              font-size: 18px;
+              font-weight: 700;
+            }
+
+            .module {
+              margin: 4px 0 0;
+              color: #059669;
+              font-size: 26px;
+              font-weight: 800;
+            }
+
+            .metadata {
+              color: #64748b;
+              text-align: right;
+              line-height: 1.6;
+            }
+
+            .summary {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 20px;
+              margin-bottom: 14px;
+            }
+
+            .count {
+              margin: 0;
+              color: #475569;
+              font-size: 12px;
+            }
+
+            .filter {
+              margin: 0;
+              color: #475569;
+              font-size: 12px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              table-layout: auto;
+            }
+
+            thead {
+              display: table-header-group;
+            }
+
+            tr {
+              page-break-inside: avoid;
+            }
+
+            th {
+              padding: 10px 9px;
+              border: 1px solid #cbd5e1;
+              color: #ffffff;
+              background: #0f766e;
+              font-size: 10px;
+              font-weight: 700;
+              text-align: left;
+              text-transform: uppercase;
+              letter-spacing: 0.04em;
+            }
+
+            td {
+              padding: 9px;
+              border: 1px solid #e2e8f0;
+              color: #1e293b;
+              vertical-align: top;
+              word-break: break-word;
+            }
+
+            tbody tr:nth-child(even) {
+              background: #f8fafc;
+            }
+
+            .footer {
+              display: flex;
+              justify-content: space-between;
+              gap: 20px;
+              margin-top: 18px;
+              padding-top: 12px;
+              border-top: 1px solid #cbd5e1;
+              color: #64748b;
+              font-size: 9px;
+            }
+
+            @media print {
+              body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <main class="report">
+            <header class="header">
+              <div class="brand">
+                <img
+                  class="logo"
+                  src="${escapeHtml(companyLogo)}"
+                  alt="${escapeHtml(companyName)}"
+                />
+
+                <div>
+                  <p class="company">
+                    ${escapeHtml(companyName)}
+                  </p>
+
+                  <h1 class="module">
+                    ${escapeHtml(module.pluralLabel)}
+                  </h1>
+                </div>
+              </div>
+
+              <div class="metadata">
+                <div>
+                  Generado el
+                  ${escapeHtml(generatedAt)}
+                </div>
+
+                <div>
+                  Datara CRM
+                </div>
+              </div>
+            </header>
+
+            <section class="summary">
+              <p class="count">
+                ${visibleRecords.length}
+                registro${
+                  visibleRecords.length === 1
+                    ? ""
+                    : "s"
+                }
+              </p>
+
+              ${appliedFilter}
+            </section>
+
+            <table>
+              <thead>
+                <tr>
+                  ${tableHeader}
+                </tr>
+              </thead>
+
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+
+            <footer class="footer">
+              <span>
+                ${escapeHtml(companyName)}
+              </span>
+
+              <span>
+                Generado por Datara CRM
+              </span>
+            </footer>
+          </main>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+
+    printWindow.addEventListener(
+      "load",
+      () => {
+        window.setTimeout(
+          () => {
+            printWindow.focus();
+            printWindow.print();
+          },
+          250,
+        );
+      },
+    );
+  }
+
   const hasActions = Boolean(
     onView || onEdit,
   );
@@ -1059,6 +1581,57 @@ export default function CRMDataTable({
                 </div>
               )}
             </div>
+
+            {module.allowExport !==
+              false && (
+              <details className="group relative">
+                <summary
+                  className={[
+                    "flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition",
+                    visibleRecords.length >
+                    0
+                      ? "hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                      : "pointer-events-none cursor-not-allowed opacity-50",
+                  ].join(" ")}
+                >
+                  Exportar
+
+                  <span className="text-xs transition group-open:rotate-180">
+                    ▼
+                  </span>
+                </summary>
+
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                    onClick={
+                      handleExportCsv
+                    }
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-xs font-black text-emerald-700">
+                      CSV
+                    </span>
+
+                    Exportar para Excel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-red-50 hover:text-red-700"
+                    onClick={
+                      handleExportPdf
+                    }
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-xs font-black text-red-700">
+                      PDF
+                    </span>
+
+                    Exportar PDF
+                  </button>
+                </div>
+              </details>
+            )}
 
             <Button
               variant="secondary"

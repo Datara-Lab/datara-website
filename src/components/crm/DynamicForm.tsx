@@ -17,6 +17,8 @@ import type {
 import DynamicField from "./DynamicField";
 import type { CRMRecord } from "./CRMDataTable";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export type CRMFormValue =
   | string
   | number
@@ -463,6 +465,20 @@ function shouldShowField(
   field: CRMFieldConfig,
   values: CRMFormValues,
 ): boolean {
+  if (field.visibleWhen) {
+    const dependentValue =
+      values[
+        field.visibleWhen.fieldKey
+      ];
+
+    if (
+      dependentValue !==
+      field.visibleWhen.equals
+    ) {
+      return false;
+    }
+  }
+
   switch (field.key) {
     case "availableMonths":
       return (
@@ -478,7 +494,10 @@ function shouldShowField(
 
     case "maximumBenefits":
     case "usedBenefits":
-      return values.limitPromotion === true;
+      return (
+        values.limitPromotion ===
+        true
+      );
 
     default:
       return true;
@@ -695,9 +714,28 @@ export default function DynamicForm({
   onSubmit,
   onCancel,
 }: DynamicFormProps) {
-  const formFields = useMemo(
-    () => getFormFields(module),
-    [module],
+    const {
+    user,
+  } = useAuth();
+
+    const formFields = useMemo(
+    () =>
+      getFormFields(module).map(
+        (field) =>
+          field.key ===
+            "ownerClerkUserId" &&
+          user?.id
+            ? {
+                ...field,
+                defaultValue:
+                  user.id,
+              }
+            : field,
+      ),
+    [
+      module,
+      user?.id,
+    ],
   );
 
   const sectionGroups = useMemo(
