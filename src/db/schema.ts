@@ -942,6 +942,303 @@ export const crmDealItems = pgTable(
   ],
 );
 
+export const crmActivities = pgTable(
+  "crm_activities",
+  {
+    id: uuid("id")
+      .defaultRandom()
+      .primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    type: text("type").notNull(),
+
+    subject: text("subject")
+      .notNull(),
+
+    description: text(
+      "description",
+    ),
+
+    status: text("status")
+      .notNull()
+      .default("No iniciada"),
+
+    priority: text("priority")
+      .notNull()
+      .default("Normal"),
+
+    ownerClerkUserId: text(
+      "owner_clerk_user_id",
+    ).notNull(),
+
+    ownerName: text("owner_name"),
+
+    ownerEmail: text("owner_email"),
+
+    leadId: uuid("lead_id")
+      .references(() => crmLeads.id, {
+        onDelete: "set null",
+      }),
+
+    customerId: uuid("customer_id")
+      .references(
+        () => crmCustomers.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+    dealId: uuid("deal_id")
+      .references(() => crmDeals.id, {
+        onDelete: "set null",
+      }),
+
+    startAt: timestamp("start_at", {
+      withTimezone: true,
+    }),
+
+    endAt: timestamp("end_at", {
+      withTimezone: true,
+    }),
+
+    dueAt: timestamp("due_at", {
+      withTimezone: true,
+    }),
+
+    completedAt: timestamp(
+      "completed_at",
+      {
+        withTimezone: true,
+      },
+    ),
+
+    allDay: boolean("all_day")
+      .notNull()
+      .default(false),
+
+    timezone: text("timezone")
+      .notNull()
+      .default(
+        "America/Mexico_City",
+      ),
+
+    reminderEnabled: boolean(
+      "reminder_enabled",
+    )
+      .notNull()
+      .default(false),
+
+    reminderMinutesBefore: integer(
+      "reminder_minutes_before",
+    ),
+
+    recurrence: jsonb("recurrence")
+      .$type<{
+        frequency?:
+          | "daily"
+          | "weekly"
+          | "monthly"
+          | "yearly";
+
+        interval?: number;
+
+        daysOfWeek?: number[];
+
+        endsAt?: string | null;
+
+        count?: number | null;
+      }>()
+      .notNull()
+      .default({}),
+
+    callMode: text("call_mode"),
+
+    callDirection: text(
+      "call_direction",
+    ),
+
+    callPurpose: text(
+      "call_purpose",
+    ),
+
+    callResult: text("call_result"),
+
+    callDurationSeconds: integer(
+      "call_duration_seconds",
+    ),
+
+    recordingUrl: text(
+      "recording_url",
+    ),
+
+    meetingLocationType: text(
+      "meeting_location_type",
+    ),
+
+    location: text("location"),
+
+    meetingUrl: text("meeting_url"),
+
+    metadata: jsonb("metadata")
+      .$type<
+        Record<string, unknown>
+      >()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp(
+      "created_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp(
+      "updated_at",
+      {
+        withTimezone: true,
+      },
+    )
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index(
+      "crm_activities_tenant_type_idx",
+    ).on(
+      table.tenantId,
+      table.type,
+    ),
+
+    index(
+      "crm_activities_tenant_status_idx",
+    ).on(
+      table.tenantId,
+      table.status,
+    ),
+
+    index(
+      "crm_activities_tenant_owner_idx",
+    ).on(
+      table.tenantId,
+      table.ownerClerkUserId,
+    ),
+
+    index(
+      "crm_activities_tenant_start_idx",
+    ).on(
+      table.tenantId,
+      table.startAt,
+    ),
+
+    index(
+      "crm_activities_tenant_due_idx",
+    ).on(
+      table.tenantId,
+      table.dueAt,
+    ),
+
+    index(
+      "crm_activities_tenant_lead_idx",
+    ).on(
+      table.tenantId,
+      table.leadId,
+    ),
+
+    index(
+      "crm_activities_tenant_customer_idx",
+    ).on(
+      table.tenantId,
+      table.customerId,
+    ),
+
+    index(
+      "crm_activities_tenant_deal_idx",
+    ).on(
+      table.tenantId,
+      table.dealId,
+    ),
+  ],
+);
+
+export const crmActivityParticipants =
+  pgTable(
+    "crm_activity_participants",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      activityId: uuid("activity_id")
+        .notNull()
+        .references(
+          () => crmActivities.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      participantType: text(
+        "participant_type",
+      )
+        .notNull()
+        .default("external"),
+
+      referenceId: text(
+        "reference_id",
+      ),
+
+      name: text("name").notNull(),
+
+      email: text("email"),
+
+      phone: text("phone"),
+
+      responseStatus: text(
+        "response_status",
+      )
+        .notNull()
+        .default("Pendiente"),
+
+      reminderMinutesBefore: integer(
+        "reminder_minutes_before",
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      index(
+        "crm_activity_participants_activity_idx",
+      ).on(table.activityId),
+
+      index(
+        "crm_activity_participants_tenant_email_idx",
+      ).on(
+        table.tenantId,
+        table.email,
+      ),
+    ],
+  );
 
 export const crmPromotions = pgTable(
   "crm_promotions",

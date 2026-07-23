@@ -3,6 +3,10 @@ import {
 } from "@/config/crm/industries";
 
 import {
+  createActivitiesModule,
+} from "@/config/crm/modules/activities";
+
+import {
   createCustomersModule,
 } from "@/config/crm/modules/customers";
 
@@ -154,6 +158,8 @@ export const bajajIzcalliCRMConfig:
             "deals.paymentMethod"
           ],
     }),
+
+    createActivitiesModule(),
 
   ],
 
