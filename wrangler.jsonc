@@ -1,34 +1,41 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
-  "name": "datara-website",
-  "compatibility_date": "2026-07-17",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
-  ],
-  "keep_vars": true,
-  "routes": [
-    {
-      "pattern": "datara-lab.com",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.datara-lab.com",
-      "custom_domain": true
-    }
-  ],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "datara-website"
-    }
-  ],
-  "images": {
-    "binding": "IMAGES"
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "datara-website",
+	"compatibility_date": "2026-07-17",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"keep_vars": true,
+	"routes": [
+		{
+			"pattern": "datara-lab.com",
+			"custom_domain": true
+		},
+		{
+			"pattern": "www.datara-lab.com",
+			"custom_domain": true
+		}
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "datara-website"
+		}
+	],
+	"images": {
+		"binding": "IMAGES"
+	},
+	"r2_buckets": [
+		{
+			"bucket_name": "datara-crm-documents",
+			"binding": "datara_crm_documents",
+			"remote": true
+		}
+	]
 }

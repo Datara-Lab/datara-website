@@ -1582,6 +1582,216 @@ export const crmDealPromotions =
     ],
   );
 
+export const crmDocuments =
+  pgTable(
+    "crm_documents",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      name: text("name")
+        .notNull(),
+
+      originalFileName: text(
+        "original_file_name",
+      ).notNull(),
+
+      description: text(
+        "description",
+      ),
+
+      category: text("category")
+        .notNull()
+        .default("Otro"),
+
+      mimeType: text("mime_type")
+        .notNull(),
+
+      extension: text("extension"),
+
+      sizeBytes: integer(
+        "size_bytes",
+      ).notNull(),
+
+      storageProvider: text(
+        "storage_provider",
+      )
+        .notNull()
+        .default("r2"),
+
+      storageKey: text(
+        "storage_key",
+      ).notNull(),
+
+      checksum: text("checksum"),
+
+      status: text("status")
+        .notNull()
+        .default("active"),
+
+      version: integer("version")
+        .notNull()
+        .default(1),
+
+      uploadedByClerkUserId: text(
+        "uploaded_by_clerk_user_id",
+      ).notNull(),
+
+      uploadedByName: text(
+        "uploaded_by_name",
+      ),
+
+      uploadedByEmail: text(
+        "uploaded_by_email",
+      ),
+
+      metadata: jsonb("metadata")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      archivedAt: timestamp(
+        "archived_at",
+        {
+          withTimezone: true,
+        },
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "crm_documents_storage_key_unique",
+      ).on(table.storageKey),
+
+      index(
+        "crm_documents_tenant_status_idx",
+      ).on(
+        table.tenantId,
+        table.status,
+      ),
+
+      index(
+        "crm_documents_tenant_category_idx",
+      ).on(
+        table.tenantId,
+        table.category,
+      ),
+
+      index(
+        "crm_documents_tenant_uploader_idx",
+      ).on(
+        table.tenantId,
+        table.uploadedByClerkUserId,
+      ),
+
+      index(
+        "crm_documents_tenant_created_idx",
+      ).on(
+        table.tenantId,
+        table.createdAt,
+      ),
+    ],
+  );
+
+export const crmDocumentRelations =
+  pgTable(
+    "crm_document_relations",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      documentId: uuid(
+        "document_id",
+      )
+        .notNull()
+        .references(
+          () => crmDocuments.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      entityType: text(
+        "entity_type",
+      ).notNull(),
+
+      entityId: text(
+        "entity_id",
+      ).notNull(),
+
+      entityName: text(
+        "entity_name",
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "crm_document_relations_unique",
+      ).on(
+        table.tenantId,
+        table.documentId,
+        table.entityType,
+        table.entityId,
+      ),
+
+      index(
+        "crm_document_relations_document_idx",
+      ).on(
+        table.tenantId,
+        table.documentId,
+      ),
+
+      index(
+        "crm_document_relations_entity_idx",
+      ).on(
+        table.tenantId,
+        table.entityType,
+        table.entityId,
+      ),
+    ],
+  );
+
 
 export const tenantProducts =
   pgTable(
@@ -1977,3 +2187,15 @@ export type TenantMember =
 
 export type RolePermission =
   typeof rolePermissions.$inferSelect;
+
+export type CRMDocument =
+  typeof crmDocuments.$inferSelect;
+
+export type NewCRMDocument =
+  typeof crmDocuments.$inferInsert;
+
+export type CRMDocumentRelation =
+  typeof crmDocumentRelations.$inferSelect;
+
+export type NewCRMDocumentRelation =
+  typeof crmDocumentRelations.$inferInsert;

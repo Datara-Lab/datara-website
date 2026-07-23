@@ -14,6 +14,9 @@ import {
   createDealsModule,
 } from "@/config/crm/modules/deals";
 
+import {
+  createDocumentsModule,
+} from "@/config/crm/modules/documents";
 
 import {
   createLeadsModule,
@@ -160,6 +163,8 @@ export const bajajIzcalliCRMConfig:
     }),
 
     createActivitiesModule(),
+
+    createDocumentsModule(),
 
   ],
 
