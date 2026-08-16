@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
+	"main": "./custom-worker.ts",
 	"name": "datara-website",
 	"compatibility_date": "2026-07-17",
 	"compatibility_flags": [
@@ -8,6 +8,11 @@
 		"global_fetch_strictly_public"
 	],
 	"keep_vars": true,
+	"triggers": {
+		"crons": [
+			"0 15 * * *"
+		]
+	},
 	"routes": [
 		{
 			"pattern": "datara-lab.com",
