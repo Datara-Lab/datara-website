@@ -11,6 +11,7 @@ import CRMDataTable, {
 import DealFormDrawer from "@/components/crm/DealFormDrawer";
 import CRMRecordDrawer from "@/components/crm/CRMRecordDrawer";
 import PageHeader from "@/components/shared/PageHeader";
+import Button from "@/components/ui/Button";
 import { useCRMConfig } from "@/hooks/useCRMConfig";
 import type {
   CRMFieldOption,
@@ -55,6 +56,15 @@ type CatalogResponse<T> = {
   error?: string;
 };
 
+type BranchCatalogResponse = {
+  success: boolean;
+  data?: CRMFieldOption[];
+  primaryBranchId?:
+    | string
+    | null;
+  error?: string;
+};
+
 type DealWriteResponse = {
   success: boolean;
   message?: string;
@@ -88,6 +98,16 @@ export default function OportunidadesPage() {
     members,
     setMembers,
   ] = useState<CRMFieldOption[]>([]);
+
+  const [
+    branches,
+    setBranches,
+  ] = useState<CRMFieldOption[]>([]);
+
+  const [
+    primaryBranchId,
+    setPrimaryBranchId,
+  ] = useState("");
 
   const [
     catalogsError,
@@ -134,6 +154,13 @@ export default function OportunidadesPage() {
   );
 
   const [
+    wonDealIdPendingDelivery,
+    setWonDealIdPendingDelivery,
+  ] = useState<string | null>(
+    null,
+  );
+
+  const [
     submitError,
     setSubmitError,
   ] = useState<string | null>(
@@ -154,6 +181,7 @@ export default function OportunidadesPage() {
           customersResponse,
           leadsResponse,
           membersResponse,
+          branchesResponse,
         ] = await Promise.all([
           fetch(
             "/api/crm/products",
@@ -190,6 +218,15 @@ export default function OportunidadesPage() {
                 controller.signal,
             },
           ),
+
+          fetch(
+            "/api/crm/branches/options",
+            {
+              cache: "no-store",
+              signal:
+                controller.signal,
+            },
+          ),
         ]);
 
         const productsPayload =
@@ -207,6 +244,10 @@ export default function OportunidadesPage() {
         const membersPayload =
           (await membersResponse.json()) as
             CatalogResponse<CRMFieldOption>;
+
+        const branchesPayload =
+          (await branchesResponse.json()) as
+            BranchCatalogResponse;
 
         if (
           !productsResponse.ok ||
@@ -248,6 +289,16 @@ export default function OportunidadesPage() {
           );
         }
 
+                if (
+          !branchesResponse.ok ||
+          !branchesPayload.success
+        ) {
+          throw new Error(
+            branchesPayload.error ??
+              "No fue posible cargar las sucursales.",
+          );
+        }
+
         setProducts(
           productsPayload.data ?? [],
         );
@@ -280,6 +331,15 @@ export default function OportunidadesPage() {
 
         setMembers(
           membersPayload.data ?? [],
+        );
+
+        setBranches(
+          branchesPayload.data ?? [],
+        );
+
+        setPrimaryBranchId(
+          branchesPayload.primaryBranchId ??
+            "",
         );
       } catch (error) {
         if (
@@ -409,6 +469,38 @@ export default function OportunidadesPage() {
         );
       }
 
+      const submittedStatus =
+        payload &&
+        typeof payload ===
+          "object" &&
+        !Array.isArray(payload)
+          ? String(
+              (
+                payload as
+                  Record<
+                    string,
+                    unknown
+                  >
+              ).status ?? "",
+            )
+              .trim()
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(
+                /[\u0300-\u036f]/g,
+                "",
+              )
+          : "";
+
+      setWonDealIdPendingDelivery(
+        mode === "edit" &&
+        submittedStatus ===
+          "ganada"
+          ? record?.id ?? null
+          : null,
+      );
+
+
       setSuccessMessage(
         result.message ??
           (mode === "edit"
@@ -499,6 +591,22 @@ export default function OportunidadesPage() {
                 <p className="mt-1 text-sm text-emerald-700">
                   {successMessage}
                 </p>
+
+                {wonDealIdPendingDelivery && (
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        window.location.href =
+                          `/crm/inventarios?view=reservations&dealId=${encodeURIComponent(
+                            wonDealIdPendingDelivery,
+                          )}`;
+                      }}
+                    >
+                      Revisar reservas y confirmar entrega
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <button
@@ -578,6 +686,10 @@ export default function OportunidadesPage() {
           customers={customers}
           leads={leads}
           members={members}
+          branches={branches}
+          primaryBranchId={
+            primaryBranchId
+          }
           isSubmitting={
             isSubmitting
           }

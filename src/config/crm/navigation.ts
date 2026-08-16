@@ -59,7 +59,7 @@ export function createCRMNavigation(
     CRMNavigationItemConfig[] = [
     {
       id: "home",
-      label: "Inicio",
+      label: "Resumen",
       route: "/crm",
       sectionId: "sales",
       order: 1,
@@ -140,6 +140,17 @@ export function createCRMNavigation(
       moduleId: "products",
       sectionId:
         "commercial-operation",
+      order: 2,
+      status: "active",
+      visible: true,
+    },
+    {
+      id: "inventory",
+      label: "Inventarios",
+      route: "/crm/inventarios",
+      moduleId: "inventory",
+      sectionId:
+        "commercial-operation",
       order: 1,
       status: "active",
       visible: true,
@@ -151,7 +162,7 @@ export function createCRMNavigation(
       moduleId: "promotions",
       sectionId:
         "commercial-operation",
-      order: 2,
+      order: 3,
       status: "active",
       visible: true,
     },
@@ -162,7 +173,7 @@ export function createCRMNavigation(
       moduleId: "activities",
       sectionId:
         "commercial-operation",
-      order: 3,
+      order: 4,
       status: "active",
       visible: true,
     },
@@ -173,7 +184,7 @@ export function createCRMNavigation(
       moduleId: "documents",
       sectionId:
         "commercial-operation",
-      order: 4,
+      order: 5,
       status: "active",
       visible: true,
     },
@@ -197,7 +208,7 @@ export function createCRMNavigation(
       id: "users",
       label: "Usuarios",
       route: "/crm/usuarios",
-      moduleId: "users",
+      moduleId: "crm-users",
       sectionId:
         "administration",
       order: 2,
@@ -213,6 +224,7 @@ export function createCRMNavigation(
       id: "settings",
       label: "Configuración",
       route: "/crm/configuracion",
+      moduleId: "crm-settings",
       sectionId:
         "administration",
       order: 3,
@@ -225,34 +237,10 @@ export function createCRMNavigation(
       ],
     },
     {
-      id: "inventory",
-      label: getModuleLabel(
-        terminology,
-        "inventory",
-        "Inventario",
-      ),
-      sectionId: "coming-soon",
-      order: 1,
-      status: "coming-soon",
-      visible: true,
-    },
-    {
       id: "after-sales",
       label: "Postventa",
       sectionId: "coming-soon",
       order: 2,
-      status: "coming-soon",
-      visible: true,
-    },
-    {
-      id: "services",
-      label: getModuleLabel(
-        terminology,
-        "services",
-        "Servicios",
-      ),
-      sectionId: "coming-soon",
-      order: 3,
       status: "coming-soon",
       visible: true,
     },

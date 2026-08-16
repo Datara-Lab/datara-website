@@ -17,6 +17,12 @@ import {
   tenants,
 } from "@/db/schema";
 
+import {
+  CRMPermissionError,
+  type CRMModulePermission,
+  requireCRMModulePermission,
+} from "@/lib/crm/permissions";
+
 export const dynamic = "force-dynamic";
 
 type PromotionFormPayload = {
@@ -318,7 +324,10 @@ function validatePayload(
   return null;
 }
 
-async function getTenantContext() {
+async function getTenantContext(
+  permission:
+    CRMModulePermission,
+) {
   const {
     userId,
     orgId,
@@ -358,9 +367,18 @@ async function getTenantContext() {
     );
   }
 
+  const permissions =
+    await requireCRMModulePermission(
+      tenant.id,
+      userId,
+      "promotions",
+      permission,
+    );
+
   return {
     userId,
     tenantId: tenant.id,
+    permissions,
   };
 }
 
@@ -430,7 +448,11 @@ function createErrorResponse(
   error: unknown,
   fallback: string,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -459,7 +481,10 @@ export async function GET() {
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+      permissions,
+    } = await getTenantContext(
+      "view",
+    );
 
     const promotionRecords =
       await db
@@ -666,6 +691,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: promotions,
+      permissions,
       meta: {
         count:
           promotions.length,
@@ -689,7 +715,9 @@ export async function POST(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "create",
+    );
 
     const body: unknown =
       await request.json();
@@ -889,7 +917,9 @@ export async function PATCH(
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "edit",
+    );
 
     const body: unknown =
       await request.json();

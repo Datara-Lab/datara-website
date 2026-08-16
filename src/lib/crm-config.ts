@@ -1,4 +1,10 @@
-import bajajIzcalliCRMConfig from "@/config/crm/bajaj-izcalli/index";
+import {
+  createMotorcycleDealershipCRMConfig,
+} from "@/config/crm/industries/create-motorcycle-dealership-config";
+
+import {
+  createProfessionalServicesCRMConfig,
+} from "@/config/crm/industries/create-professional-services-config";
 
 import type {
   CRMModuleConfig,
@@ -8,54 +14,84 @@ import type {
   CRMTenantConfig,
 } from "@/types/crm-config";
 
-const crmTenantConfigs: Record<string, CRMTenantConfig> = {
-  "bajaj-izcalli": bajajIzcalliCRMConfig,
-};
-
-export function getCRMTenantConfig(
+export function getCRMIndustryConfig(
+  industry: string,
   tenantId: string,
+  tenantName: string,
 ): CRMTenantConfig | null {
-  return crmTenantConfigs[tenantId] ?? null;
+  if (
+    industry ===
+    "motorcycle_dealership"
+  ) {
+    return createMotorcycleDealershipCRMConfig({
+      tenantId,
+      tenantName,
+    });
+  }
+
+  if (
+    industry ===
+    "professional_services"
+  ) {
+    return createProfessionalServicesCRMConfig({
+      tenantId,
+      tenantName,
+    });
+  }
+
+  return null;
 }
 
 export function getCRMModuleConfig(
-  tenantId: string,
+  tenantConfig:
+    | CRMTenantConfig
+    | null,
   moduleId: string,
 ): CRMModuleConfig | null {
-  const tenantConfig = getCRMTenantConfig(tenantId);
-
   if (!tenantConfig) {
     return null;
   }
 
   return (
     tenantConfig.modules.find(
-      (module) => module.id === moduleId,
+      (module) =>
+        module.id ===
+        moduleId,
     ) ?? null
   );
 }
 
 export function getCRMNavigationSectionsConfig(
-  tenantId: string,
+  tenantConfig:
+    | CRMTenantConfig
+    | null,
   role?: string,
 ): CRMNavigationSectionConfig[] {
-  const tenantConfig = getCRMTenantConfig(tenantId);
-
   if (!tenantConfig) {
     return [];
   }
 
   const normalizedRole =
-    role?.trim().toLowerCase() as
-      | CRMNavigationRole
-      | undefined;
+    role
+      ?.trim()
+      .toLowerCase() as
+        | CRMNavigationRole
+        | undefined;
 
-  return [...tenantConfig.navigationSections]
-    .filter((section) => section.visible !== false)
+  return [
+    ...tenantConfig
+      .navigationSections,
+  ]
+    .filter(
+      (section) =>
+        section.visible !==
+        false,
+    )
     .filter((section) => {
       if (
         !section.allowedRoles ||
-        section.allowedRoles.length === 0
+        section.allowedRoles
+          .length === 0
       ) {
         return true;
       }
@@ -64,35 +100,65 @@ export function getCRMNavigationSectionsConfig(
         return false;
       }
 
-      return section.allowedRoles.includes(
-        normalizedRole,
-      );
+      return section
+        .allowedRoles
+        .includes(
+          normalizedRole,
+        );
     })
-    .sort((a, b) => a.order - b.order);
+    .sort(
+      (first, second) =>
+        first.order -
+        second.order,
+    );
 }
 
 export function getCRMNavigationConfig(
-  tenantId: string,
+  tenantConfig:
+    | CRMTenantConfig
+    | null,
   role?: string,
 ): CRMNavigationItemConfig[] {
-  const tenantConfig = getCRMTenantConfig(tenantId);
-
   if (!tenantConfig) {
     return [];
   }
 
   const normalizedRole =
-    role?.trim().toLowerCase() as
-      | CRMNavigationRole
-      | undefined;
+    role
+      ?.trim()
+      .toLowerCase() as
+        | CRMNavigationRole
+        | undefined;
 
-  return [...tenantConfig.navigation]
-    .filter((item) => item.visible !== false)
-    .filter((item) => item.status !== "hidden")
+  const sectionOrder =
+    new Map(
+      tenantConfig
+        .navigationSections
+        .map(
+          (section) => [
+            section.id,
+            section.order,
+          ],
+        ),
+    );
+
+  return [
+    ...tenantConfig.navigation,
+  ]
+    .filter(
+      (item) =>
+        item.visible !== false,
+    )
+    .filter(
+      (item) =>
+        item.status !==
+        "hidden",
+    )
     .filter((item) => {
       if (
         !item.allowedRoles ||
-        item.allowedRoles.length === 0
+        item.allowedRoles
+          .length === 0
       ) {
         return true;
       }
@@ -101,26 +167,52 @@ export function getCRMNavigationConfig(
         return false;
       }
 
-      return item.allowedRoles.includes(
-        normalizedRole,
-      );
+      return item
+        .allowedRoles
+        .includes(
+          normalizedRole,
+        );
     })
-    .sort((a, b) => {
-      if (a.sectionId === b.sectionId) {
-        return a.order - b.order;
+    .sort((first, second) => {
+      if (
+        first.sectionId ===
+        second.sectionId
+      ) {
+        return (
+          first.order -
+          second.order
+        );
       }
 
-      return a.sectionId.localeCompare(
-        b.sectionId,
+      const firstSectionOrder =
+        sectionOrder.get(
+          first.sectionId,
+        ) ??
+        Number.MAX_SAFE_INTEGER;
+
+      const secondSectionOrder =
+        sectionOrder.get(
+          second.sectionId,
+        ) ??
+        Number.MAX_SAFE_INTEGER;
+
+      return (
+        firstSectionOrder -
+        secondSectionOrder
       );
     });
 }
 
 export function hasCRMModule(
-  tenantId: string,
+  tenantConfig:
+    | CRMTenantConfig
+    | null,
   moduleId: string,
 ): boolean {
   return Boolean(
-    getCRMModuleConfig(tenantId, moduleId),
+    getCRMModuleConfig(
+      tenantConfig,
+      moduleId,
+    ),
   );
 }

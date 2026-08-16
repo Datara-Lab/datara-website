@@ -16,6 +16,12 @@ import {
   tenants,
 } from "@/db/schema";
 
+import {
+  CRMPermissionError,
+  type CRMModulePermission,
+  requireCRMModulePermission,
+} from "@/lib/crm/permissions";
+
 export const dynamic =
   "force-dynamic";
 
@@ -129,7 +135,10 @@ function bytesToHex(
     .join("");
 }
 
-async function getTenantContext() {
+async function getTenantContext(
+  permission:
+    CRMModulePermission,
+) {
   const {
     userId,
     orgId,
@@ -168,6 +177,14 @@ async function getTenantContext() {
       404,
     );
   }
+
+  const permissions =
+    await requireCRMModulePermission(
+      tenant.id,
+      userId,
+      "documents",
+      permission,
+    );
 
   const [member] = await db
     .select({
@@ -212,6 +229,8 @@ async function getTenantContext() {
 
     userEmail:
       member?.email ?? null,
+
+    permissions,
   };
 }
 
@@ -236,7 +255,11 @@ function getBucket(): R2Bucket {
 function createErrorResponse(
   error: unknown,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -346,7 +369,10 @@ export async function GET() {
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+      permissions,
+    } = await getTenantContext(
+      "view",
+    );
 
     const documents = await db
       .select()
@@ -432,6 +458,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data,
+      permissions,
 
       meta: {
         count: data.length,
@@ -459,7 +486,9 @@ export async function POST(
       userId,
       userName,
       userEmail,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "create",
+    );
 
     const formData =
       await request.formData();

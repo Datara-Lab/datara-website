@@ -7,6 +7,10 @@ import {
   motorcycleDealershipTemplate,
 } from "./motorcycle-dealership";
 
+import {
+  professionalServicesTemplate,
+} from "./professional-services";
+
 function createPendingTemplate(
   id: CRMIndustry,
   name: string,
@@ -64,11 +68,7 @@ const industryTemplates: Record<
     ),
 
   professional_services:
-    createPendingTemplate(
-      "professional_services",
-      "Servicios profesionales",
-      "Plantilla pendiente de configuración.",
-    ),
+    professionalServicesTemplate,
 
   other:
     createPendingTemplate(

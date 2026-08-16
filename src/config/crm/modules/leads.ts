@@ -398,6 +398,36 @@ export function createLeadsModule(
         formSpan: 1,
       },
 
+            {
+        key: "branchId",
+        label: "Sucursal",
+        description:
+          "Sucursal responsable del seguimiento comercial del prospecto.",
+        placeholder:
+          "Selecciona una sucursal",
+        type: "lookup",
+        formVariant: "searchable",
+        required: true,
+        options: [],
+
+        showInForm: true,
+        showInTable: true,
+        showInDetail: true,
+        showInFilters: true,
+
+        formOrder: 9,
+        tableOrder: 6,
+        detailOrder: 9,
+        tableWidth: "190px",
+
+        formSectionId:
+          "commercial-information",
+        formRow: 2,
+        formColumn: 1,
+        formSpan: 1,
+      },
+
+
       {
         key: "productId",
         label:
@@ -418,14 +448,13 @@ export function createLeadsModule(
         showInTable: false,
         showInDetail: true,
         showInFilters: true,
-
-        formOrder: 9,
-        detailOrder: 9,
+        formOrder: 10,
+        detailOrder: 10,
 
         formSectionId:
           "commercial-information",
         formRow: 2,
-        formColumn: 1,
+        formColumn: 2,
         formSpan: 1,
       },
 
@@ -446,13 +475,13 @@ export function createLeadsModule(
         showInDetail: true,
         showInFilters: true,
 
-        formOrder: 10,
-        detailOrder: 10,
+        formOrder: 11,
+        detailOrder: 11,
 
         formSectionId:
           "commercial-information",
-        formRow: 2,
-        formColumn: 2,
+        formRow: 3,
+        formColumn: 1,
         formSpan: 1,
       },
 

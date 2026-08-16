@@ -9,6 +9,7 @@ import {
 
 import DocumentDetailDrawer from "@/components/crm/DocumentDetailDrawer";
 import DocumentUploadDrawer from "@/components/crm/DocumentUploadDrawer";
+import Button from "@/components/ui/Button";
 
 import {
   CRM_DOCUMENT_CATEGORIES,
@@ -620,9 +621,7 @@ export default function DocumentsWorkspace() {
                 Actualizar
               </button>
 
-              <button
-                type="button"
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-lg"
+              <Button
                 onClick={() =>
                   setIsUploadOpen(
                     true,
@@ -630,7 +629,7 @@ export default function DocumentsWorkspace() {
                 }
               >
                 Cargar documento
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -836,9 +835,9 @@ export default function DocumentsWorkspace() {
 
                       <td className="px-5 py-4">
                         <div className="flex gap-2">
-                          <button
-                            type="button"
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() =>
                               openDocument(
                                 document,
@@ -847,11 +846,11 @@ export default function DocumentsWorkspace() {
                             }
                           >
                             Ver
-                          </button>
+                          </Button>
 
-                          <button
-                            type="button"
-                            className="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700"
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() =>
                               openDocument(
                                 document,
@@ -860,14 +859,15 @@ export default function DocumentsWorkspace() {
                             }
                           >
                             Editar
-                          </button>
+                          </Button>
 
-                          <a
+                          <Button
                             href={`/api/crm/documents/${document.id}/content?download=1`}
-                            className="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-700"
+                            size="sm"
+                            variant="secondary"
                           >
                             Descargar
-                          </a>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -957,7 +957,7 @@ export default function DocumentsWorkspace() {
 
                     <button
                       type="button"
-                      className="flex-1 rounded-xl border border-blue-300 px-4 py-2.5 text-sm font-semibold text-blue-700"
+                      className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
                       onClick={() =>
                         openDocument(
                           document,
@@ -968,12 +968,14 @@ export default function DocumentsWorkspace() {
                       Editar
                     </button>
 
-                    <a
+                    <Button
                       href={`/api/crm/documents/${document.id}/content?download=1`}
-                      className="flex-1 rounded-xl border border-emerald-300 px-4 py-2.5 text-center text-sm font-semibold text-emerald-700"
+                      size="sm"
+                      variant="secondary"
+                      className="flex-1"
                     >
                       Descargar
-                    </a>
+                    </Button>
                   </div>
                 </article>
               );
@@ -997,9 +999,8 @@ export default function DocumentsWorkspace() {
               Carga el primer archivo o cambia los filtros.
             </p>
 
-            <button
-              type="button"
-              className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white"
+                        <Button
+              className="mt-5"
               onClick={() =>
                 setIsUploadOpen(
                   true,
@@ -1007,7 +1008,7 @@ export default function DocumentsWorkspace() {
               }
             >
               Cargar documento
-            </button>
+            </Button>
           </div>
         )}
 

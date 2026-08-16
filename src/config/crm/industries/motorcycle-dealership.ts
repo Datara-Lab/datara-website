@@ -17,12 +17,55 @@ export const motorcycleDealershipTemplate:
     "contacts",
     "deals",
     "activities",
+    "documents",
+    "integrations",
+    "automations",
     "promotions",
     "quotes",
     "inventory",
-    "sales",
+    "sales-orders",
     "services",
-    "follow-ups",
+  ],
+
+  defaultRoles: [
+    {
+      key: "mechanic",
+      name: "Mecánico",
+      product: "crm",
+
+      description:
+        "Atiende y actualiza las órdenes de servicio asignadas en el taller.",
+
+      permissions: [
+        {
+          moduleId:
+            "services",
+
+          canView: true,
+          canEdit: true,
+        },
+        {
+          moduleId:
+            "activities",
+
+          canView: true,
+          canCreate: true,
+          canEdit: true,
+        },
+        {
+          moduleId:
+            "contacts",
+
+          canView: true,
+        },
+        {
+          moduleId:
+            "products",
+
+          canView: true,
+        },
+      ],
+    },
   ],
 
   defaultCatalogs: {

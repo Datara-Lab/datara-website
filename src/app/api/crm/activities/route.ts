@@ -23,6 +23,12 @@ import {
   tenants,
 } from "@/db/schema";
 
+import {
+  CRMPermissionError,
+  requireCRMModulePermission,
+  type CRMModulePermission,
+} from "@/lib/crm/permissions";
+
 export const dynamic = "force-dynamic";
 
 type ActivityType =
@@ -216,7 +222,10 @@ function getParticipants(
   return value as ParticipantPayload[];
 }
 
-async function getTenantContext() {
+async function getTenantContext(
+  permission:
+    CRMModulePermission,
+) {
   const {
     userId,
     orgId,
@@ -256,9 +265,18 @@ async function getTenantContext() {
     );
   }
 
+  const permissions =
+    await requireCRMModulePermission(
+      tenant.id,
+      userId,
+      "activities",
+      permission,
+    );
+
   return {
     tenantId: tenant.id,
     userId,
+    permissions,
   };
 }
 
@@ -769,7 +787,11 @@ function createErrorResponse(
   error: unknown,
   fallback: string,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -953,7 +975,9 @@ export async function GET(
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "view",
+    );
 
     const url = new URL(
       request.url,
@@ -1411,7 +1435,9 @@ export async function POST(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "create",
+    );
 
     const requestBody: unknown =
       await request.json();
@@ -1542,7 +1568,9 @@ export async function PATCH(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "edit",
+    );
 
     const requestBody: unknown =
       await request.json();

@@ -175,7 +175,7 @@ export default function CRMPage() {
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
-        eyebrow="Inicio comercial"
+        eyebrow="Resumen del CRM"
         title={`Hola, ${user?.firstName ?? "usuario"}`}
         description={`Este es el estado actual del proceso comercial de ${
           user?.tenantName ?? "tu empresa"

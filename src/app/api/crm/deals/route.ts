@@ -18,6 +18,9 @@ import {
   crmPromotionProducts,
   crmPromotions,
   crmProducts,
+  inventoryReservations,
+  inventoryStocks,
+  tenantBranches,
   tenantMembers,
   tenants,
 } from "@/db/schema";
@@ -26,6 +29,20 @@ import {
   type DealItemCalculationInput,
   type DealPromotionInput,
 } from "@/lib/crm/deal-calculations";
+
+import {
+  CRMBranchAccessError,
+  getCRMBranchAccess,
+  validateCRMBranchId,
+  type CRMBranchAccessContext,
+} from "@/lib/crm/branch-access";
+
+import {
+  CRMPermissionError,
+  type CRMModulePermission,
+  type CRMModulePermissions,
+  requireCRMModulePermission,
+} from "@/lib/crm/permissions";
 
 export const dynamic =
   "force-dynamic";
@@ -44,6 +61,8 @@ type DealItemPayload = {
 
 type DealFormPayload = {
   id?: unknown;
+
+  branchId?: unknown;
 
   name?: unknown;
   customerId?: unknown;
@@ -92,6 +111,12 @@ type ValidatedDealItem = {
 type DealContext = {
   tenantId: string;
   userId: string;
+
+  branchAccess:
+    CRMBranchAccessContext;
+
+  permissions:
+    CRMModulePermissions;
 };
 
 class ApiError extends Error {
@@ -248,8 +273,10 @@ function getNumericString(
     : String(value);
 }
 
-async function getTenantContext():
-  Promise<DealContext> {
+async function getTenantContext(
+  permission:
+    CRMModulePermission,
+): Promise<DealContext> {
   const {
     userId,
     orgId,
@@ -289,9 +316,28 @@ async function getTenantContext():
     );
   }
 
+  const [
+    branchAccess,
+    permissions,
+  ] = await Promise.all([
+    getCRMBranchAccess(
+      tenant.id,
+      userId,
+    ),
+
+    requireCRMModulePermission(
+      tenant.id,
+      userId,
+      "deals",
+      permission,
+    ),
+  ]);
+
   return {
     tenantId: tenant.id,
     userId,
+    branchAccess,
+    permissions,
   };
 }
 
@@ -299,7 +345,13 @@ function createErrorResponse(
   error: unknown,
   fallback: string,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMBranchAccessError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -388,11 +440,14 @@ function validateBasicPayload(
 
       return (
         quantity === undefined ||
+        !Number.isInteger(
+          quantity,
+        ) ||
         quantity <= 0
       );
     })
   ) {
-    return "La cantidad de cada partida debe ser mayor que cero.";
+    return "La cantidad de cada partida debe ser un número entero mayor que cero.";
   }
 
   return null;
@@ -402,16 +457,38 @@ export async function GET() {
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+      branchAccess,
+      permissions,
+    } = await getTenantContext(
+      "view",
+    );
+
+    const dealAccessCondition =
+      branchAccess.allBranches
+        ? eq(
+            crmDeals.tenantId,
+            tenantId,
+          )
+        : and(
+            eq(
+              crmDeals.tenantId,
+              tenantId,
+            ),
+
+            branchAccess.branchIds.length >
+            0
+              ? inArray(
+                  crmDeals.branchId,
+                  branchAccess.branchIds,
+                )
+              : sql<boolean>`false`,
+          );
 
     const dealRecords = await db
       .select()
       .from(crmDeals)
       .where(
-        eq(
-          crmDeals.tenantId,
-          tenantId,
-        ),
+        dealAccessCondition,
       )
       .orderBy(
         desc(
@@ -422,6 +499,64 @@ export async function GET() {
     const dealIds =
       dealRecords.map(
         (deal) => deal.id,
+      );
+
+    const branchIds =
+      Array.from(
+        new Set(
+          dealRecords
+            .map(
+              (deal) =>
+                deal.branchId,
+            )
+            .filter(
+              (
+                id,
+              ): id is string =>
+                Boolean(id),
+            ),
+        ),
+      );
+
+    const branches =
+      branchIds.length > 0
+        ? await db
+            .select({
+              id:
+                tenantBranches.id,
+
+              name:
+                tenantBranches.name,
+
+              code:
+                tenantBranches.code,
+            })
+            .from(
+              tenantBranches,
+            )
+            .where(
+              and(
+                eq(
+                  tenantBranches.tenantId,
+                  tenantId,
+                ),
+
+                inArray(
+                  tenantBranches.id,
+                  branchIds,
+                ),
+              ),
+            )
+        : [];
+
+    const branchesById =
+      new Map(
+        branches.map(
+          (branch) => [
+            branch.id,
+            branch,
+          ],
+        ),
       );
 
     const customerIds =
@@ -633,6 +768,14 @@ export async function GET() {
               )
             : undefined;
 
+        const branch =
+          deal.branchId
+            ? branchesById.get(
+                deal.branchId,
+              )
+            : undefined;
+
+
         const sourceLead =
           deal.sourceLeadId
             ? leadsById.get(
@@ -673,6 +816,16 @@ export async function GET() {
 
         return {
           id: deal.id,
+
+          branchId:
+            deal.branchId,
+
+          branchName:
+            branch
+              ? branch.code
+                ? `${branch.name} (${branch.code})`
+                : branch.name
+              : "Sin sucursal",
 
           name: deal.name,
 
@@ -965,6 +1118,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data,
+      permissions,
       meta: {
         count: data.length,
       },
@@ -1702,7 +1856,10 @@ export async function POST(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+      branchAccess,
+    } = await getTenantContext(
+      "create",
+    );
 
     const body: unknown =
       await request.json();
@@ -1716,6 +1873,15 @@ export async function POST(
 
     const values =
       body as DealFormPayload;
+
+    const branchId =
+      await validateCRMBranchId(
+        tenantId,
+        branchAccess,
+        getOptionalString(
+          values.branchId,
+        ),
+      );
 
     const validationError =
       validateBasicPayload(
@@ -1868,6 +2034,7 @@ export async function POST(
       .values({
         id: dealId,
         tenantId,
+        branchId,
 
         name:
           getOptionalString(
@@ -2372,7 +2539,31 @@ export async function PATCH(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+      branchAccess,
+    } = await getTenantContext(
+      "edit",
+    );
+
+    const dealAccessCondition =
+      branchAccess.allBranches
+        ? eq(
+            crmDeals.tenantId,
+            tenantId,
+          )
+        : and(
+            eq(
+              crmDeals.tenantId,
+              tenantId,
+            ),
+
+            branchAccess.branchIds.length >
+            0
+              ? inArray(
+                  crmDeals.branchId,
+                  branchAccess.branchIds,
+                )
+              : sql<boolean>`false`,
+          );
 
     const body: unknown =
       await request.json();
@@ -2418,13 +2609,11 @@ export async function PATCH(
         .where(
           and(
             eq(
-              crmDeals.tenantId,
-              tenantId,
-            ),
-            eq(
               crmDeals.id,
               dealId,
             ),
+
+            dealAccessCondition,
           ),
         )
         .limit(1);
@@ -2435,6 +2624,17 @@ export async function PATCH(
         404,
       );
     }
+
+    const branchId =
+      await validateCRMBranchId(
+        tenantId,
+        branchAccess,
+        getOptionalString(
+          values.branchId,
+        ) ??
+          existingDeal.branchId,
+      );
+
 
     const existingPromotions =
       await db
@@ -2596,6 +2796,160 @@ export async function PATCH(
     const normalizedStatus =
       normalizeText(status);
 
+    if (
+      normalizedStatus ===
+        "ganada" &&
+      normalizeText(
+        existingDeal.status,
+      ) !== "ganada"
+    ) {
+      const activeReservations =
+        await db
+          .select({
+            productId:
+              inventoryReservations
+                .productId,
+
+            quantity:
+              inventoryReservations
+                .quantity,
+          })
+          .from(
+            inventoryReservations,
+          )
+          .where(
+            and(
+              eq(
+                inventoryReservations
+                  .tenantId,
+                tenantId,
+              ),
+              eq(
+                inventoryReservations
+                  .sourceType,
+                "Oportunidad",
+              ),
+              eq(
+                inventoryReservations
+                  .sourceId,
+                dealId,
+              ),
+              eq(
+                inventoryReservations
+                  .status,
+                "Activa",
+              ),
+            ),
+          );
+
+      if (
+        activeReservations.length ===
+        0
+      ) {
+        throw new ApiError(
+          "La oportunidad no puede marcarse como ganada sin una reserva activa de inventario.",
+          409,
+        );
+      }
+
+      const reservedByProduct =
+        new Map<string, number>();
+
+      for (
+        const reservation of
+        activeReservations
+      ) {
+        reservedByProduct.set(
+          reservation.productId,
+          (
+            reservedByProduct.get(
+              reservation.productId,
+            ) ?? 0
+          ) +
+            Number(
+              reservation.quantity,
+            ),
+        );
+      }
+
+      const requiredByProduct =
+        new Map<
+          string,
+          {
+            name: string;
+            quantity: number;
+          }
+        >();
+
+      for (
+        const item of
+        prepared.items
+      ) {
+        const current =
+          requiredByProduct.get(
+            item.productId,
+          );
+
+        requiredByProduct.set(
+          item.productId,
+          {
+            name: item.name,
+
+            quantity:
+              (
+                current?.quantity ??
+                0
+              ) +
+              Number(
+                item.quantity,
+              ),
+          },
+        );
+      }
+
+      const missingReservations =
+        Array.from(
+          requiredByProduct.entries(),
+        )
+          .filter(
+            ([
+              productId,
+              requirement,
+            ]) =>
+              (
+                reservedByProduct.get(
+                  productId,
+                ) ?? 0
+              ) <
+              requirement.quantity,
+          )
+          .map(
+            ([
+              productId,
+              requirement,
+            ]) => {
+              const reserved =
+                reservedByProduct.get(
+                  productId,
+                ) ?? 0;
+
+              return `${requirement.name}: requiere ${requirement.quantity} y tiene ${reserved} reservada(s)`;
+            },
+          );
+
+      if (
+        missingReservations.length >
+        0
+      ) {
+        throw new ApiError(
+          `No es posible marcar la oportunidad como ganada. Completa sus reservas de inventario: ${missingReservations.join(
+            ". ",
+          )}.`,
+          409,
+        );
+      }
+    }
+
     const isClosed =
       normalizedStatus ===
         "ganada" ||
@@ -2607,6 +2961,8 @@ export async function PATCH(
     const updateDealQuery = db
       .update(crmDeals)
       .set({
+        branchId,
+
         name:
           getOptionalString(
             values.name,
@@ -2727,13 +3083,11 @@ export async function PATCH(
       .where(
         and(
           eq(
-            crmDeals.tenantId,
-            tenantId,
-          ),
-          eq(
             crmDeals.id,
             dealId,
           ),
+
+          dealAccessCondition,
         ),
       );
 
@@ -3138,6 +3492,62 @@ export async function PATCH(
           ]
         : [];
 
+        const releaseReservationQueries =
+      normalizedStatus ===
+        "perdida" ||
+      normalizedStatus ===
+        "cancelada"
+        ? [
+            sql`
+              WITH released_reservations AS (
+                UPDATE ${inventoryReservations}
+                SET
+                  status = 'Liberada',
+                  released_by_clerk_user_id = ${userId},
+                  released_by_name = 'Sistema · ciclo de oportunidad',
+                  released_at = ${now},
+                  release_reason = ${
+                    normalizedStatus ===
+                    "cancelada"
+                      ? "Oportunidad cancelada"
+                      : "Oportunidad perdida"
+                  },
+                  updated_at = ${now}
+                WHERE
+                  tenant_id = ${tenantId}
+                  AND source_type = 'Oportunidad'
+                  AND source_id = ${dealId}
+                  AND status = 'Activa'
+                RETURNING
+                  stock_id,
+                  quantity
+              ),
+              released_totals AS (
+                SELECT
+                  stock_id,
+                  sum(quantity)::integer AS quantity
+                FROM released_reservations
+                GROUP BY stock_id
+              )
+              UPDATE ${inventoryStocks} AS stock
+              SET
+                reserved_quantity = greatest(
+                  0,
+                  stock.reserved_quantity -
+                    released_totals.quantity
+                ),
+                updated_at = ${now}
+              FROM released_totals
+              WHERE
+                stock.id =
+                  released_totals.stock_id
+                AND stock.tenant_id =
+                  ${tenantId}
+            `,
+          ]
+        : [];
+
+
     const batchQueries = [
       updateDealQuery,
       deletePromotionsQuery,
@@ -3154,11 +3564,32 @@ export async function PATCH(
         >[0],
     );
 
+    const [
+      releaseReservationsQuery,
+    ] =
+      releaseReservationQueries;
+
+    if (
+      releaseReservationsQuery
+    ) {
+      await db.execute(
+        releaseReservationsQuery,
+      );
+    }
+
     return NextResponse.json({
       success: true,
 
       message:
-        "La oportunidad fue actualizada correctamente.",
+        normalizedStatus ===
+          "perdida" ||
+        normalizedStatus ===
+          "cancelada"
+          ? "La oportunidad fue actualizada y sus reservas activas fueron liberadas correctamente."
+          : normalizedStatus ===
+              "ganada"
+            ? "La oportunidad fue marcada como ganada. Las reservas permanecen activas hasta confirmar la entrega desde Inventarios."
+            : "La oportunidad fue actualizada correctamente.",
 
       data: {
         id: dealId,

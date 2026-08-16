@@ -283,6 +283,30 @@ export type CRMTerminologyConfig = {
   fields: Record<string, string>;
 };
 
+export type CRMIndustryRolePermissionConfig = {
+  moduleId: string;
+
+  canView?: boolean;
+  canCreate?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canManage?: boolean;
+};
+
+export type CRMIndustryRoleConfig = {
+  key: string;
+  name: string;
+  description?: string;
+
+  product:
+    | "crm"
+    | "analytics"
+    | "cloud";
+
+  permissions:
+    CRMIndustryRolePermissionConfig[];
+};
+
 export type CRMIndustryTemplateConfig = {
   id: CRMIndustry;
   name: string;
@@ -291,6 +315,9 @@ export type CRMIndustryTemplateConfig = {
   terminology: CRMTerminologyConfig;
 
   defaultModules: string[];
+
+  defaultRoles?:
+    CRMIndustryRoleConfig[];
 
   defaultCatalogs: Record<
     string,
@@ -305,6 +332,9 @@ export type CRMTenantConfig = {
   industry?: CRMIndustry;
 
   terminology?: CRMTerminologyConfig;
+
+  defaultRoles?:
+    CRMIndustryRoleConfig[];
 
   catalogs?: Record<
     string,

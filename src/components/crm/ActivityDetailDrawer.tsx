@@ -4,6 +4,8 @@ import type {
     CRMActivityRecord,
 } from "@/types/crm-activities";
 
+import Button from "@/components/ui/Button";
+
 type ActivityDetailDrawerProps = {
     isOpen: boolean;
 
@@ -451,13 +453,11 @@ export default function ActivityDetailDrawer({
                             Cerrar
                         </button>
 
-                        <button
-                            type="button"
-                            className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg"
+                        <Button
                             onClick={onEdit}
                         >
                             Editar
-                        </button>
+                        </Button>
                     </div>
                 </footer>
             </aside>

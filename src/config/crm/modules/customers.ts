@@ -465,7 +465,36 @@ export function createCustomersModule(
       },
 
       {
+        key: "branchId",
+        label: "Sucursal",
+        description:
+          "Sucursal responsable de la atención de este cliente.",
+        placeholder:
+          "Selecciona una sucursal",
+        type: "lookup",
+        formVariant: "searchable",
+        required: true,
+        options: [],
+
+        showInForm: true,
+        showInTable: true,
+        showInDetail: true,
+        showInFilters: true,
+
+        formSectionId:
+          "commercial-information",
+        formRow: 1,
+        formColumn: 1,
+        formSpan: 1,
+
+        tableOrder: 7,
+        detailOrder: 10,
+        tableWidth: "190px",
+      },
+
+      {
         key: "productId",
+
         label:
           getFieldLabel(
             terminology,
@@ -481,18 +510,18 @@ export function createCustomersModule(
         required: false,
         options: [],
 
-        showInForm: true,
+        showInForm: false,
         showInTable: false,
-        showInDetail: true,
-        showInFilters: true,
+        showInDetail: false,
+        showInFilters: false,
 
         formSectionId:
           "commercial-information",
         formRow: 1,
-        formColumn: 1,
+        formColumn: 2,
         formSpan: 1,
 
-        detailOrder: 10,
+        detailOrder: 11,
       },
 
       {
@@ -523,8 +552,8 @@ export function createCustomersModule(
         formColumn: 2,
         formSpan: 1,
 
-        tableOrder: 7,
-        detailOrder: 11,
+        tableOrder: 8,
+        detailOrder: 12,
         tableWidth: "190px",
       },
 

@@ -14,6 +14,11 @@ import {
   tenants,
 } from "@/db/schema";
 
+import {
+  CRMPermissionError,
+  getCRMModulePermissions,
+} from "@/lib/crm/permissions";
+
 export const dynamic = "force-dynamic";
 
 class ApiError extends Error {
@@ -65,6 +70,9 @@ async function getTenantContext() {
   const [tenant] = await db
     .select({
       id: tenants.id,
+
+      timezone:
+        tenants.timezone,
     })
     .from(tenants)
     .where(
@@ -82,15 +90,53 @@ async function getTenantContext() {
     );
   }
 
+  const [
+    dealPermissions,
+    quotePermissions,
+  ] = await Promise.all([
+    getCRMModulePermissions(
+      tenant.id,
+      userId,
+      "deals",
+    ),
+
+    getCRMModulePermissions(
+      tenant.id,
+      userId,
+      "quotes",
+    ),
+  ]);
+
+  const canUsePromotions =
+    dealPermissions.canView ||
+    dealPermissions.canCreate ||
+    dealPermissions.canEdit ||
+    quotePermissions.canView ||
+    quotePermissions.canCreate ||
+    quotePermissions.canEdit;
+
+  if (!canUsePromotions) {
+    throw new CRMPermissionError(
+      "No tienes permisos para consultar promociones comerciales.",
+    );
+  }
+
   return {
     tenantId: tenant.id,
+
+    timezone:
+      tenant.timezone,
   };
 }
 
 function createErrorResponse(
   error: unknown,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -119,12 +165,57 @@ function createErrorResponse(
   );
 }
 
+function getDateInTimezone(
+  value: Date | null,
+  timezone: string,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      },
+    ).formatToParts(value);
+
+  const year =
+    parts.find(
+      (part) =>
+        part.type === "year",
+    )?.value;
+
+  const month =
+    parts.find(
+      (part) =>
+        part.type === "month",
+    )?.value;
+
+  const day =
+    parts.find(
+      (part) =>
+        part.type === "day",
+    )?.value;
+
+  return year &&
+    month &&
+    day
+    ? `${year}-${month}-${day}`
+    : null;
+}
+
 export async function GET(
   request: Request,
 ) {
   try {
     const {
       tenantId,
+      timezone,
     } = await getTenantContext();
 
     const {
@@ -407,6 +498,16 @@ export async function GET(
 
           availableMonths:
             promotion.availableMonths,
+
+          promotionEnd:
+            promotion.promotionEnd
+              ?.toISOString() ?? null,
+
+          promotionEndDate:
+            getDateInTimezone(
+              promotion.promotionEnd,
+              timezone,
+            ),
 
           minimumDownPayment:
             promotion

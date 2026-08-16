@@ -49,6 +49,9 @@ type LeadRecord = {
 type MemberOption =
   CRMFieldOption;
 
+type BranchOption =
+  CRMFieldOption;
+
 type DealRecordItem = {
   id: string;
   productId: string;
@@ -86,6 +89,7 @@ type EditableDealItem = {
 type DealPayload = {
   id?: string;
 
+  branchId: string;
   name: string;
   customerId?: string;
   sourceLeadId?: string;
@@ -126,6 +130,9 @@ type DealFormDrawerProps = {
   customers: CustomerRecord[];
   leads: LeadRecord[];
   members: MemberOption[];
+
+  branches: BranchOption[];
+  primaryBranchId: string;
 
   isSubmitting?: boolean;
 
@@ -340,6 +347,8 @@ export default function DealFormDrawer({
   customers,
   leads,
   members,
+  branches,
+  primaryBranchId,
   isSubmitting = false,
   onClose,
   onSubmit,
@@ -377,6 +386,11 @@ export default function DealFormDrawer({
         ),
       [module],
     );
+
+  const [
+    branchId,
+    setBranchId,
+  ] = useState("");
 
   const [
     name,
@@ -501,17 +515,61 @@ export default function DealFormDrawer({
       return;
     }
 
-    setName(
+    const initialItems =
+      buildInitialItems(
+        mode === "edit"
+          ? record
+          : null,
+      );
+
+    const relationshipName =
+      getStringValue(
+        record?.customerName,
+        getStringValue(
+          record?.sourceLeadName,
+        ),
+      );
+
+    const initialProductNames =
+      initialItems
+        .map((item) =>
+          productsById.get(
+            item.productId,
+          )?.name,
+        )
+        .filter(
+          (
+            productName,
+          ): productName is string =>
+            Boolean(productName),
+        );
+
+    const automaticName =
+      !relationshipName
+        ? ""
+        : initialProductNames.length ===
+            0
+          ? relationshipName
+          : initialProductNames.length ===
+              1
+            ? `${relationshipName} - ${initialProductNames[0]}`
+            : `${relationshipName} - ${initialProductNames.length} productos`;
+
+    const initialName =
       getStringValue(
         record?.name,
+      );
+
+        setBranchId(
+      getStringValue(
+        record?.branchId,
+        primaryBranchId,
       ),
     );
 
-    setIsNameManuallyEdited(
-      mode === "edit" &&
-        Boolean(record?.name),
-    );
+    setName(initialName);
 
+    setIsNameManuallyEdited(false);
     setCustomerId(
       getStringValue(
         record?.customerId,
@@ -588,11 +646,7 @@ export default function DealFormDrawer({
     );
 
     setItems(
-      buildInitialItems(
-        mode === "edit"
-          ? record
-          : null,
-      ),
+      initialItems,
     );
 
     setFormError(null);
@@ -600,6 +654,8 @@ export default function DealFormDrawer({
     isOpen,
     mode,
     record,
+    primaryBranchId,
+    productsById,
     stageOptions,
     user?.id,
   ]);
@@ -607,7 +663,6 @@ export default function DealFormDrawer({
   useEffect(() => {
     if (
       !isOpen ||
-      mode === "edit" ||
       isNameManuallyEdited
     ) {
       return;
@@ -621,7 +676,6 @@ export default function DealFormDrawer({
       "";
 
     if (!relationshipName) {
-      setName("");
       return;
     }
 
@@ -782,6 +836,18 @@ export default function DealFormDrawer({
                 );
               }
 
+              const eligiblePromotions =
+                payload.data
+                  ?.promotions ?? [];
+
+              const eligiblePromotionIds =
+                new Set(
+                  eligiblePromotions.map(
+                    (promotion) =>
+                      promotion.id,
+                  ),
+                );
+
               setItems(
                 (current) =>
                   current.map(
@@ -791,10 +857,19 @@ export default function DealFormDrawer({
                         ? {
                             ...currentItem,
 
-                            eligiblePromotions:
-                              payload.data
-                                ?.promotions ??
-                              [],
+                            eligiblePromotions,
+
+                            promotionIds:
+                              currentItem
+                                .promotionIds
+                                .filter(
+                                  (
+                                    promotionId,
+                                  ) =>
+                                    eligiblePromotionIds.has(
+                                      promotionId,
+                                    ),
+                                ),
 
                             isLoadingPromotions:
                               false,
@@ -1078,6 +1153,13 @@ export default function DealFormDrawer({
 
     setFormError(null);
 
+    if (!branchId) {
+      setFormError(
+        "Selecciona una sucursal.",
+      );
+      return;
+    }
+
     if (!name.trim()) {
       setFormError(
         "El nombre de la oportunidad es obligatorio.",
@@ -1109,6 +1191,9 @@ export default function DealFormDrawer({
       items.some(
         (item) =>
           !item.productId ||
+          !Number.isInteger(
+            item.quantity,
+          ) ||
           item.quantity <= 0,
       )
     ) {
@@ -1138,6 +1223,8 @@ export default function DealFormDrawer({
               id: record.id,
             }
           : {}),
+
+        branchId,
 
         name:
           name.trim(),
@@ -1283,6 +1370,39 @@ export default function DealFormDrawer({
               </header>
 
               <div className="grid gap-5 p-5 sm:grid-cols-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  Sucursal *
+
+                  <select
+                    value={branchId}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950"
+                    onChange={(event) =>
+                      setBranchId(
+                        event.target.value,
+                      )
+                    }
+                  >
+                    <option value="">
+                      Selecciona una sucursal
+                    </option>
+
+                    {branches.map(
+                      (branch) => (
+                        <option
+                          key={
+                            branch.value
+                          }
+                          value={
+                            branch.value
+                          }
+                        >
+                          {branch.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+
                 <label className="text-sm font-semibold text-slate-700">
                   Nombre de la oportunidad *
 
@@ -1659,8 +1779,8 @@ export default function DealFormDrawer({
 
                             <input
                               type="number"
-                              min="0.001"
-                              step="0.001"
+                              min="1"
+                              step="1"
                               value={
                                 item.quantity
                               }

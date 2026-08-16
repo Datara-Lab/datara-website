@@ -8,6 +8,8 @@ import {
 
 import DocumentRelationPicker from "@/components/crm/DocumentRelationPicker";
 
+import Button from "@/components/ui/Button";
+
 import {
   CRM_DOCUMENT_CATEGORIES,
   type CRMDocumentRecord,
@@ -539,15 +541,16 @@ export default function DocumentDetailDrawer({
                   Cancelar
                 </button>
 
-                <button
+                                <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
+                  disabled={
+                    isSubmitting
+                  }
                 >
                   {isSubmitting
                     ? "Guardando..."
                     : "Guardar cambios"}
-                </button>
+                </Button>
               </div>
             </footer>
           </form>
@@ -743,16 +746,16 @@ export default function DocumentDetailDrawer({
                     Cerrar
                   </button>
 
-                  <button
-                    type="button"
-                    disabled={isSubmitting}
-                    className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-lg"
+                                    <Button
+                    disabled={
+                      isSubmitting
+                    }
                     onClick={() =>
                       setIsEditing(true)
                     }
                   >
                     Editar
-                  </button>
+                  </Button>
                 </div>
               </div>
             </footer>

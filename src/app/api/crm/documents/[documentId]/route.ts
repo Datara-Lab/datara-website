@@ -12,6 +12,11 @@ import {
   tenants,
 } from "@/db/schema";
 
+import {
+  CRMPermissionError,
+  requireCRMModulePermission,
+} from "@/lib/crm/permissions";
+
 export const dynamic =
   "force-dynamic";
 
@@ -116,13 +121,24 @@ async function getTenantId() {
     );
   }
 
+  await requireCRMModulePermission(
+    tenant.id,
+    userId,
+    "documents",
+    "edit",
+  );
+
   return tenant.id;
 }
 
 function createErrorResponse(
   error: unknown,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,

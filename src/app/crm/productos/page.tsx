@@ -10,6 +10,8 @@ import CRMDataTable, {
 
 import CRMRecordDrawer from "@/components/crm/CRMRecordDrawer";
 
+import ProductImagePanel from "@/components/crm/ProductImagePanel";
+
 import type {
   CRMFormValues,
 } from "@/components/crm/DynamicForm";
@@ -302,6 +304,53 @@ export default function ProductosPage() {
         module={productsModule}
         record={selectedRecord}
         isSubmitting={isSubmitting}
+        contentBefore={
+          selectedRecord?.id ? (
+            <ProductImagePanel
+              key={`${selectedRecord.id}-${String(
+                selectedRecord.imageUrl ?? "",
+              )}`}
+              productId={selectedRecord.id}
+              productName={
+                typeof selectedRecord.name ===
+                "string"
+                  ? selectedRecord.name
+                  : productsModule.singularLabel
+              }
+              imageUrl={
+                typeof selectedRecord.imageUrl ===
+                "string"
+                  ? selectedRecord.imageUrl
+                  : null
+              }
+              readOnly={
+                drawerMode === "view"
+              }
+              onUpdated={(imageUrl) => {
+                setSelectedRecord(
+                  (current) =>
+                    current
+                      ? {
+                          ...current,
+                          imageUrl,
+                          hasImage:
+                            Boolean(imageUrl),
+                        }
+                      : current,
+                );
+
+                setTableVersion(
+                  (current) =>
+                    current + 1,
+                );
+              }}
+            />
+          ) : drawerMode === "create" ? (
+            <section className="rounded-[28px] border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+              Guarda primero el producto para poder cargar su imagen.
+            </section>
+          ) : null
+        }
         onClose={closeDrawer}
         onEdit={openEditDrawer}
         onSubmit={

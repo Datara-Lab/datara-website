@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import DataraTableScroll from "@/components/shared/DataraTableScroll";
 import Button from "@/components/ui/Button";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -1725,7 +1726,7 @@ export default function CRMDataTable({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <DataraTableScroll>
         <table className="min-w-full">
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
@@ -1876,7 +1877,7 @@ export default function CRMDataTable({
             )}
           </tbody>
         </table>
-      </div>
+      </DataraTableScroll>
     </section>
   );
 }

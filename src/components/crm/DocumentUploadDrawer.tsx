@@ -9,6 +9,8 @@ import {
 
 import DocumentRelationPicker from "@/components/crm/DocumentRelationPicker";
 
+import Button from "@/components/ui/Button";
+
 import {
   CRM_DOCUMENT_CATEGORIES,
   type CRMDocumentRelationOption,
@@ -567,15 +569,16 @@ export default function DocumentUploadDrawer({
                 Cancelar
               </button>
 
-              <button
+              <Button
                 type="submit"
-                disabled={isSubmitting}
-                className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
+                disabled={
+                  isSubmitting
+                }
               >
                 {isSubmitting
                   ? "Cargando..."
                   : "Cargar documento"}
-              </button>
+              </Button>
             </div>
           </footer>
         </form>

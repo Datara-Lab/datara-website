@@ -8,13 +8,26 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import {
+  memberProductRoles,
+  roles,
   tenantMembers,
   tenants,
 } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(
+  request: Request,
+) {
+  const url =
+    new URL(request.url);
+
+  const roleKey =
+    url.searchParams
+      .get("roleKey")
+      ?.trim()
+      .toLowerCase() ??
+    null;
   const {
     userId,
     orgId,
@@ -76,14 +89,62 @@ export async function GET() {
       .select({
         clerkUserId:
           tenantMembers.clerkUserId,
+
         firstName:
           tenantMembers.firstName,
+
         lastName:
           tenantMembers.lastName,
+
         email:
           tenantMembers.email,
+
+        roleKey:
+          roles.key,
+
+        roleName:
+          roles.name,
       })
       .from(tenantMembers)
+      .leftJoin(
+        memberProductRoles,
+        and(
+          eq(
+            memberProductRoles
+              .tenantId,
+            tenant.id,
+          ),
+          eq(
+            memberProductRoles
+              .memberId,
+            tenantMembers.id,
+          ),
+          eq(
+            memberProductRoles
+              .product,
+            "crm",
+          ),
+          eq(
+            memberProductRoles
+              .enabled,
+            true,
+          ),
+        ),
+      )
+      .leftJoin(
+        roles,
+        and(
+          eq(
+            roles.id,
+            memberProductRoles
+              .roleId,
+          ),
+          eq(
+            roles.tenantId,
+            tenant.id,
+          ),
+        ),
+      )
       .where(
         and(
           eq(
@@ -94,12 +155,26 @@ export async function GET() {
             tenantMembers.status,
             "active",
           ),
+          roleKey
+            ? eq(
+                roles.key,
+                roleKey,
+              )
+            : undefined,
         ),
       )
       .orderBy(
-        asc(tenantMembers.firstName),
-        asc(tenantMembers.lastName),
-        asc(tenantMembers.email),
+        asc(
+          tenantMembers
+            .firstName,
+        ),
+        asc(
+          tenantMembers
+            .lastName,
+        ),
+        asc(
+          tenantMembers.email,
+        ),
       );
 
     const data = members.map(
@@ -125,6 +200,12 @@ export async function GET() {
           name,
           email:
             member.email,
+
+          roleKey:
+            member.roleKey,
+
+          roleName:
+            member.roleName,
         };
       },
     );

@@ -233,6 +233,23 @@ export function createDealsModule(
       },
 
       {
+        key: "branchName",
+        label: "Sucursal",
+        type: "text",
+        required: false,
+
+        showInForm: false,
+        showInTable: true,
+        showInDetail: true,
+        showInFilters: true,
+
+        tableOrder: 2,
+        detailOrder: 2,
+        tableWidth: "190px",
+      },
+
+
+      {
         key: "stage",
         label: "Etapa",
 

@@ -2,26 +2,45 @@ import {
   auth,
   currentUser,
 } from "@clerk/nextjs/server";
+
 import {
   and,
   desc,
   eq,
+  inArray,
+  sql,
 } from "drizzle-orm";
+
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
+
 import {
   crmCustomers,
   crmLeads,
   crmProducts,
+  tenantBranches,
   tenantMembers,
   tenants,
 } from "@/db/schema";
+
+import {
+  CRMBranchAccessError,
+  getCRMBranchAccess,
+  validateCRMBranchId,
+} from "@/lib/crm/branch-access";
+
+import {
+  CRMPermissionError,
+  type CRMModulePermission,
+  requireCRMModulePermission,
+} from "@/lib/crm/permissions";
 
 export const dynamic = "force-dynamic";
 
 type CustomerFormPayload = {
   id?: unknown;
+  branchId?: unknown;
   customerType?: unknown;
   name?: unknown;
   lastName?: unknown;
@@ -159,7 +178,10 @@ function validatePayload(
   return null;
 }
 
-async function getTenantContext() {
+async function getTenantContext(
+  permission:
+    CRMModulePermission,
+) {
   const {
     userId,
     orgId,
@@ -199,9 +221,28 @@ async function getTenantContext() {
     );
   }
 
+  const [
+    branchAccess,
+    permissions,
+  ] = await Promise.all([
+    getCRMBranchAccess(
+      tenant.id,
+      userId,
+    ),
+
+    requireCRMModulePermission(
+      tenant.id,
+      userId,
+      "contacts",
+      permission,
+    ),
+  ]);
+
   return {
     userId,
     tenantId: tenant.id,
+    branchAccess,
+    permissions,
   };
 }
 
@@ -371,7 +412,13 @@ function createErrorResponse(
   error: unknown,
   fallback: string,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMBranchAccessError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -436,11 +483,46 @@ export async function GET() {
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+      branchAccess,
+      permissions,
+    } = await getTenantContext(
+      "view",
+    );
+
+    const customerAccessCondition =
+      branchAccess.allBranches
+        ? eq(
+            crmCustomers.tenantId,
+            tenantId,
+          )
+        : and(
+            eq(
+              crmCustomers.tenantId,
+              tenantId,
+            ),
+
+            branchAccess.branchIds.length >
+            0
+              ? inArray(
+                  crmCustomers.branchId,
+                  branchAccess.branchIds,
+                )
+              : sql<boolean>`false`,
+          );
 
     const records = await db
-      .select({
+            .select({
         id: crmCustomers.id,
+
+        branchId:
+          crmCustomers.branchId,
+
+        branchName:
+          tenantBranches.name,
+
+        branchCode:
+          tenantBranches.code,
+
         customerType:
           crmCustomers.customerType,
         name: crmCustomers.name,
@@ -499,6 +581,19 @@ export async function GET() {
       })
       .from(crmCustomers)
       .leftJoin(
+        tenantBranches,
+        and(
+          eq(
+            crmCustomers.branchId,
+            tenantBranches.id,
+          ),
+          eq(
+            tenantBranches.tenantId,
+            tenantId,
+          ),
+        ),
+      )
+      .leftJoin(
         crmProducts,
         and(
           eq(
@@ -525,10 +620,7 @@ export async function GET() {
         ),
       )
       .where(
-        eq(
-          crmCustomers.tenantId,
-          tenantId,
-        ),
+        customerAccessCondition,
       )
       .orderBy(
         desc(
@@ -554,6 +646,31 @@ export async function GET() {
 
         return {
           id: record.id,
+
+          branchId:
+            record.branchId
+              ? {
+                  id:
+                    record.branchId,
+
+                  value:
+                    record.branchId,
+
+                  name:
+                    record.branchName ??
+                    "Sucursal",
+
+                  label:
+                    record.branchCode
+                      ? `${record.branchName ?? "Sucursal"} (${record.branchCode})`
+                      : record.branchName ??
+                        "Sucursal",
+
+                  code:
+                    record.branchCode,
+                }
+              : null,
+
           customerType:
             record.customerType,
 
@@ -645,6 +762,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data,
+      permissions,
       meta: {
         count: data.length,
         page: 1,
@@ -667,7 +785,10 @@ export async function POST(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+      branchAccess,
+    } = await getTenantContext(
+      "create",
+    );
 
     const body: unknown =
       await request.json();
@@ -681,6 +802,15 @@ export async function POST(
 
     const values =
       body as CustomerFormPayload;
+
+    const branchId =
+      await validateCRMBranchId(
+        tenantId,
+        branchAccess,
+        getOptionalString(
+          values.branchId,
+        ),
+      );
 
     const validationError =
       validatePayload(values);
@@ -736,6 +866,7 @@ export async function POST(
       .insert(crmCustomers)
       .values({
         tenantId,
+        branchId,
         customerType,
         name: customerName,
         lastName:
@@ -844,7 +975,31 @@ export async function PATCH(
     const {
       tenantId,
       userId,
-    } = await getTenantContext();
+      branchAccess,
+    } = await getTenantContext(
+      "edit",
+    );
+
+    const customerAccessCondition =
+      branchAccess.allBranches
+        ? eq(
+            crmCustomers.tenantId,
+            tenantId,
+          )
+        : and(
+            eq(
+              crmCustomers.tenantId,
+              tenantId,
+            ),
+
+            branchAccess.branchIds.length >
+            0
+              ? inArray(
+                  crmCustomers.branchId,
+                  branchAccess.branchIds,
+                )
+              : sql<boolean>`false`,
+          );
 
     const body: unknown =
       await request.json();
@@ -882,7 +1037,11 @@ export async function PATCH(
     const [existingCustomer] =
       await db
         .select({
-          id: crmCustomers.id,
+          id:
+            crmCustomers.id,
+
+          branchId:
+            crmCustomers.branchId,
         })
         .from(crmCustomers)
         .where(
@@ -891,10 +1050,8 @@ export async function PATCH(
               crmCustomers.id,
               recordId,
             ),
-            eq(
-              crmCustomers.tenantId,
-              tenantId,
-            ),
+
+            customerAccessCondition,
           ),
         )
         .limit(1);
@@ -905,6 +1062,16 @@ export async function PATCH(
         404,
       );
     }
+
+    const branchId =
+      await validateCRMBranchId(
+        tenantId,
+        branchAccess,
+        getOptionalString(
+          values.branchId,
+        ) ??
+          existingCustomer.branchId,
+      );
 
     const customerType =
       getOptionalString(
@@ -949,6 +1116,7 @@ export async function PATCH(
     const [customer] = await db
       .update(crmCustomers)
       .set({
+        branchId,
         customerType,
         name: customerName,
         lastName:
@@ -1026,10 +1194,8 @@ export async function PATCH(
             crmCustomers.id,
             recordId,
           ),
-          eq(
-            crmCustomers.tenantId,
-            tenantId,
-          ),
+
+          customerAccessCondition,
         ),
       )
       .returning({

@@ -8,7 +8,11 @@ import {
 } from "react";
 
 import ActivityFormDrawer from "@/components/crm/ActivityFormDrawer";
+
 import ActivityDetailDrawer from "@/components/crm/ActivityDetailDrawer";
+
+import Button from "@/components/ui/Button";
+
 import type {
   CRMActivityOption,
   CRMActivityRecord,
@@ -748,9 +752,8 @@ export default function ActivitiesWorkspace() {
                 </button>
 
                 <div className="relative">
-                  <button
-                    type="button"
-                    className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg"
+                  <Button
+                    className="w-full"
                     onClick={() => {
                       if (
                         selectedType ===
@@ -776,7 +779,7 @@ export default function ActivitiesWorkspace() {
                           "call"
                         ? "llamada ▾"
                         : "tarea"}
-                  </button>
+                  </Button>
 
                   {selectedType ===
                     "call" &&
@@ -986,9 +989,9 @@ export default function ActivitiesWorkspace() {
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() =>
                               openView(
                                 activity,
@@ -996,11 +999,11 @@ export default function ActivitiesWorkspace() {
                             }
                           >
                             Ver
-                          </button>
+                          </Button>
 
-                          <button
-                            type="button"
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() =>
                               openEdit(
                                 activity,
@@ -1008,7 +1011,31 @@ export default function ActivitiesWorkspace() {
                             }
                           >
                             Editar
-                          </button>
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              openView(
+                                activity,
+                              )
+                            }
+                          >
+                            Ver
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              openEdit(
+                                activity,
+                              )
+                            }
+                          >
+                            Editar
+                          </Button>
                         </div>
                       </td>
                     </tr>

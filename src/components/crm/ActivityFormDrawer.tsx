@@ -17,6 +17,8 @@ import type {
   CRMRelatedOption,
 } from "@/types/crm-activities";
 
+import Button from "@/components/ui/Button";
+
 type ActivityFormDrawerProps = {
   isOpen: boolean;
 
@@ -1752,25 +1754,24 @@ export default function ActivityFormDrawer({
               </button>
 
               {mode === "view" ? (
-                <button
-                  type="button"
-                  className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg"
+                <Button
                   onClick={onEdit}
                 >
                   Editar
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
+                  disabled={
+                    isSubmitting
+                  }
                 >
                   {isSubmitting
                     ? "Guardando..."
                     : mode === "create"
                       ? `Crear ${typeLabel}`
                       : "Guardar cambios"}
-                </button>
+                </Button>
               )}
             </div>
           </footer>

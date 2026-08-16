@@ -28,6 +28,15 @@ type OptionsResponse = {
   error?: string;
 };
 
+type BranchOptionsResponse = {
+  success: boolean;
+  data?: CRMFieldOption[];
+  primaryBranchId?:
+    | string
+    | null;
+  error?: string;
+};
+
 type CustomerWriteResponse = {
   success: boolean;
   message?: string;
@@ -59,6 +68,16 @@ export default function ClientesPage() {
   ] = useState<CRMFieldOption[]>([]);
 
   const [
+    branchOptions,
+    setBranchOptions,
+  ] = useState<CRMFieldOption[]>([]);
+
+  const [
+    primaryBranchId,
+    setPrimaryBranchId,
+  ] = useState("");
+
+  const [
     optionsError,
     setOptionsError,
   ] = useState<string | null>(null);
@@ -74,6 +93,7 @@ export default function ClientesPage() {
         const [
           productsResponse,
           membersResponse,
+          branchesResponse,
         ] = await Promise.all([
           fetch(
             "/api/crm/products",
@@ -92,6 +112,15 @@ export default function ClientesPage() {
                 controller.signal,
             },
           ),
+
+          fetch(
+            "/api/crm/branches/options",
+            {
+              cache: "no-store",
+              signal:
+                controller.signal,
+            },
+          ),
         ]);
 
         const productsPayload =
@@ -99,6 +128,10 @@ export default function ClientesPage() {
 
         const membersPayload =
           (await membersResponse.json()) as OptionsResponse;
+
+        const branchesPayload =
+          (await branchesResponse.json()) as
+            BranchOptionsResponse;
 
         if (
           !productsResponse.ok ||
@@ -120,12 +153,31 @@ export default function ClientesPage() {
           );
         }
 
+        if (
+          !branchesResponse.ok ||
+          !branchesPayload.success
+        ) {
+          throw new Error(
+            branchesPayload.error ??
+              "No fue posible cargar las sucursales.",
+          );
+        }
+
         setProductOptions(
           productsPayload.data ?? [],
         );
 
         setMemberOptions(
           membersPayload.data ?? [],
+        );
+
+        setBranchOptions(
+          branchesPayload.data ?? [],
+        );
+
+        setPrimaryBranchId(
+          branchesPayload.primaryBranchId ??
+            "",
         );
       } catch (error) {
         if (
@@ -166,6 +218,21 @@ export default function ClientesPage() {
             .fields.map((field) => {
               if (
                 field.key ===
+                "branchId"
+              ) {
+                return {
+                  ...field,
+
+                  options:
+                    branchOptions,
+
+                  defaultValue:
+                    primaryBranchId,
+                };
+              }
+
+              if (
+                field.key ===
                 "productId"
               ) {
                 return {
@@ -191,6 +258,8 @@ export default function ClientesPage() {
       };
     }, [
       configuredCustomersModule,
+      branchOptions,
+      primaryBranchId,
       productOptions,
       memberOptions,
     ]);

@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import {
+  type ReactNode,
+  useEffect,
+} from "react";
 
 import DynamicForm, {
   type CRMFormValues,
@@ -26,9 +29,17 @@ type CRMRecordDrawerProps = {
   record?: CRMRecord | null;
 
   isSubmitting?: boolean;
+  isConverting?: boolean;
+
+  contentBefore?:
+    ReactNode;
 
   onClose: () => void;
   onEdit?: (record: CRMRecord) => void;
+
+  onConvert?: (
+    record: CRMRecord,
+  ) => void | Promise<void>;
 
   onSubmit?: (
     values: CRMFormValues,
@@ -681,8 +692,11 @@ export default function CRMRecordDrawer({
   module,
   record,
   isSubmitting = false,
+  isConverting = false,
+  contentBefore,
   onClose,
   onEdit,
+  onConvert,
   onSubmit,
 }: CRMRecordDrawerProps) {
   const detailFields =
@@ -894,6 +908,12 @@ export default function CRMRecordDrawer({
         </header>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+          {contentBefore && (
+            <div className="mb-6">
+              {contentBefore}
+            </div>
+          )}
+
           {mode === "view" && record ? (
             <div className="space-y-6">
               {detailSections.map(
@@ -1078,6 +1098,26 @@ export default function CRMRecordDrawer({
               >
                 Cerrar
               </Button>
+
+              {record &&
+                onConvert &&
+                record.leadStatus !==
+                  "Convertido" && (
+                  <Button
+                    disabled={
+                      isConverting
+                    }
+                    onClick={() =>
+                      void onConvert(
+                        record,
+                      )
+                    }
+                  >
+                    {isConverting
+                      ? "Convirtiendo..."
+                      : "Convertir en cliente"}
+                  </Button>
+                )}
 
               {record &&
                 onEdit &&

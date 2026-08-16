@@ -28,6 +28,15 @@ type OptionsResponse = {
   error?: string;
 };
 
+type BranchOptionsResponse = {
+  success: boolean;
+  data?: CRMFieldOption[];
+  primaryBranchId?:
+    | string
+    | null;
+  error?: string;
+};
+
 type LeadWriteResponse = {
   success: boolean;
   message?: string;
@@ -59,21 +68,39 @@ export default function ProspectosPage() {
   ] = useState<CRMFieldOption[]>([]);
 
   const [
+    branchOptions,
+    setBranchOptions,
+  ] = useState<CRMFieldOption[]>([]);
+
+  const [
+    primaryBranchId,
+    setPrimaryBranchId,
+  ] = useState("");
+
+  const [
     optionsError,
     setOptionsError,
   ] = useState<string | null>(null);
+
+  const [
+    areOptionsLoading,
+    setAreOptionsLoading,
+  ] = useState(true);
 
   useEffect(() => {
     const controller =
       new AbortController();
 
-    async function loadOptions() {
+async function loadOptions() {
+      setAreOptionsLoading(true);
+
       try {
         setOptionsError(null);
 
         const [
           productsResponse,
           membersResponse,
+          branchesResponse,
         ] = await Promise.all([
           fetch(
             "/api/crm/products",
@@ -92,6 +119,15 @@ export default function ProspectosPage() {
                 controller.signal,
             },
           ),
+
+          fetch(
+            "/api/crm/branches/options",
+            {
+              cache: "no-store",
+              signal:
+                controller.signal,
+            },
+          ),
         ]);
 
         const productsPayload =
@@ -99,6 +135,10 @@ export default function ProspectosPage() {
 
         const membersPayload =
           (await membersResponse.json()) as OptionsResponse;
+
+        const branchesPayload =
+          (await branchesResponse.json()) as
+            BranchOptionsResponse;
 
         if (
           !productsResponse.ok ||
@@ -120,12 +160,31 @@ export default function ProspectosPage() {
           );
         }
 
+        if (
+          !branchesResponse.ok ||
+          !branchesPayload.success
+        ) {
+          throw new Error(
+            branchesPayload.error ??
+              "No fue posible cargar las sucursales.",
+          );
+        }
+
         setProductOptions(
           productsPayload.data ?? [],
         );
 
         setMemberOptions(
           membersPayload.data ?? [],
+        );
+
+        setBranchOptions(
+          branchesPayload.data ?? [],
+        );
+
+        setPrimaryBranchId(
+          branchesPayload.primaryBranchId ??
+            "",
         );
       } catch (error) {
         if (
@@ -140,11 +199,12 @@ export default function ProspectosPage() {
             ? error.message
             : "No fue posible cargar las opciones del formulario.",
         );
+      } finally {
+        setAreOptionsLoading(false);
       }
     }
 
     void loadOptions();
-
     return () => {
       controller.abort();
     };
@@ -162,6 +222,21 @@ export default function ProspectosPage() {
         fields:
           configuredLeadsModule.fields.map(
             (field) => {
+              if (
+                field.key ===
+                "branchId"
+              ) {
+                return {
+                  ...field,
+
+                  options:
+                    branchOptions,
+
+                  defaultValue:
+                    primaryBranchId,
+                };
+              }
+
               if (
                 field.key ===
                 "productId"
@@ -190,6 +265,8 @@ export default function ProspectosPage() {
       };
     }, [
       configuredLeadsModule,
+      branchOptions,
+      primaryBranchId,
       productOptions,
       memberOptions,
     ]);
@@ -217,6 +294,11 @@ export default function ProspectosPage() {
   ] = useState(false);
 
   const [
+    isConverting,
+    setIsConverting,
+  ] = useState(false);
+
+  const [
     tableVersion,
     setTableVersion,
   ] = useState(0);
@@ -236,6 +318,13 @@ export default function ProspectosPage() {
   );
 
   function openCreateDrawer() {
+    if (areOptionsLoading) {
+      setOptionsError(
+        "Espera un momento mientras se cargan los modelos y responsables.",
+      );
+      return;
+    }
+
     setSelectedRecord(null);
     setDrawerMode("create");
     setSubmitError(null);
@@ -255,11 +344,94 @@ export default function ProspectosPage() {
   function openEditDrawer(
     record: CRMRecord,
   ) {
+    if (areOptionsLoading) {
+      setOptionsError(
+        "Espera un momento mientras se cargan los modelos y responsables.",
+      );
+      return;
+    }
+
     setSelectedRecord(record);
     setDrawerMode("edit");
     setSubmitError(null);
     setSuccessMessage(null);
     setIsDrawerOpen(true);
+  }
+
+    async function convertLead(
+    record: CRMRecord,
+  ) {
+    const confirmed =
+      window.confirm(
+        "¿Convertir este prospecto en cliente? El prospecto se marcará como convertido y conservará su historial.",
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsConverting(true);
+    setSubmitError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response =
+        await fetch(
+          "/api/crm/leads/convert",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              leadId:
+                record.id,
+            }),
+          },
+        );
+
+      const result =
+        (await response.json()) as {
+          success: boolean;
+          message?: string;
+          error?: string;
+        };
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.error ??
+            "No fue posible convertir el prospecto.",
+        );
+      }
+
+      setSuccessMessage(
+        result.message ??
+          "El prospecto fue convertido en cliente.",
+      );
+
+      setTableVersion(
+        (current) =>
+          current + 1,
+      );
+
+      setIsDrawerOpen(false);
+      setSelectedRecord(null);
+      setDrawerMode("view");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "No fue posible convertir el prospecto.",
+      );
+    } finally {
+      setIsConverting(false);
+    }
   }
 
   function closeDrawer() {
@@ -490,9 +662,15 @@ export default function ProspectosPage() {
         isSubmitting={
           isSubmitting
         }
+        isConverting={
+          isConverting
+        }
         onClose={closeDrawer}
         onEdit={
           openEditDrawer
+        }
+        onConvert={
+          convertLead
         }
         onSubmit={
           handleDrawerSubmit

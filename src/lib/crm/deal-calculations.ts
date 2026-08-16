@@ -12,6 +12,14 @@ export type DealPromotionInput = {
 
   availableMonths?: string[];
 
+  promotionEnd?:
+    | string
+    | null;
+
+  promotionEndDate?:
+    | string
+    | null;
+
   minimumDownPayment?:
     | number
     | null;

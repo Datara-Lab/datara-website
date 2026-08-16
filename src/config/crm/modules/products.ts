@@ -1,4 +1,5 @@
 import type {
+  CRMFieldConfig,
   CRMFieldOption,
   CRMModuleConfig,
   CRMTerminologyConfig,
@@ -20,11 +21,17 @@ function getFieldLabel(
 
 export function createProductsModule(
   terminology?: CRMTerminologyConfig,
+
   catalogs?: Record<
     string,
     CRMFieldOption[]
   >,
+
+  industryId?: string,
 ): CRMModuleConfig {
+  const supportsMotorcycleDetails =
+    industryId ===
+    "motorcycle_dealership";
   const moduleTerminology =
     terminology?.modules.products;
 
@@ -73,12 +80,25 @@ export function createProductsModule(
         columns: 2,
       },
 
+      ...(supportsMotorcycleDetails
+        ? [
+            {
+              id: "technical",
+              title: "Ficha técnica",
+              description:
+                "Especificaciones reutilizables en cotizaciones e inventario.",
+              order: 2,
+              columns: 2 as const,
+            },
+          ]
+        : []),
+
       {
         id: "commercial",
         title: "Información comercial",
         description:
           "Precio, moneda y disponibilidad.",
-        order: 2,
+        order: 3,
         columns: 2,
       },
     ],
@@ -234,8 +254,317 @@ export function createProductsModule(
         formSpan: 2,
       },
 
+...(supportsMotorcycleDetails
+  ? [
       {
-        key: "unitPrice",
+        key: "modelYear",
+        label: "Año del modelo",
+        placeholder: "Ej. 2026",
+
+        type: "text",
+          required: false,
+
+          validation: {
+            pattern:
+              "^(19|20|21)\\d{2}$",
+            maxLength: 4,
+            message:
+              "Captura un año de cuatro dígitos.",
+          },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 5,
+        detailOrder: 5,
+
+        formSectionId:
+          "technical",
+        formRow: 1,
+        formColumn: 1,
+      },
+
+      {
+        key: "colors",
+        label: "Colores disponibles",
+        placeholder:
+          "Ej. Negro, blanco, rojo",
+
+        description:
+          "Separa cada color con una coma.",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 500,
+          message:
+            "La lista de colores es demasiado extensa.",
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 6,
+        detailOrder: 6,
+
+        formSectionId:
+          "technical",
+        formRow: 1,
+        formColumn: 2,
+      },
+
+      {
+        key: "engine",
+        label: "Motor",
+        placeholder:
+          "Ej. 4 tiempos, monocilíndrico, DOHC",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 250,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 7,
+        detailOrder: 7,
+
+        formSectionId:
+          "technical",
+        formRow: 2,
+        formColumn: 1,
+      },
+
+      {
+        key: "displacement",
+        label: "Cilindrada",
+        placeholder: "Ej. 449 cc",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 100,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 8,
+        detailOrder: 8,
+
+        formSectionId:
+          "technical",
+        formRow: 2,
+        formColumn: 2,
+      },
+
+      {
+        key: "power",
+        label: "Potencia",
+        placeholder:
+          "Ej. 50 HP a 9,500 rpm",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 150,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 9,
+        detailOrder: 9,
+
+        formSectionId:
+          "technical",
+        formRow: 3,
+        formColumn: 1,
+      },
+
+      {
+        key: "coolingSystem",
+        label:
+          "Sistema de enfriamiento",
+        placeholder:
+          "Ej. Refrigeración líquida",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 150,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 10,
+        detailOrder: 10,
+
+        formSectionId:
+          "technical",
+        formRow: 3,
+        formColumn: 2,
+      },
+
+      {
+        key: "transmission",
+        label: "Transmisión",
+        placeholder:
+          "Ej. 6 velocidades",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 150,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 11,
+        detailOrder: 11,
+
+        formSectionId:
+          "technical",
+        formRow: 4,
+        formColumn: 1,
+      },
+
+      {
+        key: "fuelCapacity",
+        label:
+          "Capacidad del tanque",
+        placeholder: "Ej. 14 litros",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 100,
+        },
+      showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 12,
+        detailOrder: 12,
+
+        formSectionId:
+          "technical",
+        formRow: 4,
+        formColumn: 2,
+      },
+
+      {
+        key: "loadCapacity",
+        label:
+          "Capacidad de carga",
+        placeholder: "Ej. 153 kg",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 100,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 13,
+        detailOrder: 13,
+
+        formSectionId:
+          "technical",
+        formRow: 5,
+        formColumn: 1,
+      },
+
+      {
+        key: "passengerCapacity",
+        label:
+          "Capacidad de pasajeros",
+        placeholder: "Ej. 2 personas",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 100,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 14,
+        detailOrder: 14,
+
+        formSectionId:
+          "technical",
+        formRow: 5,
+        formColumn: 2,
+      },
+
+      {
+        key: "warranty",
+        label: "Garantía",
+        placeholder:
+          "Ej. 2 años o 40,000 km",
+
+        type: "text",
+        required: false,
+
+        validation: {
+          maxLength: 250,
+        },
+
+        showInForm: true,
+        showInTable: false,
+        showInDetail: true,
+        showInFilters: false,
+
+        formOrder: 15,
+        detailOrder: 15,
+
+          formSectionId:
+            "technical",
+          formRow: 6,
+          formColumn: 1,
+          formSpan: 2,
+        },
+          ] as CRMFieldConfig[]
+        : []),
+
+        {
+          key: "unitPrice",
 
         label: getFieldLabel(
           terminology,

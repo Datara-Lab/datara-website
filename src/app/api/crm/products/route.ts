@@ -13,17 +13,40 @@ import {
   tenants,
 } from "@/db/schema";
 
+import {
+  CRMPermissionError,
+  type CRMModulePermission,
+  requireCRMModulePermission,
+} from "@/lib/crm/permissions";
+
 export const dynamic = "force-dynamic";
 
 type ProductFormPayload = {
   id?: unknown;
+
   name?: unknown;
   code?: unknown;
   description?: unknown;
   category?: unknown;
+
   unitPrice?: unknown;
   currency?: unknown;
   active?: unknown;
+
+  modelYear?: unknown;
+  colors?: unknown;
+
+  engine?: unknown;
+  displacement?: unknown;
+  power?: unknown;
+  coolingSystem?: unknown;
+  transmission?: unknown;
+
+  fuelCapacity?: unknown;
+  loadCapacity?: unknown;
+  passengerCapacity?: unknown;
+
+  warranty?: unknown;
 };
 
 class ApiError extends Error {
@@ -119,19 +142,53 @@ function validateProduct(
 
 function mapProductValues(
   values: ProductFormPayload,
+  currentMetadata:
+    Record<string, unknown> = {},
 ) {
-  const unitPrice = getOptionalNumber(
-    values.unitPrice,
-  );
+  const unitPrice =
+    getOptionalNumber(
+      values.unitPrice,
+    );
+
+  const currentTechnical =
+    isRecord(
+      currentMetadata
+        .technicalSpecifications,
+    )
+      ? currentMetadata
+          .technicalSpecifications
+      : {};
+
+  const colorsValue =
+    getOptionalString(
+      values.colors,
+    );
+
+  const colors =
+    colorsValue
+      ? Array.from(
+          new Set(
+            colorsValue
+              .split(",")
+              .map(
+                (color) =>
+                  color.trim(),
+              )
+              .filter(Boolean),
+          ),
+        )
+      : [];
 
   return {
     name:
-      getOptionalString(values.name) ??
-      "",
+      getOptionalString(
+        values.name,
+      ) ?? "",
 
     code:
-      getOptionalString(values.code) ??
-      null,
+      getOptionalString(
+        values.code,
+      ) ?? null,
 
     description:
       getOptionalString(
@@ -143,23 +200,89 @@ function mapProductValues(
         values.category,
       ) ?? null,
 
-    unitPrice: String(
-      unitPrice ?? 0,
-    ),
+    unitPrice:
+      String(
+        unitPrice ?? 0,
+      ),
 
     currency:
       getOptionalString(
         values.currency,
-      )?.toLowerCase() ?? "mxn",
+      )?.toLowerCase() ??
+      "mxn",
 
-    active: getBoolean(
-      values.active,
-      true,
-    ),
+    active:
+      getBoolean(
+        values.active,
+        true,
+      ),
+
+    metadata: {
+      ...currentMetadata,
+
+      technicalSpecifications: {
+        ...currentTechnical,
+
+        modelYear:
+          getOptionalNumber(
+            values.modelYear,
+          ) ?? null,
+
+        colors,
+
+        engine:
+          getOptionalString(
+            values.engine,
+          ) ?? null,
+
+        displacement:
+          getOptionalString(
+            values.displacement,
+          ) ?? null,
+
+        power:
+          getOptionalString(
+            values.power,
+          ) ?? null,
+
+        coolingSystem:
+          getOptionalString(
+            values.coolingSystem,
+          ) ?? null,
+
+        transmission:
+          getOptionalString(
+            values.transmission,
+          ) ?? null,
+
+        fuelCapacity:
+          getOptionalString(
+            values.fuelCapacity,
+          ) ?? null,
+
+        loadCapacity:
+          getOptionalString(
+            values.loadCapacity,
+          ) ?? null,
+
+        passengerCapacity:
+          getOptionalString(
+            values.passengerCapacity,
+          ) ?? null,
+
+        warranty:
+          getOptionalString(
+            values.warranty,
+          ) ?? null,
+      },
+    },
   };
 }
 
-async function getTenantContext() {
+async function getTenantContext(
+  permission:
+    CRMModulePermission,
+) {
   const {
     userId,
     orgId,
@@ -199,9 +322,18 @@ async function getTenantContext() {
     );
   }
 
+  const permissions =
+    await requireCRMModulePermission(
+      tenant.id,
+      userId,
+      "products",
+      permission,
+    );
+
   return {
     userId,
     tenantId: tenant.id,
+    permissions,
   };
 }
 
@@ -218,7 +350,11 @@ function createErrorResponse(
   error: unknown,
   fallback: string,
 ) {
-  if (error instanceof ApiError) {
+  if (
+    error instanceof ApiError ||
+    error instanceof
+      CRMPermissionError
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -263,9 +399,41 @@ function serializeProduct(
     ? `${product.name} (${product.code})`
     : product.name;
 
-const label = product.active
-  ? baseLabel
-  : `${baseLabel} · Inactivo`;
+  const label =
+    product.active
+      ? baseLabel
+      : `${baseLabel} · Inactivo`;
+
+  const technicalSpecifications =
+    isRecord(
+      product.metadata
+        ?.technicalSpecifications,
+    )
+      ? product.metadata
+          .technicalSpecifications
+      : {};
+
+  const technicalString = (
+    key: string,
+  ): string => {
+    const value =
+      technicalSpecifications[key];
+
+    return typeof value ===
+      "string"
+      ? value
+      : "";
+  };
+
+  const technicalColors =
+    Array.isArray(
+      technicalSpecifications.colors,
+    )
+      ? technicalSpecifications.colors
+          .map(String)
+          .filter(Boolean)
+          .join(", ")
+      : "";
 
   return {
     id: product.id,
@@ -273,7 +441,78 @@ const label = product.active
     name: product.name,
     code: product.code,
     description: product.description,
-    category: product.category,
+
+    hasImage:
+      Boolean(
+        product.imageObjectKey,
+      ),
+
+    imageUrl:
+      product.imageObjectKey
+        ? `/api/crm/products/${product.id}/image`
+        : null,
+
+    category:
+      product.category,
+
+    modelYear:
+      typeof technicalSpecifications
+        .modelYear === "number" ||
+      typeof technicalSpecifications
+        .modelYear === "string"
+        ? String(
+            technicalSpecifications
+              .modelYear,
+          )
+        : "",
+
+    colors:
+      technicalColors,
+
+    engine:
+      technicalString(
+        "engine",
+      ),
+
+    displacement:
+      technicalString(
+        "displacement",
+      ),
+
+    power:
+      technicalString(
+        "power",
+      ),
+
+    coolingSystem:
+      technicalString(
+        "coolingSystem",
+      ),
+
+    transmission:
+      technicalString(
+        "transmission",
+      ),
+
+    fuelCapacity:
+      technicalString(
+        "fuelCapacity",
+      ),
+
+    loadCapacity:
+      technicalString(
+        "loadCapacity",
+      ),
+
+    passengerCapacity:
+      technicalString(
+        "passengerCapacity",
+      ),
+
+    warranty:
+      technicalString(
+        "warranty",
+      ),
 
     unitPrice: Number(
       product.unitPrice,
@@ -303,7 +542,10 @@ export async function GET(
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+      permissions,
+    } = await getTenantContext(
+      "view",
+    );
 
     const url = new URL(request.url);
 
@@ -343,6 +585,7 @@ export async function GET(
       data: products.map(
         serializeProduct,
       ),
+      permissions,
       meta: {
         count: products.length,
       },
@@ -361,7 +604,9 @@ export async function POST(
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "create",
+    );
 
     const requestBody: unknown =
       await request.json();
@@ -424,7 +669,9 @@ export async function PATCH(
   try {
     const {
       tenantId,
-    } = await getTenantContext();
+    } = await getTenantContext(
+      "edit",
+    );
 
     const requestBody: unknown =
       await request.json();
@@ -449,6 +696,35 @@ export async function PATCH(
       );
     }
 
+    const [existingProduct] =
+      await db
+        .select({
+          metadata:
+            crmProducts.metadata,
+        })
+        .from(crmProducts)
+        .where(
+          and(
+            eq(
+              crmProducts.id,
+              productId,
+            ),
+
+            eq(
+              crmProducts.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .limit(1);
+
+    if (!existingProduct) {
+      throw new ApiError(
+        "El producto no existe o no pertenece a la empresa.",
+        404,
+      );
+    }
+
     const validationError =
       validateProduct(values);
 
@@ -460,7 +736,10 @@ export async function PATCH(
     }
 
     const productValues =
-      mapProductValues(values);
+      mapProductValues(
+        values,
+        existingProduct.metadata,
+      );
 
     const [product] = await db
       .update(crmProducts)
