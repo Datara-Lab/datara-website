@@ -1,0 +1,1 @@
+ALTER TABLE "crm_products" ADD COLUMN "product" "product_access";

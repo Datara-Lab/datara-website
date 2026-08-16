@@ -1,0 +1,1 @@
+ALTER TABLE "commercial_purchases" ADD COLUMN "product_key" text DEFAULT 'crm' NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE "crm_products" ADD COLUMN "image_object_key" text;

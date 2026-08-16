@@ -1,0 +1,3 @@
+ALTER TABLE "inventory_stocks" ADD CONSTRAINT "inventory_stocks_quantity_nonnegative" CHECK ("inventory_stocks"."quantity" >= 0);--> statement-breakpoint
+ALTER TABLE "inventory_stocks" ADD CONSTRAINT "inventory_stocks_reserved_nonnegative" CHECK ("inventory_stocks"."reserved_quantity" >= 0);--> statement-breakpoint
+ALTER TABLE "inventory_stocks" ADD CONSTRAINT "inventory_stocks_reserved_lte_quantity" CHECK ("inventory_stocks"."reserved_quantity" <= "inventory_stocks"."quantity");
