@@ -8,6 +8,7 @@
 		"global_fetch_strictly_public"
 	],
 	"keep_vars": true,
+	"minify": true,
 	"triggers": {
 		"crons": [
 			"0 15 * * *"
