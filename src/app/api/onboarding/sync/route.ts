@@ -3,16 +3,35 @@ import {
   clerkClient,
   currentUser,
 } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import {
+  and,
+  eq,
+} from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import {
+  commercialPurchases,
+  memberProductRoles,
   roles,
+  subscriptions,
   tenantMembers,
   tenantProducts,
   tenants,
+  trialRedemptions,
 } from "@/db/schema";
+
+import {
+  provisionCRMTemplateRoles,
+} from "@/lib/crm/provision-template-roles";
+
+import {
+  provisionCRMModuleEntitlements,
+} from "@/lib/crm/provision-module-entitlements";
+
+import {
+  getDataraProvisioningMetadata,
+} from "@/lib/onboarding/provisioning-metadata";
 
 const supportedProducts = [
   "crm",
@@ -79,6 +98,54 @@ function getProducts(
   );
 }
 
+function getIndustry(
+  metadata: unknown,
+):
+  | "motorcycle_dealership"
+  | "automotive_dealership"
+  | "veterinary"
+  | "real_estate"
+  | "retail"
+  | "professional_services"
+  | "other"
+  | null {
+  if (
+    typeof metadata !==
+      "object" ||
+    metadata === null
+  ) {
+    return null;
+  }
+
+  const industry =
+    (
+      metadata as {
+        industry?: unknown;
+      }
+    ).industry;
+
+  if (
+    industry ===
+      "motorcycle_dealership" ||
+    industry ===
+      "automotive_dealership" ||
+    industry ===
+      "veterinary" ||
+    industry ===
+      "real_estate" ||
+    industry ===
+      "retail" ||
+    industry ===
+      "professional_services" ||
+    industry ===
+      "other"
+  ) {
+    return industry;
+  }
+
+  return null;
+}
+
 function getLocalRoleKey(
   clerkRole?: string | null,
 ) {
@@ -94,11 +161,14 @@ function getLocalRoleKey(
   }
 }
 
-export async function POST() {
+export async function POST(
+  request: Request,
+) {
   const {
     userId,
     orgId,
-    orgRole,
+    orgRole:
+      activeOrganizationRole,
   } = await auth();
 
   if (!userId) {
@@ -113,7 +183,33 @@ export async function POST() {
     );
   }
 
-  if (!orgId) {
+  let requestedOrganizationId:
+    string | null = null;
+
+  try {
+    const requestBody =
+      (await request.json()) as {
+        organizationId?: unknown;
+      };
+
+    requestedOrganizationId =
+      typeof requestBody
+        .organizationId ===
+        "string"
+        ? requestBody
+            .organizationId
+            .trim() || null
+        : null;
+  } catch {
+    requestedOrganizationId =
+      null;
+  }
+
+  const organizationId =
+    requestedOrganizationId ??
+    orgId;
+
+  if (!organizationId) {
     return NextResponse.json(
       {
         success: false,
@@ -130,10 +226,45 @@ export async function POST() {
     const user = await currentUser();
     const clerk = await clerkClient();
 
+    const memberships =
+      await clerk.organizations
+        .getOrganizationMembershipList({
+          organizationId,
+
+          userId: [
+            userId,
+          ],
+
+          limit: 1,
+        });
+
+    const membership =
+      memberships.data[0];
+
+    if (!membership) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "No tienes acceso a la organización solicitada.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    const orgRole =
+      organizationId === orgId
+        ? activeOrganizationRole ??
+          membership.role
+        : membership.role;
+
     const organization =
-      await clerk.organizations.getOrganization({
-        organizationId: orgId,
-      });
+      await clerk.organizations
+        .getOrganization({
+          organizationId,
+        });
 
     if (!user) {
       return NextResponse.json(
@@ -154,6 +285,47 @@ export async function POST() {
         organization.publicMetadata,
       );
 
+    const organizationIndustry =
+      getIndustry(
+        organization.publicMetadata,
+      );
+
+    const provisioningMetadata =
+      getDataraProvisioningMetadata(
+        organization.publicMetadata,
+      );
+
+    const organizationTaxId =
+      typeof organization
+        .privateMetadata
+        .taxId === "string"
+        ? organization
+            .privateMetadata
+            .taxId
+            .trim()
+            .toUpperCase()
+        : null;
+
+    const trialRedemptionId =
+      typeof organization
+        .privateMetadata
+        .trialRedemptionId ===
+        "string"
+        ? organization
+            .privateMetadata
+            .trialRedemptionId
+        : null;
+
+    const commercialPurchaseId =
+      typeof organization
+        .privateMetadata
+        .commercialPurchaseId ===
+        "string"
+        ? organization
+            .privateMetadata
+            .commercialPurchaseId
+        : null;
+
     const [tenant] = await db
       .insert(tenants)
       .values({
@@ -163,6 +335,13 @@ export async function POST() {
           organization.slug ??
           organization.id,
         name: organization.name,
+
+        industry:
+          organizationIndustry,
+
+        taxId:
+          organizationTaxId,
+
         status: "provisioning",
         metadata: {
           clerkPublicMetadata:
@@ -178,6 +357,15 @@ export async function POST() {
             organization.slug ??
             organization.id,
           name: organization.name,
+
+          industry:
+            organizationIndustry ??
+            undefined,
+
+          taxId:
+            organizationTaxId ??
+            undefined,
+
           metadata: {
             clerkPublicMetadata:
               organization.publicMetadata,
@@ -213,6 +401,14 @@ export async function POST() {
         ],
       });
 
+    if (tenant.industry) {
+      await provisionCRMTemplateRoles(
+        tenant.id,
+        tenant.name,
+        tenant.industry,
+      );
+    }
+
     const tenantRoles = await db
       .select()
       .from(roles)
@@ -223,17 +419,74 @@ export async function POST() {
         ),
       );
 
+    const ownerRole =
+      tenantRoles.find(
+        (role) =>
+          role.key === "owner" &&
+          role.product === null,
+      );
+
+    const [existingOwner] =
+      ownerRole
+        ? await db
+            .select({
+              id:
+                tenantMembers.id,
+
+              clerkUserId:
+                tenantMembers
+                  .clerkUserId,
+            })
+            .from(tenantMembers)
+            .where(
+              and(
+                eq(
+                  tenantMembers
+                    .tenantId,
+                  tenant.id,
+                ),
+                eq(
+                  tenantMembers
+                    .roleId,
+                  ownerRole.id,
+                ),
+                eq(
+                  tenantMembers.status,
+                  "active",
+                ),
+              ),
+            )
+            .limit(1)
+        : [];
+
+    const isExistingOwner =
+      existingOwner
+        ?.clerkUserId ===
+      userId;
+
     const localRoleKey =
-      getLocalRoleKey(orgRole);
+      isExistingOwner ||
+      (
+        !existingOwner &&
+        orgRole ===
+          "org:admin"
+      )
+        ? "owner"
+        : getLocalRoleKey(
+            orgRole,
+          );
 
     const assignedRole =
       tenantRoles.find(
         (role) =>
-          role.key === localRoleKey,
+          role.key ===
+            localRoleKey &&
+          role.product === null,
       ) ??
       tenantRoles.find(
         (role) =>
-          role.key === "user",
+          role.key === "user" &&
+          role.product === null,
       );
 
     const primaryEmail =
@@ -257,28 +510,12 @@ export async function POST() {
       );
     }
 
-    await db
-      .insert(tenantMembers)
-      .values({
-        tenantId: tenant.id,
-        clerkUserId: user.id,
-        roleId:
-          assignedRole?.id ?? null,
-        email:
-          primaryEmail.emailAddress,
-        firstName:
-          user.firstName ?? null,
-        lastName:
-          user.lastName ?? null,
-        status: "active",
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [
-          tenantMembers.tenantId,
-          tenantMembers.clerkUserId,
-        ],
-        set: {
+    const [member] =
+      await db
+        .insert(tenantMembers)
+        .values({
+          tenantId: tenant.id,
+          clerkUserId: user.id,
           roleId:
             assignedRole?.id ?? null,
           email:
@@ -289,8 +526,82 @@ export async function POST() {
             user.lastName ?? null,
           status: "active",
           updatedAt: now,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [
+            tenantMembers.tenantId,
+            tenantMembers.clerkUserId,
+          ],
+          set: {
+            roleId:
+              assignedRole?.id ?? null,
+            email:
+              primaryEmail.emailAddress,
+            firstName:
+              user.firstName ?? null,
+            lastName:
+              user.lastName ?? null,
+            status: "active",
+            updatedAt: now,
+          },
+        })
+        .returning({
+          id:
+            tenantMembers.id,
+        });
+
+    if (!member) {
+      throw new Error(
+        "No fue posible registrar al usuario en la empresa.",
+      );
+    }
+
+    if (
+      localRoleKey === "owner" &&
+      assignedRole &&
+      organizationProducts.includes(
+        "crm",
+      )
+    ) {
+      await db
+        .insert(
+          memberProductRoles,
+        )
+        .values({
+          tenantId:
+            tenant.id,
+
+          memberId:
+            member.id,
+
+          product:
+            "crm",
+
+          roleId:
+            assignedRole.id,
+
+          enabled: true,
+          allBranches: true,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: [
+            memberProductRoles
+              .memberId,
+            memberProductRoles
+              .product,
+          ],
+
+          set: {
+            roleId:
+              assignedRole.id,
+
+            enabled: true,
+            allBranches: true,
+            updatedAt: now,
+          },
+        });
+    }
 
     await db
       .update(tenantProducts)
@@ -333,6 +644,409 @@ export async function POST() {
             disabledAt: null,
           },
         });
+    }
+
+    let provisionedModuleIds:
+      string[] = [];
+
+    if (
+      organizationProducts.includes(
+        "crm",
+      ) &&
+      organizationIndustry &&
+      provisioningMetadata
+    ) {
+      const [activeStripeSubscription] =
+        await db
+          .select({
+            id:
+              subscriptions.id,
+          })
+          .from(
+            subscriptions,
+          )
+          .where(
+            and(
+              eq(
+                subscriptions.tenantId,
+                tenant.id,
+              ),
+
+              eq(
+                subscriptions.provider,
+                "stripe",
+              ),
+
+              eq(
+                subscriptions.status,
+                "active",
+              ),
+            ),
+          )
+          .limit(1);
+
+      const ignoreStaleTrialMetadata =
+        provisioningMetadata.mode ===
+          "trial" &&
+        Boolean(
+          activeStripeSubscription,
+        );
+
+      const expiresAt =
+        provisioningMetadata.mode ===
+        "trial"
+          ? new Date(
+              provisioningMetadata
+                .trialEndsAt!,
+            )
+          : null;
+
+      if (!ignoreStaleTrialMetadata) {
+        provisionedModuleIds =
+          await provisionCRMModuleEntitlements({
+            tenantId: tenant.id,
+
+            industry:
+              organizationIndustry,
+
+            mode:
+              provisioningMetadata.mode,
+
+            packageKeys:
+              provisioningMetadata
+                .packageKeys,
+
+            expiresAt,
+          });
+      }
+
+      if (
+        provisioningMetadata.mode ===
+          "trial" &&
+        !ignoreStaleTrialMetadata
+      ) {
+        await db
+          .insert(subscriptions)
+          .values({
+            tenantId:
+              tenant.id,
+
+            provider:
+              "datara",
+
+            providerSubscriptionId:
+              `trial:${tenant.id}`,
+
+            planKey:
+              `trial-full-${organizationIndustry}`,
+
+            status:
+              "trialing",
+
+            seats: 1,
+            currency:
+              "mxn",
+
+            currentPeriodStart:
+              now,
+
+            currentPeriodEnd:
+              expiresAt,
+
+            cancelAtPeriodEnd:
+              true,
+
+            updatedAt:
+              now,
+          })
+          .onConflictDoUpdate({
+            target: [
+              subscriptions.provider,
+              subscriptions
+                .providerSubscriptionId,
+            ],
+
+            set: {
+              planKey:
+                `trial-full-${organizationIndustry}`,
+
+              status:
+                "trialing",
+
+              currentPeriodEnd:
+                expiresAt,
+
+              cancelAtPeriodEnd:
+                true,
+
+              updatedAt:
+                now,
+            },
+          });
+      }
+
+            if (
+        provisioningMetadata.mode ===
+          "subscription" &&
+        commercialPurchaseId
+      ) {
+        const [commercialPurchase] =
+          await db
+            .select({
+              id:
+                commercialPurchases.id,
+
+              status:
+                commercialPurchases.status,
+
+              clerkUserId:
+                commercialPurchases
+                  .clerkUserId,
+
+              clerkOrganizationId:
+                commercialPurchases
+                  .clerkOrganizationId,
+
+              stripeCustomerId:
+                commercialPurchases
+                  .stripeCustomerId,
+
+              stripeSubscriptionId:
+                commercialPurchases
+                  .stripeSubscriptionId,
+
+              productKey:
+                commercialPurchases
+                  .productKey,
+
+              billingPeriod:
+                commercialPurchases
+                  .billingPeriod,
+
+              catalogItemIds:
+                commercialPurchases
+                  .catalogItemIds,
+
+              currency:
+                commercialPurchases
+                  .currency,
+
+              paidAt:
+                commercialPurchases
+                  .paidAt,
+            })
+            .from(
+              commercialPurchases,
+            )
+            .where(
+              eq(
+                commercialPurchases.id,
+                commercialPurchaseId,
+              ),
+            )
+            .limit(1);
+
+        if (
+          !commercialPurchase ||
+          commercialPurchase
+            .clerkUserId !==
+            user.id ||
+          commercialPurchase
+            .clerkOrganizationId !==
+            organization.id ||
+          !commercialPurchase
+            .stripeSubscriptionId
+        ) {
+          throw new Error(
+            "La contratación pagada no corresponde con la organización activa.",
+          );
+        }
+
+        const planKey =
+          provisioningMetadata
+            .packageKeys.length >
+          0
+            ? `crm-${provisioningMetadata.packageKeys.join(
+                "-",
+              )}`
+            : "crm-custom";
+
+        await db
+          .insert(subscriptions)
+          .values({
+            tenantId:
+              tenant.id,
+
+            provider:
+              "stripe",
+
+            providerCustomerId:
+              commercialPurchase
+                .stripeCustomerId,
+
+            providerSubscriptionId:
+              commercialPurchase
+                .stripeSubscriptionId,
+
+            productKey:
+              commercialPurchase
+                .productKey,
+
+            planKey,
+
+            billingPeriod:
+              commercialPurchase
+                .billingPeriod,
+
+            catalogItemIds:
+              commercialPurchase
+                .catalogItemIds,
+
+            status:
+              "active",
+
+            seats:
+              1,
+
+            currency:
+              commercialPurchase
+                .currency,
+
+            currentPeriodStart:
+              commercialPurchase
+                .paidAt ??
+              now,
+
+            currentPeriodEnd:
+              null,
+
+            cancelAtPeriodEnd:
+              false,
+
+            updatedAt:
+              now,
+          })
+          .onConflictDoUpdate({
+            target: [
+              subscriptions.provider,
+              subscriptions
+                .providerSubscriptionId,
+            ],
+
+            set: {
+              tenantId:
+                tenant.id,
+
+              providerCustomerId:
+                commercialPurchase
+                  .stripeCustomerId,
+
+              productKey:
+                commercialPurchase
+                  .productKey,
+
+              planKey,
+
+              billingPeriod:
+                commercialPurchase
+                  .billingPeriod,
+
+              catalogItemIds:
+                commercialPurchase
+                  .catalogItemIds,
+
+              status:
+                "active",
+
+              currency:
+                commercialPurchase
+                  .currency,
+
+              cancelAtPeriodEnd:
+                false,
+
+              updatedAt:
+                now,
+            },
+          });
+
+        await db
+          .update(
+            commercialPurchases,
+          )
+          .set({
+            tenantId:
+              tenant.id,
+
+            status:
+              "provisioned",
+
+            provisionedAt:
+              now,
+
+            updatedAt:
+              now,
+          })
+          .where(
+            eq(
+              commercialPurchases.id,
+              commercialPurchase.id,
+            ),
+          );
+      }
+
+      await db
+        .update(tenants)
+        .set({
+          status:
+            "active",
+
+          updatedAt:
+            now,
+        })
+        .where(
+          eq(
+            tenants.id,
+            tenant.id,
+          ),
+        );
+
+      if (
+        provisioningMetadata.mode ===
+          "trial" &&
+        !ignoreStaleTrialMetadata &&
+        trialRedemptionId
+      ) {
+        await db
+          .update(
+            trialRedemptions,
+          )
+          .set({
+            tenantId:
+              tenant.id,
+
+            clerkOrganizationId:
+              organization.id,
+
+            ownerEmail:
+              primaryEmail
+                .emailAddress
+                .trim()
+                .toLowerCase(),
+
+            status:
+              "active",
+
+            updatedAt:
+              now,
+          })
+          .where(
+            eq(
+              trialRedemptions.id,
+              trialRedemptionId,
+            ),
+          );
+      }
     }
 
     return NextResponse.json({

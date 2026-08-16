@@ -5,15 +5,28 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function LoginForm() {
+type LoginFormProps = {
+  redirectUrl?: string;
+};
+
+export default function LoginForm({
+  redirectUrl = "/seleccionar-empresa",
+}: LoginFormProps) {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.replace("/portal");
+      router.replace(
+        redirectUrl,
+      );
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    redirectUrl,
+    router,
+  ]);
 
   return (
     <section className="flex h-full items-center justify-center bg-white px-8 py-5 sm:px-12">
@@ -49,8 +62,12 @@ export default function LoginForm() {
           ) : (
             <SignIn
               routing="hash"
-              forceRedirectUrl="/portal"
-              signUpForceRedirectUrl="/portal"
+              forceRedirectUrl={
+                redirectUrl
+              }
+              signUpForceRedirectUrl={
+                redirectUrl
+              }
               appearance={{
                 elements: {
                   rootBox: "w-full",

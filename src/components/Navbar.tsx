@@ -52,8 +52,11 @@ export default function Navbar() {
 
         {/* CTA */}
 
-        <Button size="lg">
-          Solicitar Demo
+        <Button
+          size="lg"
+          href="/login"
+        >
+          Iniciar sesión
         </Button>
 
       </div>

@@ -28,10 +28,10 @@ export default function Hero() {
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Button
-              href="mailto:ventas@datara-lab.com?subject=Solicitud%20de%20demo%20Datara"
+              href="/demo"
               size="lg"
             >
-              Solicitar una demo
+              Probar gratis 14 días
             </Button>
 
             <Button href="#productos" variant="secondary" size="lg">

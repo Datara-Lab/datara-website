@@ -14,7 +14,8 @@ import type { NavigationItem } from "@/lib/navigation";
 
 type ProductTheme =
   | "analytics"
-  | "crm";
+  | "crm"
+  | "workspace";
 
 type AppShellProps = {
   children: ReactNode;
@@ -22,6 +23,7 @@ type AppShellProps = {
   productName: string;
   productLogo: string;
   navigation: NavigationItem[];
+  headerContent?: ReactNode;
 };
 
 const productStyles: Record<
@@ -41,6 +43,11 @@ const productStyles: Record<
       "bg-emerald-50 text-emerald-700",
     eyebrow: "text-emerald-600",
   },
+  workspace: {
+    activeItem:
+      "bg-blue-50 text-blue-700",
+    eyebrow: "text-blue-600",
+  },
 };
 
 export default function AppShell({
@@ -49,6 +56,7 @@ export default function AppShell({
   productName,
   productLogo,
   navigation,
+  headerContent,
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -97,6 +105,12 @@ export default function AppShell({
               </p>
             </div>
           </button>
+
+          {headerContent && (
+            <div className="ml-auto min-w-0">
+              {headerContent}
+            </div>
+          )}
 
           <div className="flex shrink-0 items-center gap-4">
             <div className="hidden text-right sm:block">

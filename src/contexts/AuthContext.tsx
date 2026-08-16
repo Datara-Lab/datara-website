@@ -19,6 +19,7 @@ import {
 import type {
   ProductAccess,
   User,
+  UserIndustry,
   UserRole,
 } from "@/types/user";
 
@@ -83,6 +84,47 @@ function getProductAccess(
       product === "cloud",
   );
 }
+
+function getIndustry(
+  metadata: unknown,
+): UserIndustry | null {
+  if (
+    typeof metadata !==
+      "object" ||
+    metadata === null
+  ) {
+    return null;
+  }
+
+  const industry =
+    (
+      metadata as {
+        industry?: unknown;
+      }
+    ).industry;
+
+  if (
+    industry ===
+      "motorcycle_dealership" ||
+    industry ===
+      "automotive_dealership" ||
+    industry ===
+      "veterinary" ||
+    industry ===
+      "real_estate" ||
+    industry ===
+      "retail" ||
+    industry ===
+      "professional_services" ||
+    industry ===
+      "other"
+  ) {
+    return industry;
+  }
+
+  return null;
+}
+
 
 function SignedInAuthProvider({
   children,
@@ -277,6 +319,12 @@ function SignedInAuthProvider({
       tenantName:
         resolvedOrganization.name,
 
+      industry:
+        getIndustry(
+          resolvedOrganization
+            .publicMetadata,
+        ),
+
       products: getProductAccess(
         resolvedOrganization.publicMetadata,
       ),
@@ -298,7 +346,7 @@ function SignedInAuthProvider({
         login: () => {
           void openSignIn({
             forceRedirectUrl:
-              "/portal",
+              "/seleccionar-empresa",
           });
         },
 

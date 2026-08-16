@@ -9,6 +9,15 @@ export type UserRole =
   | "manager"
   | "user";
 
+export type UserIndustry =
+  | "motorcycle_dealership"
+  | "automotive_dealership"
+  | "veterinary"
+  | "real_estate"
+  | "retail"
+  | "professional_services"
+  | "other";
+
 export type User = {
   id: string;
   firstName: string;
@@ -17,5 +26,8 @@ export type User = {
   role: UserRole;
   tenantId: string;
   tenantName: string;
+  industry:
+    | UserIndustry
+    | null;
   products: ProductAccess[];
 };
