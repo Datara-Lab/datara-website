@@ -6475,6 +6475,460 @@ export const rolePermissions =
     ],
   );
 
+export type CRMAutomationEntityType =
+  | "lead"
+  | "customer"
+  | "deal"
+  | "activity";
+
+export type CRMAutomationTriggerType =
+  | "record_created"
+  | "record_updated"
+  | "status_changed";
+
+export type CRMAutomationCondition = {
+  field: string;
+
+  operator:
+    | "equals"
+    | "not_equals"
+    | "contains"
+    | "not_contains"
+    | "is_empty"
+    | "is_not_empty"
+    | "greater_than"
+    | "less_than"
+    | "changed";
+
+  value?: unknown;
+};
+
+export type CRMAutomationAction =
+  | {
+      type: "assign_owner";
+      clerkUserId: string;
+    }
+  | {
+      type: "update_field";
+      field: string;
+      value: unknown;
+    }
+  | {
+      type: "change_status";
+      status: string;
+    }
+  | {
+      type: "create_activity";
+      activityType: string;
+      subject: string;
+      description?: string;
+      priority?: string;
+      dueInMinutes?: number;
+      ownerClerkUserId?:
+        string;
+    }
+  | {
+      type:
+        "create_notification";
+      title: string;
+      message: string;
+      recipientClerkUserId?:
+        string;
+    };
+
+export const crmAutomationRules =
+  pgTable(
+    "crm_automation_rules",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      branchId: uuid("branch_id")
+        .references(
+          () => tenantBranches.id,
+          {
+            onDelete: "set null",
+          },
+        ),
+
+      name: text("name")
+        .notNull(),
+
+      description: text(
+        "description",
+      ),
+
+      entityType: text(
+        "entity_type",
+      )
+        .$type<
+          CRMAutomationEntityType
+        >()
+        .notNull(),
+
+      triggerType: text(
+        "trigger_type",
+      )
+        .$type<
+          CRMAutomationTriggerType
+        >()
+        .notNull(),
+
+      conditions: jsonb(
+        "conditions",
+      )
+        .$type<{
+          mode: "all" | "any";
+
+          items:
+            CRMAutomationCondition[];
+        }>()
+        .notNull()
+        .default({
+          mode: "all",
+          items: [],
+        }),
+
+      actions: jsonb("actions")
+        .$type<
+          CRMAutomationAction[]
+        >()
+        .notNull()
+        .default([]),
+
+      enabled: boolean("enabled")
+        .notNull()
+        .default(false),
+
+      stopOnError: boolean(
+        "stop_on_error",
+      )
+        .notNull()
+        .default(true),
+
+      createdByClerkUserId: text(
+        "created_by_clerk_user_id",
+      )
+        .notNull(),
+
+      updatedByClerkUserId: text(
+        "updated_by_clerk_user_id",
+      )
+        .notNull(),
+
+      lastRunAt: timestamp(
+        "last_run_at",
+        {
+          withTimezone: true,
+        },
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      index(
+        "crm_automation_rules_tenant_idx",
+      ).on(
+        table.tenantId,
+        table.updatedAt,
+      ),
+
+      index(
+        "crm_automation_rules_trigger_idx",
+      ).on(
+        table.tenantId,
+        table.entityType,
+        table.triggerType,
+        table.enabled,
+      ),
+
+      index(
+        "crm_automation_rules_branch_idx",
+      ).on(
+        table.tenantId,
+        table.branchId,
+      ),
+    ],
+  );
+
+export const crmAutomationExecutions =
+  pgTable(
+    "crm_automation_executions",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      ruleId: uuid("rule_id")
+        .notNull()
+        .references(
+          () => crmAutomationRules.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      eventKey: text("event_key")
+        .notNull(),
+
+      entityType: text(
+        "entity_type",
+      )
+        .$type<
+          CRMAutomationEntityType
+        >()
+        .notNull(),
+
+      entityId: text("entity_id")
+        .notNull(),
+
+      triggerType: text(
+        "trigger_type",
+      )
+        .$type<
+          CRMAutomationTriggerType
+        >()
+        .notNull(),
+
+      status: text("status")
+        .$type<
+          | "running"
+          | "succeeded"
+          | "partially_succeeded"
+          | "failed"
+          | "skipped"
+        >()
+        .notNull()
+        .default("running"),
+
+      context: jsonb("context")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      actionResults: jsonb(
+        "action_results",
+      )
+        .$type<
+          Array<{
+            actionIndex: number;
+            actionType: string;
+            status:
+              | "succeeded"
+              | "failed"
+              | "skipped";
+            message?: string;
+          }>
+        >()
+        .notNull()
+        .default([]),
+
+      errorMessage: text(
+        "error_message",
+      ),
+
+      triggeredByClerkUserId:
+        text(
+          "triggered_by_clerk_user_id",
+        ),
+
+      startedAt: timestamp(
+        "started_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      completedAt: timestamp(
+        "completed_at",
+        {
+          withTimezone: true,
+        },
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "crm_automation_executions_event_unique",
+      ).on(
+        table.tenantId,
+        table.ruleId,
+        table.eventKey,
+      ),
+
+      index(
+        "crm_automation_executions_rule_idx",
+      ).on(
+        table.ruleId,
+        table.createdAt,
+      ),
+
+      index(
+        "crm_automation_executions_tenant_status_idx",
+      ).on(
+        table.tenantId,
+        table.status,
+        table.createdAt,
+      ),
+
+      index(
+        "crm_automation_executions_entity_idx",
+      ).on(
+        table.tenantId,
+        table.entityType,
+        table.entityId,
+      ),
+    ],
+  );
+
+export const crmNotifications =
+  pgTable(
+    "crm_notifications",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      recipientClerkUserId: text(
+        "recipient_clerk_user_id",
+      )
+        .notNull(),
+
+      title: text("title")
+        .notNull(),
+
+      message: text("message")
+        .notNull(),
+
+      entityType: text(
+        "entity_type",
+      ).$type<
+        CRMAutomationEntityType
+      >(),
+
+      entityId: text("entity_id"),
+
+      automationRuleId: uuid(
+        "automation_rule_id",
+      ).references(
+        () => crmAutomationRules.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      automationExecutionId: uuid(
+        "automation_execution_id",
+      ).references(
+        () =>
+          crmAutomationExecutions.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      metadata: jsonb("metadata")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      readAt: timestamp("read_at", {
+        withTimezone: true,
+      }),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      index(
+        "crm_notifications_recipient_idx",
+      ).on(
+        table.tenantId,
+        table.recipientClerkUserId,
+        table.readAt,
+        table.createdAt,
+      ),
+
+      index(
+        "crm_notifications_rule_idx",
+      ).on(
+        table.automationRuleId,
+        table.createdAt,
+      ),
+    ],
+  );
+
+export type CRMAutomationRule =
+  typeof crmAutomationRules
+    .$inferSelect;
+
+export type NewCRMAutomationRule =
+  typeof crmAutomationRules
+    .$inferInsert;
+
+export type CRMAutomationExecution =
+  typeof crmAutomationExecutions
+    .$inferSelect;
+
+export type CRMNotification =
+  typeof crmNotifications
+    .$inferSelect;
+
 export type TenantRegion =
   typeof tenantRegions.$inferSelect;
 

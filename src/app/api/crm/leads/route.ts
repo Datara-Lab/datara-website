@@ -31,6 +31,10 @@ import {
 } from "@/lib/crm/branch-access";
 
 import {
+  executeCRMAutomations,
+} from "@/lib/crm/automation-engine";
+
+import {
   CRMPermissionError,
   requireCRMModulePermission,
   type CRMModulePermission,
@@ -755,11 +759,50 @@ export async function POST(
         createdAt: now,
         updatedAt: now,
       })
-      .returning({
-        id: crmLeads.id,
-        createdAt:
-          crmLeads.createdAt,
+      .returning();
+
+    if (!lead) {
+      throw new ApiError(
+        "No fue posible crear el prospecto.",
+        500,
+      );
+    }
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `lead:${lead.id}:created:${crypto.randomUUID()}`,
+
+        tenantId,
+        branchId:
+          lead.branchId,
+
+        entityType:
+          "lead",
+
+        entityId:
+          lead.id,
+
+        triggerType:
+          "record_created",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          null,
+
+        nextRecord:
+          lead,
       });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones del prospecto ${lead.id}:`,
+        automationError,
+      );
+    }
 
     return NextResponse.json(
       {
@@ -790,6 +833,7 @@ export async function PATCH(
   try {
     const {
       tenantId,
+      userId,
       branchAccess,
     } = await getTenantContext(
       "edit",
@@ -851,15 +895,7 @@ export async function PATCH(
 
     const [existingLead] =
       await db
-        .select({
-          id: crmLeads.id,
-
-          branchId:
-            crmLeads.branchId,
-
-          productId:
-            crmLeads.productId,
-        })
+        .select()
         .from(crmLeads)
         .where(
           and(
@@ -985,16 +1021,78 @@ export async function PATCH(
           leadAccessCondition,
         ),
       )
-      .returning({
-        id: crmLeads.id,
-        updatedAt:
-          crmLeads.updatedAt,
-      });
+      .returning();
 
     if (!lead) {
       throw new ApiError(
         "No fue posible actualizar el prospecto.",
         404,
+      );
+    }
+
+    const automationEventId =
+      crypto.randomUUID();
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `lead:${lead.id}:updated:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          lead.branchId,
+
+        entityType:
+          "lead",
+
+        entityId:
+          lead.id,
+
+        triggerType:
+          "record_updated",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          existingLead,
+
+        nextRecord:
+          lead,
+      });
+
+      await executeCRMAutomations({
+        eventKey:
+          `lead:${lead.id}:status:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          lead.branchId,
+
+        entityType:
+          "lead",
+
+        entityId:
+          lead.id,
+
+        triggerType:
+          "status_changed",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          existingLead,
+
+        nextRecord:
+          lead,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones del prospecto ${lead.id}:`,
+        automationError,
       );
     }
 

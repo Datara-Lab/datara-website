@@ -288,6 +288,13 @@
       "when": 1786772170967,
       "tag": "0040_damp_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1786935258027,
+      "tag": "0041_crm_automations",
+      "breakpoints": true
     }
   ]
 }
