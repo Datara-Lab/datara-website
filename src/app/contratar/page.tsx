@@ -38,7 +38,14 @@ export default async function ContratarPage({
 
     return (
         <>
-            <Navbar />
+            <Navbar
+                homeHref={
+                    purchaseType ===
+                        "subscription_change"
+                        ? "/portal"
+                        : "/"
+                }
+            />
 
             <main className="min-h-screen bg-slate-50 px-5 py-16 sm:px-8">
                 <div className="mx-auto max-w-7xl">

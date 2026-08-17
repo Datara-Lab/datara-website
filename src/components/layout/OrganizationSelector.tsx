@@ -196,8 +196,8 @@ export default function OrganizationSelector() {
         const sizeClasses =
             size ===
                 "small"
-                ? "h-8 w-8 rounded-lg text-sm"
-                : "h-10 w-10 rounded-xl text-base";
+                ? "h-8 w-8 rounded-full text-sm"
+                : "h-10 w-10 rounded-full text-base";
 
         if (hasFailed) {
             return (
@@ -247,7 +247,7 @@ export default function OrganizationSelector() {
                                 .tenantId,
                         )
                     }
-                    className="h-full w-full object-contain"
+                    className="h-full w-full rounded-full object-cover"
                 />
             </span>
         );

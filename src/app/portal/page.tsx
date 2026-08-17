@@ -412,7 +412,7 @@ export default async function PortalPage() {
                       width={96}
                       height={96}
                       unoptimized
-                      className="max-h-full max-w-full object-contain"
+                      className="h-full w-full rounded-full object-cover"
                     />
                   </div>
 

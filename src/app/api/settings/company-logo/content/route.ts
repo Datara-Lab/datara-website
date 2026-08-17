@@ -166,10 +166,10 @@ function createFallbackLogo(
         </linearGradient>
       </defs>
 
-      <rect
-        width="160"
-        height="160"
-        rx="36"
+      <circle
+        cx="80"
+        cy="80"
+        r="80"
         fill="url(#background)"
       />
 

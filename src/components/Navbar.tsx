@@ -1,14 +1,20 @@
 import Image from "next/image";
 import Button from "./ui/Button";
 
-export default function Navbar() {
+type NavbarProps = {
+  homeHref?: string;
+};
+
+export default function Navbar({
+  homeHref = "/",
+}: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
 
         {/* Logo */}
 
-        <a href="/" className="flex items-center gap-4">
+        <a href={homeHref} className="flex items-center gap-4">
 
           <Image
             src="/logos/lab-icon.png"
