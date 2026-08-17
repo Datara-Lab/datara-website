@@ -31,6 +31,10 @@ import {
 } from "@/lib/crm/deal-calculations";
 
 import {
+  executeCRMAutomations,
+} from "@/lib/crm/automation-engine";
+
+import {
   CRMBranchAccessError,
   getCRMBranchAccess,
   validateCRMBranchId,
@@ -2504,6 +2508,68 @@ export async function POST(
         >[0],
     );
 
+    const [createdDeal] =
+      await db
+        .select()
+        .from(crmDeals)
+        .where(
+          and(
+            eq(
+              crmDeals.id,
+              dealId,
+            ),
+
+            eq(
+              crmDeals.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .limit(1);
+
+    if (!createdDeal) {
+      throw new ApiError(
+        "No fue posible recuperar la oportunidad creada.",
+        500,
+      );
+    }
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `deal:${createdDeal.id}:created:${crypto.randomUUID()}`,
+
+        tenantId,
+        branchId:
+          createdDeal.branchId,
+
+        entityType:
+          "deal",
+
+        entityId:
+          createdDeal.id,
+
+        triggerType:
+          "record_created",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          null,
+
+        nextRecord:
+          createdDeal,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones de la oportunidad ${createdDeal.id}:`,
+        automationError,
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -3574,6 +3640,98 @@ export async function PATCH(
     ) {
       await db.execute(
         releaseReservationsQuery,
+      );
+    }
+
+    const [updatedDeal] =
+      await db
+        .select()
+        .from(crmDeals)
+        .where(
+          and(
+            eq(
+              crmDeals.id,
+              dealId,
+            ),
+
+            eq(
+              crmDeals.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .limit(1);
+
+    if (!updatedDeal) {
+      throw new ApiError(
+        "No fue posible recuperar la oportunidad actualizada.",
+        500,
+      );
+    }
+
+    const automationEventId =
+      crypto.randomUUID();
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `deal:${updatedDeal.id}:updated:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          updatedDeal.branchId,
+
+        entityType:
+          "deal",
+
+        entityId:
+          updatedDeal.id,
+
+        triggerType:
+          "record_updated",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          existingDeal,
+
+        nextRecord:
+          updatedDeal,
+      });
+
+      await executeCRMAutomations({
+        eventKey:
+          `deal:${updatedDeal.id}:status:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          updatedDeal.branchId,
+
+        entityType:
+          "deal",
+
+        entityId:
+          updatedDeal.id,
+
+        triggerType:
+          "status_changed",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          existingDeal,
+
+        nextRecord:
+          updatedDeal,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones de la oportunidad ${updatedDeal.id}:`,
+        automationError,
       );
     }
 

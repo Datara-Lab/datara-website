@@ -31,6 +31,10 @@ import {
 } from "@/lib/crm/branch-access";
 
 import {
+  executeCRMAutomations,
+} from "@/lib/crm/automation-engine";
+
+import {
   CRMPermissionError,
   type CRMModulePermission,
   requireCRMModulePermission,
@@ -938,11 +942,50 @@ export async function POST(
           ) ?? null,
         updatedAt: new Date(),
       })
-      .returning({
-        id: crmCustomers.id,
-        createdAt:
-          crmCustomers.createdAt,
+      .returning();
+
+    if (!customer) {
+      throw new ApiError(
+        "No fue posible crear el cliente.",
+        500,
+      );
+    }
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `customer:${customer.id}:created:${crypto.randomUUID()}`,
+
+        tenantId,
+        branchId:
+          customer.branchId,
+
+        entityType:
+          "customer",
+
+        entityId:
+          customer.id,
+
+        triggerType:
+          "record_created",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          null,
+
+        nextRecord:
+          customer,
       });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones del cliente ${customer.id}:`,
+        automationError,
+      );
+    }
 
     return NextResponse.json(
       {
@@ -1036,13 +1079,7 @@ export async function PATCH(
 
     const [existingCustomer] =
       await db
-        .select({
-          id:
-            crmCustomers.id,
-
-          branchId:
-            crmCustomers.branchId,
-        })
+        .select()
         .from(crmCustomers)
         .where(
           and(
@@ -1198,16 +1235,78 @@ export async function PATCH(
           customerAccessCondition,
         ),
       )
-      .returning({
-        id: crmCustomers.id,
-        updatedAt:
-          crmCustomers.updatedAt,
-      });
+      .returning();
 
     if (!customer) {
       throw new ApiError(
         "No fue posible actualizar el cliente.",
         404,
+      );
+    }
+
+    const automationEventId =
+      crypto.randomUUID();
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `customer:${customer.id}:updated:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          customer.branchId,
+
+        entityType:
+          "customer",
+
+        entityId:
+          customer.id,
+
+        triggerType:
+          "record_updated",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          existingCustomer,
+
+        nextRecord:
+          customer,
+      });
+
+      await executeCRMAutomations({
+        eventKey:
+          `customer:${customer.id}:status:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          customer.branchId,
+
+        entityType:
+          "customer",
+
+        entityId:
+          customer.id,
+
+        triggerType:
+          "status_changed",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          existingCustomer,
+
+        nextRecord:
+          customer,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones del cliente ${customer.id}:`,
+        automationError,
       );
     }
 

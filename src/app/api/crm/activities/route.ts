@@ -29,6 +29,10 @@ import {
   type CRMModulePermission,
 } from "@/lib/crm/permissions";
 
+import {
+  executeCRMAutomations,
+} from "@/lib/crm/automation-engine";
+
 export const dynamic = "force-dynamic";
 
 type ActivityType =
@@ -1532,6 +1536,49 @@ export async function POST(
         .values(participantRows);
     }
 
+    if (!activity) {
+      throw new ApiError(
+        "No fue posible recuperar la actividad creada.",
+        500,
+      );
+    }
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `activity:${activity.id}:created:${crypto.randomUUID()}`,
+
+        tenantId,
+        branchId:
+          null,
+
+        entityType:
+          "activity",
+
+        entityId:
+          activity.id,
+
+        triggerType:
+          "record_created",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          null,
+
+        nextRecord:
+          activity,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones de la actividad ${activity.id}:`,
+        automationError,
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -1728,6 +1775,79 @@ export async function PATCH(
           crmActivityParticipants,
         )
         .values(participantRows);
+    }
+
+    if (!activity) {
+      throw new ApiError(
+        "No fue posible recuperar la actividad actualizada.",
+        500,
+      );
+    }
+
+    const automationEventId =
+      crypto.randomUUID();
+
+    try {
+      await executeCRMAutomations({
+        eventKey:
+          `activity:${activity.id}:updated:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          null,
+
+        entityType:
+          "activity",
+
+        entityId:
+          activity.id,
+
+        triggerType:
+          "record_updated",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          currentActivity,
+
+        nextRecord:
+          activity,
+      });
+
+      await executeCRMAutomations({
+        eventKey:
+          `activity:${activity.id}:status:${automationEventId}`,
+
+        tenantId,
+        branchId:
+          null,
+
+        entityType:
+          "activity",
+
+        entityId:
+          activity.id,
+
+        triggerType:
+          "status_changed",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          currentActivity,
+
+        nextRecord:
+          activity,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones de la actividad ${activity.id}:`,
+        automationError,
+      );
     }
 
     return NextResponse.json({
