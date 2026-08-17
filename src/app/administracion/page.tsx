@@ -41,13 +41,6 @@ const baseAdministrationModules = [
     status: "Próximamente",
   },
   {
-    title: "Automatizaciones",
-    description:
-      "Configura reglas, flujos de trabajo y acciones automáticas.",
-    href: "#",
-    status: "Próximamente",
-  },
-  {
     title: "Seguridad",
     description:
       "Administra sesiones, acceso, autenticación y políticas de seguridad.",

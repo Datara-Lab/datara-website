@@ -249,7 +249,8 @@ async function resolveRecipient(
                 : action.recipientSource ===
                     "record"
                     ? getText(
-                        record.email,
+                        record.email ??
+                        record.customerEmail,
                     )
                     : await getRelatedCustomerEmail(
                         tenantId,

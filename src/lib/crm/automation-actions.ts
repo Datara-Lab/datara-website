@@ -340,6 +340,11 @@ async function assignOwner(
                     ),
                 );
             break;
+
+        case "sales_order":
+            throw new AutomationActionError(
+                "El responsable de una orden de venta no puede cambiarse mediante automatizaciones.",
+            );
     }
 
     return {
@@ -616,6 +621,11 @@ async function updateField(
                     throw new AutomationActionError(
                         `El campo ${field} no puede modificarse automáticamente en actividades.`,
                     );
+
+        case "sales_order":
+            throw new AutomationActionError(
+                "Los campos operativos de una orden de venta no pueden modificarse mediante automatizaciones.",
+            );
             }
 
             await db

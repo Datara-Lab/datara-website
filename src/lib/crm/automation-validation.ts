@@ -42,6 +42,7 @@ const entityTypes =
         "customer",
         "deal",
         "activity",
+        "sales_order",
     ]);
 
 const triggerTypes =

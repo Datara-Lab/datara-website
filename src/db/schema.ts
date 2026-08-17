@@ -6479,7 +6479,8 @@ export type CRMAutomationEntityType =
   | "lead"
   | "customer"
   | "deal"
-  | "activity";
+  | "activity"
+  | "sales_order";
 
 export type CRMAutomationTriggerType =
   | "record_created"

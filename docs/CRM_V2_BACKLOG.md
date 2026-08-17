@@ -90,13 +90,11 @@ Su objetivo es proteger el alcance de la V1: ningún elemento de esta lista debe
 
 Los siguientes módulos forman parte de la V1 y deben terminarse antes de declarar completo el CRM:
 
-- Automatizaciones.
 - Analytics.
 
 ### Orden de ejecución
 
-1. Automatizaciones: reglas, asignaciones, notificaciones y cambios automáticos de estado.
-2. Analytics: revisión del código existente, consolidación de dashboards, KPIs, reportes y embudos.
+1. Analytics: revisión del código existente, consolidación de dashboards, KPIs, reportes y embudos.
 
 ### Lista de salida a producción de CRM V1
 
@@ -119,6 +117,9 @@ Los siguientes módulos forman parte de la V1 y deben terminarse antes de declar
 - Usuarios y permisos, con administración de miembros, roles por producto, permisos por módulo y acción, acceso por sucursal y protección en interfaz y API.
 - Configuración del CRM, con orden, renombrado, visibilidad del menú y protección de los accesos administrativos.
 - Licenciamiento modular del CRM, con separación entre producto contratado, módulos habilitados y permisos de usuario.
+- Automatizaciones, con reglas por empresa y sucursal, condiciones configurables, asignaciones, actualización de campos, cambios de estado, actividades, notificaciones internas y correos electrónicos identificados con la empresa.
+- Automatizaciones diferidas, con programación por minutos, horas, días o meses, fechas base configurables, reintentos, cancelación y reprogramación de trabajos, historial de ejecuciones y prevención de duplicados.
+- Recordatorios posteriores a la entrega de órdenes de venta, incluyendo el caso de servicio de motocicleta 180 días después de la fecha de entrega.
 
 ### Arquitectura comercial definida
 
@@ -127,15 +128,23 @@ Los siguientes módulos forman parte de la V1 y deben terminarse antes de declar
 - Complemento Ventas: Cotizaciones, Órdenes de venta y Promociones.
 - Complemento Inventarios.
 - Complemento Servicios.
-- Complementos futuros: Automatizaciones, Analytics y Campañas.
+- Complemento Automatizaciones.
+- Complementos futuros: Analytics y Campañas.
 - Las empresas existentes conservan acceso completo mientras no tengan una contratación modular configurada.
 - El menú y las APIs validan tanto la contratación del módulo como los permisos del usuario.
 
-> El CRM V1 todavía no está completo. El siguiente módulo de trabajo es Automatizaciones.
+> El CRM V1 todavía no está completo. El siguiente módulo de trabajo es Analytics.
 
 ## Verticales y capacidades transversales V2
 
 Las siguientes verticales y capacidades se diseñaron durante el cierre de la V1, pero quedan formalmente fuera de su alcance para proteger la fecha de lanzamiento.
+
+### Mejoras de Automatizaciones
+
+- Incorporar una vista compacta.
+- Permitir alternar entre vista de tarjetas y vista de lista.
+- Permitir expandir las tarjetas para consultar detalles sin abrir el editor.
+- Agregar búsqueda, filtros, agrupación y controles de densidad.
 
 ### Priorización de verticales
 

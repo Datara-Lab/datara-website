@@ -11,6 +11,7 @@ import {
 
 import AppShell from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
+import CRMHeaderActions from "@/components/crm/CRMHeaderActions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCRMConfig } from "@/hooks/useCRMConfig";
 import type { NavigationItem } from "@/lib/navigation";
@@ -218,6 +219,8 @@ export default function CRMClientLayout({
                 )
                 .filter(
                     (item) =>
+                        item.id !==
+                            "settings" &&
                         visibleModuleIds !==
                             null &&
                         !hiddenNavigationItemIds.includes(
@@ -450,8 +453,11 @@ export default function CRMClientLayout({
             productLogo="/logos/crm-icon.png"
             navigation={appNavigation}
             headerContent={
-                trial ? (
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                    <CRMHeaderActions />
+
+                    {trial ? (
+                        <div className="flex items-center gap-2">
                         <div
                             title={
                                 trial.expired
@@ -515,8 +521,9 @@ export default function CRMClientLayout({
                         >
                             Contratar
                         </Button>
-                    </div>
-                ) : undefined
+                        </div>
+                    ) : null}
+                </div>
             }
         >
             {trial?.expired ? (

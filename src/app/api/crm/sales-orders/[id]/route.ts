@@ -31,6 +31,10 @@ import {
 } from "@/lib/crm/branch-access";
 
 import {
+  executeCRMAutomations,
+} from "@/lib/crm/automation-engine";
+
+import {
   CRMPermissionError,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
@@ -816,14 +820,7 @@ export async function PATCH(
 
     const [deliveredOrder] =
       await db
-        .select({
-          status:
-            crmSalesOrders.status,
-
-          deliveredAt:
-            crmSalesOrders
-              .deliveredAt,
-        })
+        .select()
         .from(
           crmSalesOrders,
         )
@@ -849,6 +846,43 @@ export async function PATCH(
       throw new ApiError(
         "No fue posible confirmar la entrega de la orden.",
         409,
+      );
+    }
+
+        try {
+      await executeCRMAutomations({
+        eventKey:
+          `sales_order:${deliveredOrder.id}:delivered:${crypto.randomUUID()}`,
+
+        tenantId,
+
+        branchId:
+          deliveredOrder.branchId,
+
+        entityType:
+          "sales_order",
+
+        entityId:
+          deliveredOrder.id,
+
+        triggerType:
+          "status_changed",
+
+        actorClerkUserId:
+          userId,
+
+        previousRecord:
+          order,
+
+        nextRecord:
+          deliveredOrder,
+      });
+    } catch (
+      automationError
+    ) {
+      console.error(
+        `No fue posible ejecutar las automatizaciones de la orden entregada ${deliveredOrder.id}:`,
+        automationError,
       );
     }
 
