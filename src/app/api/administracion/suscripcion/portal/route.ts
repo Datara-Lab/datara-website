@@ -16,6 +16,10 @@ import {
 import Stripe from "stripe";
 
 import {
+    createStripeClient,
+} from "@/lib/commercial/create-stripe-client";
+
+import {
     db,
 } from "@/db";
 
@@ -163,7 +167,7 @@ export async function POST(
         }
 
         const stripe =
-            new Stripe(
+            createStripeClient(
                 stripeSecretKey,
             );
 

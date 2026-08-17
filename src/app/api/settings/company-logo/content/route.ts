@@ -252,9 +252,8 @@ export async function GET(
       );
 
     if (!tenant.logoObjectKey) {
-      throw new ApiError(
-        "La empresa aún no tiene un logo configurado.",
-        404,
+      return createFallbackLogo(
+        tenant.name,
       );
     }
 

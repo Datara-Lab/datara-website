@@ -20,6 +20,10 @@ import {
 import Stripe from "stripe";
 
 import {
+    createStripeClient,
+} from "@/lib/commercial/create-stripe-client";
+
+import {
     getCRMIndustryTemplates,
 } from "@/config/crm/industries";
 
@@ -1446,7 +1450,7 @@ export async function POST(
         await request.text();
 
     const stripe =
-        new Stripe(
+        createStripeClient(
             stripeSecretKey,
         );
 

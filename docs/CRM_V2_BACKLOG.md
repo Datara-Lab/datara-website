@@ -98,6 +98,16 @@ Los siguientes módulos forman parte de la V1 y deben terminarse antes de declar
 1. Automatizaciones: reglas, asignaciones, notificaciones y cambios automáticos de estado.
 2. Analytics: revisión del código existente, consolidación de dashboards, KPIs, reportes y embudos.
 
+### Lista de salida a producción de CRM V1
+
+- Activar la instancia productiva de Clerk.
+- Sustituir las claves de desarrollo de Clerk por claves productivas durante el build y en Cloudflare.
+- Verificar dominios, redirecciones, organizaciones, nombres y sesiones con la instancia productiva.
+- Eliminar la advertencia de claves de desarrollo de Clerk antes del lanzamiento.
+- Publicar Términos de Servicio y Política de Privacidad.
+- Solicitar aceptación expresa de los documentos legales y de los cobros recurrentes.
+- Conservar evidencia auditable de la versión, usuario, empresa y fecha de cada aceptación.
+
 ## Módulos cerrados del CRM V1
 
 - Contratación automática y suscripciones: alta de empresa, demos, pagos recurrentes, catálogo comercial, planes mensuales y anuales, cambios inmediatos con prorrateo, cambios programados, recuperación de pagos y sincronización mediante webhooks de Stripe.

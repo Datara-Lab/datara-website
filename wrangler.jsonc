@@ -8,6 +8,18 @@
 		"global_fetch_strictly_public"
 	],
 	"keep_vars": true,
+	        "observability": {
+                "enabled": true,
+                "logs": {
+                        "enabled": true,
+                        "head_sampling_rate": 1,
+                        "persist": true,
+                        "invocation_logs": true
+                },
+                "traces": {
+                        "enabled": false
+                }
+        },
 	"minify": true,
 	"triggers": {
 		"crons": [

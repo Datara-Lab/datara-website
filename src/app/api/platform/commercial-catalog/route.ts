@@ -14,6 +14,10 @@ import {
 
 import Stripe from "stripe";
 
+import {
+    createStripeClient,
+} from "@/lib/commercial/create-stripe-client";
+
 import { db } from "@/db";
 
 import {
@@ -64,7 +68,7 @@ function getStripeClient():
         );
     }
 
-    return new Stripe(
+    return createStripeClient(
         stripeSecretKey,
     );
 }
