@@ -1,4 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
+import {
+  auth,
+  clerkClient,
+} from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -376,6 +379,20 @@ export async function PATCH(
         500,
       );
     }
+
+    const clerk =
+      await clerkClient();
+
+    await clerk
+      .organizations
+      .updateOrganization(
+        updatedTenant
+          .clerkOrganizationId,
+        {
+          name:
+            updatedTenant.name,
+        },
+      );
 
     return NextResponse.json({
       success: true,

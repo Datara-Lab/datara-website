@@ -356,7 +356,6 @@ export async function POST(
           slug:
             organization.slug ??
             organization.id,
-          name: organization.name,
 
           industry:
             organizationIndustry ??
