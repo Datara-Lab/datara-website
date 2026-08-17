@@ -221,13 +221,29 @@ export function createCRMNavigation(
       ],
     },
     {
+      id: "automations",
+      label: "Automatizaciones",
+      route: "/crm/automatizaciones",
+      moduleId: "automations",
+      sectionId:
+        "administration",
+      order: 3,
+      status: "active",
+      visible: true,
+      allowedRoles: [
+        "owner",
+        "admin",
+        "manager",
+      ],
+    },
+    {
       id: "settings",
       label: "Configuración",
       route: "/crm/configuracion",
       moduleId: "crm-settings",
       sectionId:
         "administration",
-      order: 3,
+      order: 4,
       status: "active",
       visible: true,
       allowedRoles: [

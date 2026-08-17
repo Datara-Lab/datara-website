@@ -12,41 +12,73 @@ type DataraCloudflareEnv =
         };
     };
 
+async function callInternalEndpoint(
+    env:
+        DataraCloudflareEnv,
+    pathname: string,
+    taskName: string,
+) {
+    const response =
+        await env
+            .WORKER_SELF_REFERENCE
+            .fetch(
+                new Request(
+                    `https://datara-lab.com${pathname}`,
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "X-Cron-Secret":
+                                env.CRON_SECRET,
+                        },
+                    },
+                ),
+            );
+
+    if (!response.ok) {
+        const responseBody =
+            await response.text();
+
+        throw new Error(
+            `No fue posible ejecutar ${taskName}: ${response.status} ${responseBody}`,
+        );
+    }
+}
+
 export default {
     fetch:
         handler.fetch,
 
     async scheduled(
-        _controller,
+        controller,
         env,
     ) {
         const dataraEnvironment =
-            env as DataraCloudflareEnv;
+            env as
+                DataraCloudflareEnv;
 
-        const response =
-            await dataraEnvironment
-                .WORKER_SELF_REFERENCE
-                .fetch(
-                    new Request(
-                        "https://datara-lab.com/api/internal/trial-reminders",
-                        {
-                            method: "POST",
+        if (
+            controller.cron ===
+            "*/5 * * * *"
+        ) {
+            await callInternalEndpoint(
+                dataraEnvironment,
+                "/api/internal/automation-jobs",
+                "las automatizaciones programadas",
+            );
 
-                            headers: {
-                                "X-Cron-Secret":
-                                    dataraEnvironment
-                                        .CRON_SECRET,
-                            },
-                        },
-                    ),
-                );
+            return;
+        }
 
-        if (!response.ok) {
-            const responseBody =
-                await response.text();
-
-            throw new Error(
-                `No fue posible ejecutar los recordatorios: ${response.status} ${responseBody}`,
+        if (
+            controller.cron ===
+            "0 15 * * *"
+        ) {
+            await callInternalEndpoint(
+                dataraEnvironment,
+                "/api/internal/trial-reminders",
+                "los recordatorios de pruebas",
             );
         }
     },

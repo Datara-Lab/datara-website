@@ -18,6 +18,10 @@ import {
     type CRMAutomationEntityType,
 } from "@/db/schema";
 
+import {
+    sendAutomationEmail,
+} from "@/lib/crm/automation-email";
+
 type AutomationRecord =
     Record<string, unknown>;
 
@@ -909,5 +913,27 @@ export async function executeAutomationAction(
                 context,
                 action,
             );
+        case "send_email": {
+            const message =
+                await sendAutomationEmail({
+                    tenantId:
+                        context.tenantId,
+
+                    entityType:
+                        context.entityType,
+
+                    record:
+                        context.record,
+
+                    action,
+                });
+
+            return {
+                message,
+
+                record:
+                    context.record,
+            };
+        }
     }
 }

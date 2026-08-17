@@ -6503,38 +6503,69 @@ export type CRMAutomationCondition = {
   value?: unknown;
 };
 
+export type CRMAutomationDelay = {
+  amount: number;
+
+  unit:
+    | "minutes"
+    | "hours"
+    | "days"
+    | "months";
+
+  baseField?: string;
+};
+
 export type CRMAutomationAction =
-  | {
-      type: "assign_owner";
-      clerkUserId: string;
-    }
-  | {
-      type: "update_field";
-      field: string;
-      value: unknown;
-    }
-  | {
-      type: "change_status";
-      status: string;
-    }
-  | {
-      type: "create_activity";
-      activityType: string;
-      subject: string;
-      description?: string;
-      priority?: string;
-      dueInMinutes?: number;
-      ownerClerkUserId?:
-        string;
-    }
-  | {
-      type:
-        "create_notification";
-      title: string;
-      message: string;
-      recipientClerkUserId?:
-        string;
-    };
+  (
+    | {
+        type: "assign_owner";
+        clerkUserId: string;
+      }
+    | {
+        type: "update_field";
+        field: string;
+        value: unknown;
+      }
+    | {
+        type: "change_status";
+        status: string;
+      }
+    | {
+        type: "create_activity";
+        activityType: string;
+        subject: string;
+        description?: string;
+        priority?: string;
+        dueInMinutes?: number;
+        ownerClerkUserId?:
+          string;
+      }
+    | {
+        type:
+          "create_notification";
+        title: string;
+        message: string;
+        recipientClerkUserId?:
+          string;
+      }
+    | {
+        type: "send_email";
+
+        recipientSource:
+          | "record"
+          | "related_customer"
+          | "owner"
+          | "fixed";
+
+        recipientEmail?: string;
+        subject: string;
+        message: string;
+        replyTo?: string;
+      }
+  ) & {
+    delay?:
+      CRMAutomationDelay;
+  };
 
 export const crmAutomationRules =
   pgTable(
@@ -6822,6 +6853,172 @@ export const crmAutomationExecutions =
     ],
   );
 
+export const crmAutomationScheduledJobs =
+  pgTable(
+    "crm_automation_scheduled_jobs",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      ruleId: uuid("rule_id")
+        .notNull()
+        .references(
+          () => crmAutomationRules.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      executionId: uuid(
+        "execution_id",
+      )
+        .notNull()
+        .references(
+          () =>
+            crmAutomationExecutions.id,
+          {
+            onDelete: "cascade",
+          },
+        ),
+
+      actionIndex: integer(
+        "action_index",
+      ).notNull(),
+
+      action: jsonb("action")
+        .$type<
+          CRMAutomationAction
+        >()
+        .notNull(),
+
+      entityType: text(
+        "entity_type",
+      )
+        .$type<
+          CRMAutomationEntityType
+        >()
+        .notNull(),
+
+      entityId: text("entity_id")
+        .notNull(),
+
+      actorClerkUserId: text(
+        "actor_clerk_user_id",
+      ).notNull(),
+
+      recordSnapshot: jsonb(
+        "record_snapshot",
+      )
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      scheduledFor: timestamp(
+        "scheduled_for",
+        {
+          withTimezone: true,
+        },
+      ).notNull(),
+
+      status: text("status")
+        .$type<
+          | "pending"
+          | "processing"
+          | "succeeded"
+          | "failed"
+          | "cancelled"
+        >()
+        .notNull()
+        .default("pending"),
+
+      attempts: integer("attempts")
+        .notNull()
+        .default(0),
+
+      maxAttempts: integer(
+        "max_attempts",
+      )
+        .notNull()
+        .default(3),
+
+      lastAttemptAt: timestamp(
+        "last_attempt_at",
+        {
+          withTimezone: true,
+        },
+      ),
+
+      completedAt: timestamp(
+        "completed_at",
+        {
+          withTimezone: true,
+        },
+      ),
+
+      errorMessage: text(
+        "error_message",
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "crm_automation_scheduled_jobs_action_unique",
+      ).on(
+        table.tenantId,
+        table.executionId,
+        table.actionIndex,
+      ),
+
+      index(
+        "crm_automation_scheduled_jobs_due_idx",
+      ).on(
+        table.status,
+        table.scheduledFor,
+      ),
+
+      index(
+        "crm_automation_scheduled_jobs_rule_idx",
+      ).on(
+        table.ruleId,
+        table.createdAt,
+      ),
+
+      index(
+        "crm_automation_scheduled_jobs_entity_idx",
+      ).on(
+        table.tenantId,
+        table.entityType,
+        table.entityId,
+      ),
+    ],
+  );
+
 export const crmNotifications =
   pgTable(
     "crm_notifications",
@@ -6991,3 +7188,9 @@ export type CRMDocumentRelation =
 
 export type NewCRMDocumentRelation =
   typeof crmDocumentRelations.$inferInsert;
+
+export type CRMAutomationScheduledJob =
+  typeof crmAutomationScheduledJobs.$inferSelect;
+
+export type NewCRMAutomationScheduledJob =
+  typeof crmAutomationScheduledJobs.$inferInsert;

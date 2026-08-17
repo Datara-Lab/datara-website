@@ -24,6 +24,11 @@ import {
     matchesAutomationConditions,
 } from "@/lib/crm/automation-conditions";
 
+import {
+    cancelPendingAutomationJobs,
+    scheduleAutomationAction,
+} from "@/lib/crm/automation-scheduling";
+
 type AutomationRecord =
     Record<string, unknown>;
 
@@ -247,6 +252,23 @@ export async function executeCRMAutomations(
             );
 
         if (!matches) {
+                        await cancelPendingAutomationJobs({
+                tenantId:
+                    event.tenantId,
+
+                ruleId:
+                    rule.id,
+
+                entityType:
+                    event.entityType,
+
+                entityId:
+                    event.entityId,
+
+                reason:
+                    "El registro dejó de cumplir las condiciones de la automatización.",
+            });
+
             await db
                 .update(
                     crmAutomationExecutions,
@@ -323,6 +345,55 @@ export async function executeCRMAutomations(
             }
 
             try {
+                if (action.delay) {
+                    const scheduledResult =
+                        await scheduleAutomationAction({
+                            tenantId:
+                                event.tenantId,
+
+                            ruleId:
+                                rule.id,
+
+                            executionId:
+                                execution.id,
+
+                            actionIndex,
+                            action,
+
+                            entityType:
+                                event.entityType,
+
+                            entityId:
+                                event.entityId,
+
+                            actorClerkUserId:
+                                event
+                                    .actorClerkUserId,
+
+                            record:
+                                currentRecord,
+                        });
+
+                    succeededActions +=
+                        1;
+
+                    actionResults.push({
+                        actionIndex,
+
+                        actionType:
+                            action.type,
+
+                        status:
+                            "succeeded",
+
+                        message:
+                            scheduledResult
+                                .message,
+                    });
+
+                    continue;
+                }
+
                 const actionResult =
                     await executeAutomationAction(
                         {

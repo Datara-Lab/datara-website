@@ -309,6 +309,99 @@ function getConditions(
     };
 }
 
+function getActionDelay(
+    value: unknown,
+    actionIndex: number,
+): CRMAutomationAction[
+    "delay"
+] {
+    if (
+        value === undefined ||
+        value === null
+    ) {
+        return undefined;
+    }
+
+    if (!isRecord(value)) {
+        throw new AutomationValidationError(
+            `La programación de la acción ${actionIndex + 1} no tiene un formato válido.`,
+        );
+    }
+
+    const amount =
+        value.amount;
+
+    const unit =
+        value.unit;
+
+    if (
+        typeof amount !==
+            "number" ||
+        !Number.isInteger(amount) ||
+        amount < 1
+    ) {
+        throw new AutomationValidationError(
+            `El retraso de la acción ${actionIndex + 1} debe ser un número entero mayor que cero.`,
+        );
+    }
+
+    const maximumByUnit = {
+        minutes: 5_256_000,
+        hours: 87_600,
+        days: 3_650,
+        months: 120,
+    } as const;
+
+    if (
+        unit !== "minutes" &&
+        unit !== "hours" &&
+        unit !== "days" &&
+        unit !== "months"
+    ) {
+        throw new AutomationValidationError(
+            `La unidad del retraso de la acción ${actionIndex + 1} no es válida.`,
+        );
+    }
+
+    if (
+        amount >
+        maximumByUnit[unit]
+    ) {
+        throw new AutomationValidationError(
+            `El retraso de la acción ${actionIndex + 1} supera el máximo permitido.`,
+        );
+    }
+
+    const baseField =
+        getOptionalString(
+            value.baseField,
+            `El campo de fecha de la acción ${actionIndex + 1}`,
+            80,
+        );
+
+    if (
+        baseField &&
+        !/^[a-zA-Z][a-zA-Z0-9_.]*$/.test(
+            baseField,
+        )
+    ) {
+        throw new AutomationValidationError(
+            `El campo de fecha de la acción ${actionIndex + 1} no es válido.`,
+        );
+    }
+
+    return {
+        amount,
+        unit,
+
+        ...(baseField
+            ? {
+                baseField,
+            }
+            : {}),
+    };
+}
+
 function getActions(
     value: unknown,
 ): CRMAutomationAction[] {
@@ -338,6 +431,12 @@ function getActions(
                 );
             }
 
+            const delay =
+                getActionDelay(
+                    action.delay,
+                    index,
+                );
+
             switch (action.type) {
                 case "assign_owner":
                     return {
@@ -350,6 +449,12 @@ function getActions(
                                 `El responsable de la acción ${index + 1}`,
                                 255,
                             ),
+
+                        ...(delay
+                            ? {
+                                delay,
+                            }
+                            : {}),
                     };
 
                 case "update_field":
@@ -366,6 +471,12 @@ function getActions(
 
                         value:
                             action.value,
+
+                        ...(delay
+                            ? {
+                                delay,
+                            }
+                            : {}),
                     };
 
                 case "change_status":
@@ -379,6 +490,12 @@ function getActions(
                                 `El estado de la acción ${index + 1}`,
                                 120,
                             ),
+
+                        ...(delay
+                            ? {
+                                delay,
+                            }
+                            : {}),
                     };
 
                 case "create_activity": {
@@ -447,6 +564,12 @@ function getActions(
                                 255,
                             ) ??
                             undefined,
+
+                        ...(delay
+                            ? {
+                                delay,
+                            }
+                            : {}),
                     };
                 }
 
@@ -476,7 +599,120 @@ function getActions(
                                 255,
                             ) ??
                             undefined,
+
+                        ...(delay
+                            ? {
+                                delay,
+                            }
+                            : {}),
                     };
+
+                                case "send_email": {
+                    const recipientSource =
+                        action.recipientSource;
+
+                    if (
+                        recipientSource !==
+                            "record" &&
+                        recipientSource !==
+                            "related_customer" &&
+                        recipientSource !==
+                            "owner" &&
+                        recipientSource !==
+                            "fixed"
+                    ) {
+                        throw new AutomationValidationError(
+                            `El destinatario de la acción ${index + 1} no es válido.`,
+                        );
+                    }
+
+                    const recipientEmail =
+                        getOptionalString(
+                            action.recipientEmail,
+                            `El correo del destinatario de la acción ${index + 1}`,
+                            320,
+                        );
+
+                    if (
+                        recipientSource ===
+                            "fixed" &&
+                        !recipientEmail
+                    ) {
+                        throw new AutomationValidationError(
+                            `La acción ${index + 1} requiere un correo fijo.`,
+                        );
+                    }
+
+                    if (
+                        recipientEmail &&
+                        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                            recipientEmail,
+                        )
+                    ) {
+                        throw new AutomationValidationError(
+                            `El correo de la acción ${index + 1} no es válido.`,
+                        );
+                    }
+
+                    const replyTo =
+                        getOptionalString(
+                            action.replyTo,
+                            `El correo de respuesta de la acción ${index + 1}`,
+                            320,
+                        );
+
+                    if (
+                        replyTo &&
+                        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                            replyTo,
+                        )
+                    ) {
+                        throw new AutomationValidationError(
+                            `El correo de respuesta de la acción ${index + 1} no es válido.`,
+                        );
+                    }
+
+                    return {
+                        type:
+                            "send_email",
+
+                        recipientSource,
+
+                        ...(recipientEmail
+                            ? {
+                                recipientEmail:
+                                    recipientEmail.toLowerCase(),
+                            }
+                            : {}),
+
+                        subject:
+                            getRequiredString(
+                                action.subject,
+                                `El asunto de la acción ${index + 1}`,
+                                200,
+                            ),
+
+                        message:
+                            getRequiredString(
+                                action.message,
+                                `El mensaje de la acción ${index + 1}`,
+                                10_000,
+                            ),
+
+                        ...(replyTo
+                            ? {
+                                replyTo:
+                                    replyTo.toLowerCase(),
+                            }
+                            : {}),
+
+                        ...(delay
+                            ? {
+                                delay,
+                            }
+                            : {}),
+                    };
+                }
 
                 default:
                     throw new AutomationValidationError(
