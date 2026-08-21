@@ -45,8 +45,8 @@ export default function RootLayout({
       <body className="antialiased">
         <ClerkProvider
           afterSignOutUrl="/login"
-          signInForceRedirectUrl="/portal"
-          signUpForceRedirectUrl="/portal"
+          signInFallbackRedirectUrl="/portal"
+          signUpFallbackRedirectUrl="/portal"
         >
           <AuthProvider>
             {children}

@@ -83,12 +83,15 @@ function getBillingPeriod(
     value: unknown,
 ):
     | "monthly"
-    | "annual" {
+    | "annual"
+    | "annual_installments" {
     if (
         value ===
         "monthly" ||
         value ===
-        "annual"
+        "annual" ||
+        value ===
+        "annual_installments"
     ) {
         return value;
     }
@@ -366,6 +369,18 @@ export async function POST(
                         commercialCatalogItems
                             .annualPrice,
 
+                    installmentsEnabled:
+                        commercialCatalogItems
+                            .installmentsEnabled,
+
+                    annualInstallmentsPrice:
+                        commercialCatalogItems
+                            .annualInstallmentsPrice,
+
+                    stripeAnnualInstallmentsPriceId:
+                        commercialCatalogItems
+                            .stripeAnnualInstallmentsPriceId,
+
                     currency:
                         commercialCatalogItems
                             .currency,
@@ -484,7 +499,8 @@ export async function POST(
                     typeof selectedItems,
                 period:
                     | "monthly"
-                    | "annual",
+                    | "annual"
+                    | "annual_installments",
             ) =>
                 items.reduce(
                     (
@@ -496,7 +512,11 @@ export async function POST(
                             period ===
                                 "monthly"
                                 ? item.monthlyPrice
-                                : item.annualPrice,
+                                : period ===
+                                    "annual"
+                                    ? item.annualPrice
+                                    : item
+                                          .annualInstallmentsPrice,
                         ),
                     0,
                 );
@@ -629,6 +649,62 @@ export async function POST(
             createStripeClient(
                 stripeSecretKey,
             );
+
+        if (
+            billingPeriod ===
+            "annual_installments"
+        ) {
+            const itemWithoutInstallments =
+                selectedItems.find(
+                    (item) =>
+                        !item
+                            .installmentsEnabled ||
+                        !item
+                            .stripeAnnualInstallmentsPriceId,
+                );
+
+            if (
+                itemWithoutInstallments
+            ) {
+                throw new ApiError(
+                    `${itemWithoutInstallments.name} no está disponible con meses sin intereses.`,
+                    409,
+                );
+            }
+
+            return NextResponse.json({
+                success: true,
+
+                data: {
+                    changeType:
+                        "immediate",
+
+                    billingPeriod,
+
+                    catalogItemIds:
+                        selectedItemIds,
+
+                    recurringTotal:
+                        selectedTotal,
+
+                    amountDueNow:
+                        selectedTotal,
+
+                    currency:
+                        selectedItems[
+                            0
+                        ]?.currency ??
+                        "mxn",
+
+                    effectiveAt:
+                        new Date()
+                            .toISOString(),
+
+                    prorationDate:
+                        null,
+                },
+            });
+        }
 
         const stripeSubscription =
             await stripe

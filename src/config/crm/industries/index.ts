@@ -28,6 +28,25 @@ function createPendingTemplate(
 
     defaultModules: [],
 
+    defaultProductTypes: [
+      {
+        key: "product",
+        name: "Producto",
+        inventoryTracked: true,
+        technicalProfile: null,
+        sortOrder: 10,
+        categories: [],
+      },
+      {
+        key: "service",
+        name: "Servicio",
+        inventoryTracked: false,
+        technicalProfile: null,
+        sortOrder: 20,
+        categories: [],
+      },
+    ],
+
     defaultCatalogs: {},
   };
 }

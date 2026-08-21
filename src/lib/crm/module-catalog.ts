@@ -12,6 +12,7 @@ export const CRM_CORE_MODULE_IDS = [
     "documents",
     "integrations",
     "automations",
+    "crm-analytics",
 ] as const;
 
 export const CRM_SALES_MODULE_IDS = [

@@ -9,7 +9,9 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import {
+  crmProductCategories,
   crmProducts,
+  crmProductTypes,
   tenants,
 } from "@/db/schema";
 
@@ -27,6 +29,14 @@ type ProductFormPayload = {
   name?: unknown;
   code?: unknown;
   description?: unknown;
+  productTypeId?: unknown;
+
+  /*
+   * Compatibilidad temporal con clientes
+   * que todavía envían la clave anterior.
+   */
+  itemType?: unknown;
+
   category?: unknown;
 
   unitPrice?: unknown;
@@ -115,6 +125,208 @@ function getBoolean(
   return defaultValue;
 }
 
+type ProductItemType =
+  | "model"
+  | "product"
+  | "service";
+
+type StoredProductType = {
+  id: string;
+  key: string;
+  name: string;
+  inventoryTracked: boolean;
+  technicalProfile:
+    | string
+    | null;
+  active: boolean;
+};
+
+function getLegacyItemType(
+  productType:
+    StoredProductType,
+): ProductItemType {
+  if (
+    productType.technicalProfile ===
+    "motorcycle_model"
+  ) {
+    return "model";
+  }
+
+  return productType.inventoryTracked
+    ? "product"
+    : "service";
+}
+
+async function getProductType(
+  tenantId: string,
+  values: ProductFormPayload,
+  currentProductTypeId?:
+    string | null,
+): Promise<StoredProductType> {
+  const requestedId =
+    getOptionalString(
+      values.productTypeId,
+    ) ??
+    currentProductTypeId ??
+    undefined;
+
+  const legacyKey =
+    getOptionalString(
+      values.itemType,
+    );
+
+  if (
+    !requestedId &&
+    !legacyKey
+  ) {
+    throw new ApiError(
+      "Selecciona un tipo de elemento.",
+      400,
+    );
+  }
+
+  const typeCondition =
+    requestedId
+      ? eq(
+          crmProductTypes.id,
+          requestedId,
+        )
+      : eq(
+          crmProductTypes.key,
+          legacyKey ?? "",
+        );
+
+  const [productType] =
+    await db
+      .select({
+        id:
+          crmProductTypes.id,
+        key:
+          crmProductTypes.key,
+        name:
+          crmProductTypes.name,
+        inventoryTracked:
+          crmProductTypes
+            .inventoryTracked,
+        technicalProfile:
+          crmProductTypes
+            .technicalProfile,
+        active:
+          crmProductTypes.active,
+      })
+      .from(crmProductTypes)
+      .where(
+        and(
+          eq(
+            crmProductTypes.tenantId,
+            tenantId,
+          ),
+          typeCondition,
+        ),
+      )
+      .limit(1);
+
+  if (!productType) {
+    throw new ApiError(
+      "El tipo seleccionado no existe o no pertenece a la empresa.",
+      400,
+    );
+  }
+
+  if (
+    !productType.active &&
+    productType.id !==
+      currentProductTypeId
+  ) {
+    throw new ApiError(
+      "El tipo seleccionado está inactivo.",
+      400,
+    );
+  }
+
+  return productType;
+}
+
+async function validateProductCategory(
+  tenantId: string,
+  productTypeId: string,
+  categoryValue: unknown,
+  current?: {
+    productTypeId:
+      | string
+      | null;
+    category:
+      | string
+      | null;
+  },
+): Promise<string> {
+  const category =
+    getOptionalString(
+      categoryValue,
+    );
+
+  if (!category) {
+    throw new ApiError(
+      "Selecciona una categoría.",
+      400,
+    );
+  }
+
+  const [storedCategory] =
+    await db
+      .select({
+        active:
+          crmProductCategories.active,
+      })
+      .from(
+        crmProductCategories,
+      )
+      .where(
+        and(
+          eq(
+            crmProductCategories
+              .tenantId,
+            tenantId,
+          ),
+          eq(
+            crmProductCategories
+              .productTypeId,
+            productTypeId,
+          ),
+          eq(
+            crmProductCategories.name,
+            category,
+          ),
+        ),
+      )
+      .limit(1);
+
+  if (!storedCategory) {
+    throw new ApiError(
+      "La categoría seleccionada no corresponde al tipo de elemento.",
+      400,
+    );
+  }
+
+  const preservesCurrentCategory =
+    current?.productTypeId ===
+      productTypeId &&
+    current.category ===
+      category;
+
+  if (
+    !storedCategory.active &&
+    !preservesCurrentCategory
+  ) {
+    throw new ApiError(
+      "La categoría seleccionada está inactiva.",
+      400,
+    );
+  }
+
+  return category;
+}
+
 function validateProduct(
   values: ProductFormPayload,
 ): string | null {
@@ -123,7 +335,7 @@ function validateProduct(
   );
 
   if (!name) {
-    return "El nombre del producto es obligatorio.";
+    return "El nombre del elemento es obligatorio.";
   }
 
   const unitPrice = getOptionalNumber(
@@ -142,9 +354,18 @@ function validateProduct(
 
 function mapProductValues(
   values: ProductFormPayload,
+  productType:
+    StoredProductType,
+  category: string,
   currentMetadata:
     Record<string, unknown> = {},
+  currentActive = true,
 ) {
+  const itemType =
+    getLegacyItemType(
+      productType,
+    );
+
   const unitPrice =
     getOptionalNumber(
       values.unitPrice,
@@ -195,10 +416,16 @@ function mapProductValues(
         values.description,
       ) ?? null,
 
-    category:
-      getOptionalString(
-        values.category,
-      ) ?? null,
+    productTypeId:
+      productType.id,
+
+    /*
+     * Se conserva hasta retirar las columnas
+     * de compatibilidad en una migración posterior.
+     */
+    itemType,
+
+    category,
 
     unitPrice:
       String(
@@ -214,7 +441,7 @@ function mapProductValues(
     active:
       getBoolean(
         values.active,
-        true,
+        currentActive,
       ),
 
     metadata: {
@@ -393,7 +620,10 @@ function createErrorResponse(
 }
 
 function serializeProduct(
-  product: typeof crmProducts.$inferSelect,
+  product:
+    typeof crmProducts.$inferSelect,
+  productType?:
+    StoredProductType,
 ) {
   const baseLabel = product.code
     ? `${product.name} (${product.code})`
@@ -451,6 +681,33 @@ function serializeProduct(
       product.imageObjectKey
         ? `/api/crm/products/${product.id}/image`
         : null,
+
+    productTypeId:
+      product.productTypeId,
+
+    productTypeKey:
+      productType?.key ??
+      product.itemType,
+
+    productTypeName:
+      productType?.name ??
+      product.itemType,
+
+    inventoryTracked:
+      productType
+        ?.inventoryTracked ??
+      false,
+
+    technicalProfile:
+      productType
+        ?.technicalProfile ??
+      null,
+
+    /*
+     * Compatibilidad temporal.
+     */
+    itemType:
+      product.itemType,
 
     category:
       product.category,
@@ -554,8 +811,23 @@ export async function GET(
         "includeInactive",
       ) === "true";
 
+    const requestedStatus =
+      url.searchParams.get(
+        "status",
+      );
+
+    const status =
+      requestedStatus ===
+        "inactive" ||
+      requestedStatus ===
+        "all"
+        ? requestedStatus
+        : includeInactive
+          ? "all"
+          : "active";
+
     const whereClause =
-      includeInactive
+      status === "all"
         ? eq(
             crmProducts.tenantId,
             tenantId,
@@ -565,25 +837,74 @@ export async function GET(
               crmProducts.tenantId,
               tenantId,
             ),
+
             eq(
               crmProducts.active,
-              true,
+              status === "active",
             ),
           );
 
-    const products = await db
-      .select()
-      .from(crmProducts)
-      .where(whereClause)
-      .orderBy(
-        desc(crmProducts.active),
-        asc(crmProducts.name),
+    const [
+      products,
+      productTypes,
+    ] = await Promise.all([
+      db
+        .select()
+        .from(crmProducts)
+        .where(whereClause)
+        .orderBy(
+          desc(crmProducts.active),
+          asc(crmProducts.name),
+        ),
+
+      db
+        .select({
+          id:
+            crmProductTypes.id,
+          key:
+            crmProductTypes.key,
+          name:
+            crmProductTypes.name,
+          inventoryTracked:
+            crmProductTypes
+              .inventoryTracked,
+          technicalProfile:
+            crmProductTypes
+              .technicalProfile,
+          active:
+            crmProductTypes.active,
+        })
+        .from(crmProductTypes)
+        .where(
+          eq(
+            crmProductTypes.tenantId,
+            tenantId,
+          ),
+        ),
+    ]);
+
+    const productTypesById =
+      new Map(
+        productTypes.map(
+          (productType) => [
+            productType.id,
+            productType,
+          ],
+        ),
       );
 
     return NextResponse.json({
       success: true,
       data: products.map(
-        serializeProduct,
+        (product) =>
+          serializeProduct(
+            product,
+            product.productTypeId
+              ? productTypesById.get(
+                  product.productTypeId,
+                )
+              : undefined,
+          ),
       ),
       permissions,
       meta: {
@@ -631,8 +952,25 @@ export async function POST(
       );
     }
 
+    const productType =
+      await getProductType(
+        tenantId,
+        values,
+      );
+
+    const category =
+      await validateProductCategory(
+        tenantId,
+        productType.id,
+        values.category,
+      );
+
     const productValues =
-      mapProductValues(values);
+      mapProductValues(
+        values,
+        productType,
+        category,
+      );
 
     const [product] = await db
       .insert(crmProducts)
@@ -649,6 +987,7 @@ export async function POST(
           "El producto fue creado correctamente.",
         data: serializeProduct(
           product,
+          productType,
         ),
       },
       {
@@ -669,6 +1008,7 @@ export async function PATCH(
   try {
     const {
       tenantId,
+      permissions,
     } = await getTenantContext(
       "edit",
     );
@@ -701,6 +1041,15 @@ export async function PATCH(
         .select({
           metadata:
             crmProducts.metadata,
+
+          productTypeId:
+            crmProducts.productTypeId,
+
+          category:
+            crmProducts.category,
+
+          active:
+            crmProducts.active,
         })
         .from(crmProducts)
         .where(
@@ -725,6 +1074,24 @@ export async function PATCH(
       );
     }
 
+    const requestedActive =
+      typeof values.active ===
+        "boolean"
+        ? values.active
+        : existingProduct.active;
+
+    if (
+      requestedActive !==
+        existingProduct.active &&
+      !permissions
+        .isGlobalAdministrator
+    ) {
+      throw new CRMPermissionError(
+        "Solo un administrador puede descontinuar o reactivar elementos del catálogo.",
+        403,
+      );
+    }
+
     const validationError =
       validateProduct(values);
 
@@ -735,10 +1102,35 @@ export async function PATCH(
       );
     }
 
+    const productType =
+      await getProductType(
+        tenantId,
+        values,
+        existingProduct
+          .productTypeId,
+      );
+
+    const category =
+      await validateProductCategory(
+        tenantId,
+        productType.id,
+        values.category,
+        {
+          productTypeId:
+            existingProduct
+              .productTypeId,
+          category:
+            existingProduct.category,
+        },
+      );
+
     const productValues =
       mapProductValues(
         values,
+        productType,
+        category,
         existingProduct.metadata,
+        existingProduct.active,
       );
 
     const [product] = await db
@@ -776,6 +1168,7 @@ export async function PATCH(
           : "El producto fue desactivado correctamente.",
       data: serializeProduct(
         product,
+        productType,
       ),
     });
   } catch (error) {

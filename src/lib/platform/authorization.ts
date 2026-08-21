@@ -91,15 +91,15 @@ export async function requirePlatformAdministrator() {
         );
     }
 
-    if (
-        orgId !==
-        internalOrganizationId
-    ) {
-        throw new PlatformAuthorizationError(
-            "Esta sección es exclusiva para el equipo de Datara Lab.",
-            403,
-        );
-    }
+if (
+    orgId !==
+    internalOrganizationId
+) {
+    throw new PlatformAuthorizationError(
+        "Esta sección es exclusiva para el equipo de Datara Lab.",
+        403,
+    );
+}
 
     const [administrator] =
         await db

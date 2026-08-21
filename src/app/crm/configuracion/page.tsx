@@ -154,6 +154,19 @@ export default function ConfiguracionPage() {
           </a>
 
           <a
+            href="/crm/configuracion/catalogo"
+            className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            <h2 className="text-xl font-black text-slate-950">
+              🗂️ Categorías del catálogo
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Administra las categorías disponibles para modelos, productos y servicios.
+            </p>
+          </a>
+
+          <a
             href="/crm/configuracion/reservas"
             className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >

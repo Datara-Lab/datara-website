@@ -604,10 +604,13 @@ export async function GET() {
               }
             : null,
 
-        canManage:
-          settingsPermissions
-            ?.canManage ??
-          false,
+          canManage:
+            settingsPermissions
+              ?.canManage ??
+            false,
+
+          roleKey:
+            context.roleKey,
       },
     });
   } catch (error) {

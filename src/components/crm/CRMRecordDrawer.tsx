@@ -90,6 +90,19 @@ function shouldShowDetailField(
     );
   }
 
+  if (
+    "in" in
+    field.visibleWhen
+  ) {
+    return field.visibleWhen.in.includes(
+      relatedValue as
+        | string
+        | number
+        | boolean
+        | null,
+    );
+  }
+
   return (
     relatedValue ===
     field.visibleWhen.equals
@@ -265,17 +278,31 @@ function formatFieldValue(
         </span>
       );
 
-    case "select":
+    case "select": {
+      const stringValue =
+        String(value);
+
+      const optionLabel =
+        field.options?.find(
+          (option) =>
+            option.value ===
+            stringValue,
+        )?.label ??
+        stringValue;
+
       return (
         <span
           className={[
             "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
-            getBadgeClassName(String(value)),
+            getBadgeClassName(
+              optionLabel,
+            ),
           ].join(" ")}
         >
-          {String(value)}
+          {optionLabel}
         </span>
       );
+    }
 
     case "multiselect": {
       const values = Array.isArray(value)
@@ -916,7 +943,15 @@ export default function CRMRecordDrawer({
 
           {mode === "view" && record ? (
             <div className="space-y-6">
-              {detailSections.map(
+              {detailSections
+                .filter(
+                  ({
+                    fields,
+                  }) =>
+                    fields.length >
+                    0,
+                )
+                .map(
                 ({
                   section,
                   fields,

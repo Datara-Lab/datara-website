@@ -19,6 +19,7 @@ import { db } from "@/db";
 
 import {
   crmProducts,
+  crmProductTypes,
   inventoryLocations,
   inventoryStocks,
   tenantBranches,
@@ -315,6 +316,10 @@ export async function GET() {
           id: crmProducts.id,
           name: crmProducts.name,
           code: crmProducts.code,
+          productTypeId:
+            crmProductTypes.id,
+          productTypeName:
+            crmProductTypes.name,
           category:
             crmProducts.category,
           unitPrice:
@@ -323,14 +328,34 @@ export async function GET() {
             crmProducts.currency,
         })
         .from(crmProducts)
+        .innerJoin(
+          crmProductTypes,
+          and(
+            eq(
+              crmProductTypes.id,
+              crmProducts.productTypeId,
+            ),
+
+            eq(
+              crmProductTypes.tenantId,
+              tenant.id,
+            ),
+          ),
+        )
         .where(
           and(
             eq(
               crmProducts.tenantId,
               tenant.id,
             ),
+
             eq(
               crmProducts.active,
+              true,
+            ),
+
+            eq(
+              crmProductTypes.inventoryTracked,
               true,
             ),
           ),
@@ -488,6 +513,12 @@ export async function GET() {
 
                 productCode:
                   product.code,
+
+                productTypeId:
+                  product.productTypeId,
+
+                productTypeName:
+                  product.productTypeName,
 
                 category:
                   product.category,

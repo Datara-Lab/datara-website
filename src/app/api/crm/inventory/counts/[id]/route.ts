@@ -37,6 +37,10 @@ import {
 } from "@/lib/crm/inventory-audit";
 
 import {
+  isInventoryTrackedProduct,
+} from "@/lib/crm/inventory-products";
+
+import {
   CRMPermissionError,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
@@ -495,6 +499,19 @@ export async function PATCH(
         throw new ApiError(
           "El modelo seleccionado no está disponible.",
           404,
+        );
+      }
+
+      const inventoryTracked =
+        await isInventoryTrackedProduct(
+          tenantId,
+          productId,
+        );
+
+      if (!inventoryTracked) {
+        throw new ApiError(
+          "El elemento seleccionado pertenece a un tipo que no administra inventario.",
+          400,
         );
       }
 

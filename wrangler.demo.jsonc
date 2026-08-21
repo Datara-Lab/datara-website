@@ -1,0 +1,71 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": "./custom-worker.ts",
+  "name": "datara-demo",
+  "compatibility_date": "2026-07-17",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "keep_vars": true,
+  "vars": {
+    "DATARA_ENVIRONMENT": "demo",
+    "DATARA_EXPECTED_DATABASE_HOST": "ep-tiny-bread-auvm2zu4-pooler.c-10.us-east-1.aws.neon.tech",
+    "DATARA_PUBLIC_URL": "https://demo.datara-lab.com",
+    "NEXT_PUBLIC_DATARA_ENVIRONMENT": "demo"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false
+    }
+  },
+  "routes": [
+    {
+      "pattern": "demo.datara-lab.com",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
+  "r2_buckets": [
+    {
+      "bucket_name": "datara-crm-documents-demo",
+      "binding": "datara_crm_documents",
+      "remote": true
+    }
+  ],
+  "secrets": {
+    "required": [
+      "CLERK_SECRET_KEY",
+      "CRON_SECRET",
+      "DATABASE_URL",
+      "DATARA_INTERNAL_ORGANIZATION_ID",
+      "RESEND_API_KEY",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET"
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "datara-demo"
+    }
+  ]
+}

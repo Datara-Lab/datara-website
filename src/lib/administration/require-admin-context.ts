@@ -126,5 +126,7 @@ export async function requireAdminContext() {
         tenantId: tenant.id,
         memberId: member.id,
         clerkUserId: userId,
+        roleKey:
+            member.roleKey,
     };
 }

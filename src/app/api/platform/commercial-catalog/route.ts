@@ -84,6 +84,12 @@ type CatalogItemPayload = {
     annualPrice?: unknown;
     annualDiscountPercent?:
     unknown;
+    installmentsEnabled?:
+    unknown;
+    installmentsDiscountPercent?:
+    unknown;
+    annualInstallmentsPrice?:
+    unknown;
     currency?: unknown;
     includedUsers?: unknown;
     includedStorageGb?: unknown;
@@ -449,6 +455,41 @@ function getCatalogValues(
             100
         );
 
+    const installmentsEnabled =
+        getBoolean(
+            payload
+                .installmentsEnabled,
+            "Meses sin intereses",
+        );
+
+    const installmentsDiscountPercent =
+        getNonNegativeInteger(
+            payload
+                .installmentsDiscountPercent,
+            "El descuento para MSI",
+        );
+
+    if (
+        installmentsDiscountPercent >
+        100
+    ) {
+        throw new ApiError(
+            "El descuento para MSI no puede exceder 100%.",
+            400,
+        );
+    }
+
+    const annualInstallmentsPrice =
+        installmentsEnabled
+            ? monthlyPrice *
+              12 *
+              (
+                  1 -
+                  installmentsDiscountPercent /
+                  100
+              )
+            : 0;
+
     return {
         productKey:
             payload.productKey,
@@ -493,6 +534,14 @@ function getCatalogValues(
             ),
 
         annualDiscountPercent,
+
+        installmentsEnabled,
+
+        installmentsDiscountPercent,
+
+        annualInstallmentsPrice:
+            annualInstallmentsPrice
+                .toFixed(2),
 
         currency,
 
@@ -666,6 +715,14 @@ export async function POST(
                     annualPrice:
                         createdItem.annualPrice,
 
+                    installmentsEnabled:
+                        createdItem
+                            .installmentsEnabled,
+
+                    annualInstallmentsPrice:
+                        createdItem
+                            .annualInstallmentsPrice,
+
                     currency:
                         createdItem.currency,
 
@@ -683,6 +740,10 @@ export async function POST(
                     stripeAnnualPriceId:
                         createdItem
                             .stripeAnnualPriceId,
+
+                    stripeAnnualInstallmentsPriceId:
+                        createdItem
+                            .stripeAnnualInstallmentsPriceId,
                 },
             });
 
@@ -893,6 +954,14 @@ export async function PATCH(
                     annualPrice:
                         values.annualPrice,
 
+                    installmentsEnabled:
+                        values
+                            .installmentsEnabled,
+
+                    annualInstallmentsPrice:
+                        values
+                            .annualInstallmentsPrice,
+
                     currency:
                         values.currency,
 
@@ -910,6 +979,10 @@ export async function PATCH(
                     stripeAnnualPriceId:
                         currentItem
                             .stripeAnnualPriceId,
+
+                    stripeAnnualInstallmentsPriceId:
+                        currentItem
+                            .stripeAnnualInstallmentsPriceId,
                 },
             });
 

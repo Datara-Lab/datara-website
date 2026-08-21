@@ -1,16 +1,18 @@
 "use client";
 
-import { SignIn, useAuth } from "@clerk/nextjs";
+import { SignIn, SignUp, useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 type LoginFormProps = {
   redirectUrl?: string;
+  initialMode?: "sign-in" | "sign-up";
 };
 
 export default function LoginForm({
   redirectUrl = "/seleccionar-empresa",
+  initialMode = "sign-in",
 }: LoginFormProps) {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
@@ -43,11 +45,15 @@ export default function LoginForm({
         </div>
 
         <h2 className="mt-3 text-center text-4xl font-bold tracking-tight text-slate-950">
-          Iniciar sesión
+        {initialMode === "sign-up"
+          ? "Crea tu cuenta"
+          : "Iniciar sesión"}
         </h2>
 
         <p className="mt-1.5 text-center text-slate-500">
-          Accede a tu espacio de trabajo.
+        {initialMode === "sign-up"
+          ? "Regístrate para activar tu prueba gratuita."
+          : "Accede a tu espacio de trabajo."}
         </p>
 
         <div className="mt-6 flex min-h-[320px] justify-center">
@@ -59,6 +65,26 @@ export default function LoginForm({
             <p className="text-sm text-slate-500">
               Abriendo tu espacio de trabajo...
             </p>
+          ) : (
+          initialMode === "sign-up" ? (
+          <SignUp
+            routing="hash"
+            forceRedirectUrl={
+              redirectUrl
+            }
+            signInForceRedirectUrl={
+              redirectUrl
+            }
+            appearance={{
+              elements: {
+                rootBox: "w-full",
+                cardBox: "w-full shadow-none",
+                card: "w-full shadow-none border-0 p-0",
+                headerTitle: "hidden",
+                headerSubtitle: "hidden",
+              },
+            }}
+          />
           ) : (
             <SignIn
               routing="hash"
@@ -79,6 +105,7 @@ export default function LoginForm({
                 },
               }}
             />
+          )
           )}
         </div>
 

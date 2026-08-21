@@ -1,26 +1,57 @@
-import { neon } from "@neondatabase/serverless";
-import { config } from "dotenv";
+import {
+    neon,
+} from "@neondatabase/serverless";
+
+import {
+    config,
+} from "dotenv";
+
 import {
     asc,
     eq,
 } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
+
+import {
+    drizzle,
+} from "drizzle-orm/neon-http";
+
 import Stripe from "stripe";
 
 import {
     commercialCatalogItems,
 } from "../src/db/schema";
 
+import {
+    synchronizeStripeCatalogItem,
+} from "../src/lib/commercial/synchronize-stripe-catalog-item";
+
+const environmentFile =
+    process.env
+        .DATARA_ENV_FILE
+        ?.trim() ||
+    ".env.development.local";
+
+const expectedDatabaseHost =
+    process.env
+        .DATARA_EXPECTED_DATABASE_HOST
+        ?.trim() ||
+    "ep-aged-wildflower-audj25dr-pooler.c-10.us-east-1.aws.neon.tech";
+
 config({
-    path: ".env.local",
-    override: true,
+    path:
+        environmentFile,
+
+    override:
+        true,
 });
 
 function getRequiredEnvironment(
     name: string,
 ): string {
     const value =
-        process.env[name];
+        process.env[
+            name
+        ]?.trim();
 
     if (!value) {
         throw new Error(
@@ -31,26 +62,37 @@ function getRequiredEnvironment(
     return value;
 }
 
-function getAmountInCents(
-    amount: string,
-): number {
-    const amountInCents =
-        Math.round(
-            Number(amount) * 100,
-        );
+function validateDatabaseUrl(
+    databaseUrl: string,
+): void {
+    let databaseHost:
+        string;
 
-    if (
-        !Number.isFinite(
-            amountInCents,
-        ) ||
-        amountInCents < 0
-    ) {
+    try {
+        databaseHost =
+            new URL(
+                databaseUrl,
+            ).hostname;
+    } catch {
         throw new Error(
-            `El importe ${amount} no es válido.`,
+            "DATABASE_URL no contiene una URL válida.",
         );
     }
 
-    return amountInCents;
+    if (
+        databaseHost !==
+        expectedDatabaseHost
+    ) {
+        throw new Error(
+            [
+                "Sincronización bloqueada.",
+                `Endpoint recibido: ${databaseHost}`,
+                `Endpoint permitido: ${expectedDatabaseHost}`,
+            ].join(
+                " ",
+            ),
+        );
+    }
 }
 
 async function synchronizeStripeCatalog() {
@@ -64,13 +106,17 @@ async function synchronizeStripeCatalog() {
             "STRIPE_SECRET_KEY",
         );
 
+    validateDatabaseUrl(
+        databaseUrl,
+    );
+
     if (
         !stripeSecretKey.startsWith(
             "sk_test_",
         )
     ) {
         throw new Error(
-            "Este script solamente puede ejecutarse con una clave de Stripe Sandbox.",
+            "Este script solamente puede ejecutarse con una clave de Stripe Test.",
         );
     }
 
@@ -79,7 +125,7 @@ async function synchronizeStripeCatalog() {
             databaseUrl,
         );
 
-    const db =
+    const database =
         drizzle(
             sql,
         );
@@ -90,7 +136,7 @@ async function synchronizeStripeCatalog() {
         );
 
     const catalogItems =
-        await db
+        await database
             .select({
                 id:
                     commercialCatalogItems.id,
@@ -118,9 +164,20 @@ async function synchronizeStripeCatalog() {
                     commercialCatalogItems
                         .annualPrice,
 
+                installmentsEnabled:
+                    commercialCatalogItems
+                        .installmentsEnabled,
+
+                annualInstallmentsPrice:
+                    commercialCatalogItems
+                        .annualInstallmentsPrice,
+
                 currency:
                     commercialCatalogItems
                         .currency,
+
+                active:
+                    commercialCatalogItems.active,
 
                 stripeProductId:
                     commercialCatalogItems
@@ -133,6 +190,10 @@ async function synchronizeStripeCatalog() {
                 stripeAnnualPriceId:
                     commercialCatalogItems
                         .stripeAnnualPriceId,
+
+                stripeAnnualInstallmentsPriceId:
+                    commercialCatalogItems
+                        .stripeAnnualInstallmentsPriceId,
             })
             .from(
                 commercialCatalogItems,
@@ -156,241 +217,69 @@ async function synchronizeStripeCatalog() {
             );
 
     console.log(
-        `Sincronizando ${catalogItems.length} elementos comerciales con Stripe Sandbox...`,
+        `Sincronizando ${catalogItems.length} elementos con Stripe Test...`,
     );
 
     for (
         const item of
         catalogItems
     ) {
-        let stripeProductId =
-            item.stripeProductId;
+        const references =
+            await synchronizeStripeCatalogItem({
+                stripe,
+                item,
+            });
 
-        if (!stripeProductId) {
-            const stripeProduct =
-                await stripe.products
-                    .create({
-                        name:
-                            item.name,
+        await database
+            .update(
+                commercialCatalogItems,
+            )
+            .set({
+                ...references,
 
-                        description:
-                            item.description ??
-                            undefined,
-
-                        metadata: {
-                            catalogItemId:
-                                item.id,
-
-                            productKey:
-                                item.productKey,
-
-                            itemKey:
-                                item.itemKey,
-                        },
-                    });
-
-            stripeProductId =
-                stripeProduct.id;
-
-            await db
-                .update(
-                    commercialCatalogItems,
-                )
-                .set({
-                    stripeProductId,
-                    updatedAt:
-                        new Date(),
-                })
-                .where(
-                    eq(
-                        commercialCatalogItems.id,
-                        item.id,
-                    ),
-                );
-
-            console.log(
-                `Producto creado: ${item.name} → ${stripeProductId}`,
+                updatedAt:
+                    new Date(),
+            })
+            .where(
+                eq(
+                    commercialCatalogItems.id,
+                    item.id,
+                ),
             );
-        } else {
-            await stripe.products
-                .update(
-                    stripeProductId,
-                    {
-                        name:
-                            item.name,
 
-                        description:
-                            item.description ??
-                            undefined,
-
-                        active:
-                            true,
-
-                        metadata: {
-                            catalogItemId:
-                                item.id,
-
-                            productKey:
-                                item.productKey,
-
-                            itemKey:
-                                item.itemKey,
-                        },
-                    },
-                );
-
-            console.log(
-                `Producto actualizado: ${item.name} → ${stripeProductId}`,
-            );
-        }
-
-        if (
-            !item.stripeMonthlyPriceId
-        ) {
-            const monthlyPrice =
-                await stripe.prices
-                    .create({
-                        product:
-                            stripeProductId,
-
-                        currency:
-                            item.currency
-                                .toLowerCase(),
-
-                        unit_amount:
-                            getAmountInCents(
-                                item.monthlyPrice,
-                            ),
-
-                        tax_behavior:
-                            "inclusive",
-
-                        recurring: {
-                            interval:
-                                "month",
-                        },
-
-                        nickname:
-                            `${item.name} mensual`,
-
-                        metadata: {
-                            catalogItemId:
-                                item.id,
-
-                            productKey:
-                                item.productKey,
-
-                            itemKey:
-                                item.itemKey,
-
-                            billingPeriod:
-                                "monthly",
-                        },
-                    });
-
-            await db
-                .update(
-                    commercialCatalogItems,
-                )
-                .set({
-                    stripeMonthlyPriceId:
-                        monthlyPrice.id,
-
-                    updatedAt:
-                        new Date(),
-                })
-                .where(
-                    eq(
-                        commercialCatalogItems.id,
-                        item.id,
-                    ),
-                );
-
-            console.log(
-                `Precio mensual creado: ${item.name} → ${monthlyPrice.id}`,
-            );
-        }
-
-        if (
-            !item.stripeAnnualPriceId
-        ) {
-            const annualPrice =
-                await stripe.prices
-                    .create({
-                        product:
-                            stripeProductId,
-
-                        currency:
-                            item.currency
-                                .toLowerCase(),
-
-                        unit_amount:
-                            getAmountInCents(
-                                item.annualPrice,
-                            ),
-
-                        tax_behavior:
-                            "inclusive",
-
-                        recurring: {
-                            interval:
-                                "year",
-                        },
-
-                        nickname:
-                            `${item.name} anual`,
-
-                        metadata: {
-                            catalogItemId:
-                                item.id,
-
-                            productKey:
-                                item.productKey,
-
-                            itemKey:
-                                item.itemKey,
-
-                            billingPeriod:
-                                "annual",
-                        },
-                    });
-
-            await db
-                .update(
-                    commercialCatalogItems,
-                )
-                .set({
-                    stripeAnnualPriceId:
-                        annualPrice.id,
-
-                    updatedAt:
-                        new Date(),
-                })
-                .where(
-                    eq(
-                        commercialCatalogItems.id,
-                        item.id,
-                    ),
-                );
-
-            console.log(
-                `Precio anual creado: ${item.name} → ${annualPrice.id}`,
-            );
-        }
+        console.log(
+            [
+                "SINCRONIZADO:",
+                `${item.productKey}/${item.itemKey}`,
+                `producto=${references.stripeProductId}`,
+                `mensual=${references.stripeMonthlyPriceId}`,
+                `anual=${references.stripeAnnualPriceId}`,
+                `parcialidades=${references.stripeAnnualInstallmentsPriceId ?? "no aplica"}`,
+            ].join(
+                " ",
+            ),
+        );
     }
 
     console.log(
-        "Catálogo de Stripe Sandbox sincronizado correctamente.",
+        "Catálogo Stripe Test sincronizado correctamente.",
     );
 }
 
 synchronizeStripeCatalog().catch(
-    (error: unknown) => {
+    (
+        error: unknown,
+    ) => {
         console.error(
-            "No fue posible sincronizar el catálogo con Stripe Sandbox.",
+            "No fue posible sincronizar el catálogo Stripe Test.",
         );
 
-        console.error(error);
-        process.exit(1);
+        console.error(
+            error,
+        );
+
+        process.exit(
+            1,
+        );
     },
 );

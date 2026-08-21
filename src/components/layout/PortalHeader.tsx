@@ -5,6 +5,10 @@ import {
 } from "@clerk/nextjs";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,6 +17,56 @@ import OrganizationSelector from "./OrganizationSelector";
 export default function PortalHeader() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const [roleKey, setRoleKey] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadRole() {
+      try {
+        const response =
+          await fetch(
+            "/api/crm/settings/navigation",
+            {
+              cache: "no-store",
+            },
+          );
+
+        const result =
+          (await response.json()) as {
+            success: boolean;
+            data?: {
+              roleKey?: string;
+            };
+          };
+
+        if (
+          !response.ok ||
+          !result.success ||
+          !isActive
+        ) {
+          return;
+        }
+
+        setRoleKey(
+          result.data?.roleKey ??
+            null,
+        );
+      } catch {
+        if (isActive) {
+          setRoleKey(null);
+        }
+      }
+    }
+
+    void loadRole();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -42,10 +96,28 @@ export default function PortalHeader() {
           </div>
         </button>
 
-        <div className="flex shrink-0 items-center gap-4">
-          <OrganizationSelector />
+          <div className="flex shrink-0 items-center gap-4">
+            <OrganizationSelector />
 
-          <div className="hidden text-right sm:block">
+            {roleKey === "owner" && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/contratar?purchase=new_customer",
+                  )
+                }
+                className="hidden items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 sm:inline-flex"
+              >
+                <span className="text-base">
+                  +
+                </span>
+
+                Agregar empresa
+              </button>
+            )}
+
+            <div className="hidden text-right sm:block">
             <p className="text-sm font-semibold text-slate-900">
               {user?.firstName} {user?.lastName}
             </p>

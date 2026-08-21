@@ -26,6 +26,10 @@ import {
 } from "@/lib/crm/provision-template-roles";
 
 import {
+  provisionCRMProductCatalog,
+} from "@/lib/crm/provision-product-catalog";
+
+import {
   provisionCRMModuleEntitlements,
 } from "@/lib/crm/provision-module-entitlements";
 
@@ -406,6 +410,11 @@ export async function POST(
         tenant.name,
         tenant.industry,
       );
+
+      await provisionCRMProductCatalog(
+        tenant.id,
+        tenant.industry,
+      );
     }
 
     const tenantRoles = await db
@@ -691,7 +700,8 @@ export async function POST(
           activeStripeSubscription,
         );
 
-      const expiresAt =
+      let expiresAt:
+        Date | null =
         provisioningMetadata.mode ===
         "trial"
           ? new Date(
@@ -699,6 +709,56 @@ export async function POST(
                 .trialEndsAt!,
             )
           : null;
+
+      if (
+        provisioningMetadata.mode ===
+          "subscription" &&
+        commercialPurchaseId
+      ) {
+        const [
+          subscriptionPurchase,
+        ] =
+          await db
+            .select({
+              billingPeriod:
+                commercialPurchases
+                  .billingPeriod,
+
+              paidAt:
+                commercialPurchases
+                  .paidAt,
+            })
+            .from(
+              commercialPurchases,
+            )
+            .where(
+              eq(
+                commercialPurchases.id,
+                commercialPurchaseId,
+              ),
+            )
+            .limit(1);
+
+        if (
+          subscriptionPurchase
+            ?.billingPeriod ===
+          "annual_installments"
+        ) {
+          expiresAt =
+            new Date(
+              subscriptionPurchase
+                .paidAt ??
+              now,
+            );
+
+          expiresAt
+            .setUTCFullYear(
+              expiresAt
+                .getUTCFullYear() +
+                1,
+            );
+        }
+      }
 
       if (!ignoreStaleTrialMetadata) {
         provisionedModuleIds =
@@ -845,6 +905,11 @@ export async function POST(
             )
             .limit(1);
 
+        const isAnnualInstallments =
+          commercialPurchase
+            ?.billingPeriod ===
+          "annual_installments";
+
         if (
           !commercialPurchase ||
           commercialPurchase
@@ -853,8 +918,11 @@ export async function POST(
           commercialPurchase
             .clerkOrganizationId !==
             organization.id ||
-          !commercialPurchase
-            .stripeSubscriptionId
+          (
+            !isAnnualInstallments &&
+            !commercialPurchase
+              .stripeSubscriptionId
+          )
         ) {
           throw new Error(
             "La contratación pagada no corresponde con la organización activa.",
@@ -870,75 +938,196 @@ export async function POST(
               )}`
             : "crm-custom";
 
-        await db
-          .insert(subscriptions)
-          .values({
-            tenantId:
-              tenant.id,
+        const currentPeriodStart =
+          commercialPurchase
+            .paidAt ??
+          now;
 
-            provider:
-              "stripe",
+        const currentPeriodEnd =
+          isAnnualInstallments
+            ? new Date(
+                currentPeriodStart,
+              )
+            : null;
 
-            providerCustomerId:
-              commercialPurchase
-                .stripeCustomerId,
+        if (currentPeriodEnd) {
+          currentPeriodEnd
+            .setUTCFullYear(
+              currentPeriodEnd
+                .getUTCFullYear() +
+                1,
+            );
+        }
 
-            providerSubscriptionId:
-              commercialPurchase
-                .stripeSubscriptionId,
+        if (isAnnualInstallments) {
+          const [
+            existingSubscription,
+          ] =
+            await db
+              .select({
+                id:
+                  subscriptions.id,
+              })
+              .from(
+                subscriptions,
+              )
+              .where(
+                and(
+                  eq(
+                    subscriptions
+                      .tenantId,
+                    tenant.id,
+                  ),
 
-            productKey:
-              commercialPurchase
-                .productKey,
+                  eq(
+                    subscriptions
+                      .productKey,
+                    commercialPurchase
+                      .productKey,
+                  ),
+                ),
+              )
+              .limit(1);
 
-            planKey,
+          if (existingSubscription) {
+            await db
+              .update(
+                subscriptions,
+              )
+              .set({
+                provider:
+                  "stripe",
 
-            billingPeriod:
-              commercialPurchase
-                .billingPeriod,
+                providerCustomerId:
+                  commercialPurchase
+                    .stripeCustomerId,
 
-            catalogItemIds:
-              commercialPurchase
-                .catalogItemIds,
+                providerSubscriptionId:
+                  null,
 
-            status:
-              "active",
+                providerScheduleId:
+                  null,
 
-            seats:
-              1,
+                productKey:
+                  commercialPurchase
+                    .productKey,
 
-            currency:
-              commercialPurchase
-                .currency,
+                planKey,
 
-            currentPeriodStart:
-              commercialPurchase
-                .paidAt ??
-              now,
+                billingPeriod:
+                  commercialPurchase
+                    .billingPeriod,
 
-            currentPeriodEnd:
-              null,
+                catalogItemIds:
+                  commercialPurchase
+                    .catalogItemIds,
 
-            cancelAtPeriodEnd:
-              false,
+                pendingBillingPeriod:
+                  null,
 
-            updatedAt:
-              now,
-          })
-          .onConflictDoUpdate({
-            target: [
-              subscriptions.provider,
-              subscriptions
-                .providerSubscriptionId,
-            ],
+                pendingCatalogItemIds:
+                  null,
 
-            set: {
+                pendingChangeAt:
+                  null,
+
+                status:
+                  "active",
+
+                seats:
+                  1,
+
+                currency:
+                  commercialPurchase
+                    .currency,
+
+                currentPeriodStart,
+
+                currentPeriodEnd,
+
+                cancelAtPeriodEnd:
+                  false,
+
+                updatedAt:
+                  now,
+              })
+              .where(
+                eq(
+                  subscriptions.id,
+                  existingSubscription.id,
+                ),
+              );
+          } else {
+            await db
+              .insert(
+                subscriptions,
+              )
+              .values({
+                tenantId:
+                  tenant.id,
+
+                provider:
+                  "stripe",
+
+                providerCustomerId:
+                  commercialPurchase
+                    .stripeCustomerId,
+
+                providerSubscriptionId:
+                  null,
+
+                productKey:
+                  commercialPurchase
+                    .productKey,
+
+                planKey,
+
+                billingPeriod:
+                  commercialPurchase
+                    .billingPeriod,
+
+                catalogItemIds:
+                  commercialPurchase
+                    .catalogItemIds,
+
+                status:
+                  "active",
+
+                seats:
+                  1,
+
+                currency:
+                  commercialPurchase
+                    .currency,
+
+                currentPeriodStart,
+
+                currentPeriodEnd,
+
+                cancelAtPeriodEnd:
+                  false,
+
+                updatedAt:
+                  now,
+              });
+          }
+        } else {
+          await db
+            .insert(subscriptions)
+            .values({
               tenantId:
                 tenant.id,
+
+              provider:
+                "stripe",
 
               providerCustomerId:
                 commercialPurchase
                   .stripeCustomerId,
+
+              providerSubscriptionId:
+                commercialPurchase
+                  .stripeSubscriptionId,
 
               productKey:
                 commercialPurchase
@@ -957,17 +1146,68 @@ export async function POST(
               status:
                 "active",
 
+              seats:
+                1,
+
               currency:
                 commercialPurchase
                   .currency,
+
+              currentPeriodStart,
+
+              currentPeriodEnd:
+                null,
 
               cancelAtPeriodEnd:
                 false,
 
               updatedAt:
                 now,
-            },
-          });
+            })
+            .onConflictDoUpdate({
+              target: [
+                subscriptions.provider,
+                subscriptions
+                  .providerSubscriptionId,
+              ],
+
+              set: {
+                tenantId:
+                  tenant.id,
+
+                providerCustomerId:
+                  commercialPurchase
+                    .stripeCustomerId,
+
+                productKey:
+                  commercialPurchase
+                    .productKey,
+
+                planKey,
+
+                billingPeriod:
+                  commercialPurchase
+                    .billingPeriod,
+
+                catalogItemIds:
+                  commercialPurchase
+                    .catalogItemIds,
+
+                status:
+                  "active",
+
+                currency:
+                  commercialPurchase
+                    .currency,
+
+                cancelAtPeriodEnd:
+                  false,
+
+                updatedAt:
+                  now,
+              },
+            });
+        }
 
         await db
           .update(

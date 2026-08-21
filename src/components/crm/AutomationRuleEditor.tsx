@@ -1162,6 +1162,19 @@ export default function AutomationRuleEditor({
                         </div>
                     ) : null}
 
+                    {process.env.NEXT_PUBLIC_DATARA_ENVIRONMENT ===
+                    "demo" ? (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-800">
+                            <p className="font-bold">
+                                Envío de correos deshabilitado
+                            </p>
+
+                            <p className="mt-1">
+                                En este entorno demo puedes probar las automatizaciones inmediatas y programadas, pero las acciones de correo electrónico no se enviarán.
+                            </p>
+                        </div>
+                    ) : null}
+
                     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                         <h3 className="text-lg font-black text-slate-950">
                             Información general

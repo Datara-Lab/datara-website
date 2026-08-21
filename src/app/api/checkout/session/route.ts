@@ -116,10 +116,15 @@ function getIndustry(
 
 function getBillingPeriod(
     value: unknown,
-): "monthly" | "annual" {
+):
+    | "monthly"
+    | "annual"
+    | "annual_installments" {
     if (
         value !== "monthly" &&
-        value !== "annual"
+        value !== "annual" &&
+        value !==
+            "annual_installments"
     ) {
         throw new ApiError(
             "Selecciona una periodicidad de pago válida.",
@@ -589,6 +594,14 @@ export async function POST(
                         commercialCatalogItems
                             .annualPrice,
 
+                    installmentsEnabled:
+                        commercialCatalogItems
+                            .installmentsEnabled,
+
+                    annualInstallmentsPrice:
+                        commercialCatalogItems
+                            .annualInstallmentsPrice,
+
                     stripeMonthlyPriceId:
                         commercialCatalogItems
                             .stripeMonthlyPriceId,
@@ -596,6 +609,10 @@ export async function POST(
                     stripeAnnualPriceId:
                         commercialCatalogItems
                             .stripeAnnualPriceId,
+
+                    stripeAnnualInstallmentsPriceId:
+                        commercialCatalogItems
+                            .stripeAnnualInstallmentsPriceId,
 
                     currency:
                         commercialCatalogItems
@@ -704,6 +721,27 @@ export async function POST(
             );
         }
 
+        if (
+            billingPeriod ===
+            "annual_installments"
+        ) {
+            const itemWithoutInstallments =
+                selectedCatalogItems.find(
+                    (item) =>
+                        !item
+                            .installmentsEnabled,
+                );
+
+            if (
+                itemWithoutInstallments
+            ) {
+                throw new ApiError(
+                    `${itemWithoutInstallments.name} no está disponible con meses sin intereses.`,
+                    400,
+                );
+            }
+        }
+
         const itemWithoutStripePrice =
             selectedCatalogItems.find(
                 (item) =>
@@ -711,8 +749,12 @@ export async function POST(
                     "monthly"
                         ? !item
                               .stripeMonthlyPriceId
-                        : !item
-                              .stripeAnnualPriceId,
+                        : billingPeriod ===
+                            "annual"
+                            ? !item
+                                  .stripeAnnualPriceId
+                            : !item
+                                  .stripeAnnualInstallmentsPriceId,
             );
 
         if (itemWithoutStripePrice) {
@@ -761,7 +803,11 @@ export async function POST(
                         billingPeriod ===
                         "monthly"
                             ? item.monthlyPrice
-                            : item.annualPrice;
+                            : billingPeriod ===
+                                "annual"
+                                ? item.annualPrice
+                                : item
+                                      .annualInstallmentsPrice;
 
                     return {
                         catalogItemId:
@@ -888,57 +934,53 @@ export async function POST(
             Stripe.Checkout.Session;
 
         try {
-            checkoutSession =
-                await stripe
-                    .checkout
-                    .sessions
-                    .create({
-                        mode:
-                            "subscription",
+            if (
+                billingPeriod ===
+                "annual_installments"
+            ) {
+                checkoutSession =
+                    await stripe
+                        .checkout
+                        .sessions
+                        .create({
+                            mode:
+                                "payment",
 
-                        billing_address_collection:
-                            "required",
+                            locale:
+                                "es-419",
 
-                        customer_email:
-                            linkedOwnerEmail ??
-                            undefined,
+                            billing_address_collection:
+                                "required",
 
-                        line_items:
-                            selectedCatalogItems.map(
-                                (item) => ({
-                                    quantity:
-                                        1,
+                            customer_email:
+                                linkedOwnerEmail ??
+                                undefined,
 
-                                    price:
-                                        billingPeriod ===
-                                        "monthly"
-                                            ? item
-                                                  .stripeMonthlyPriceId!
-                                            : item
-                                                  .stripeAnnualPriceId!,
-                                }),
-                            ),
+                            payment_method_types: [
+                                "card",
+                            ],
 
-                        metadata: {
-                            purchaseId:
-                                purchase.id,
+                            payment_method_options: {
+                                card: {
+                                    installments: {
+                                        enabled:
+                                            true,
+                                    },
+                                },
+                            },
 
-                            purchaseType,
+                            line_items:
+                                selectedCatalogItems.map(
+                                    (item) => ({
+                                        quantity:
+                                            1,
 
-                            tenantId:
-                                linkedTenantId ??
-                                "",
+                                        price:
+                                            item
+                                                .stripeAnnualInstallmentsPriceId!,
+                                    }),
+                                ),
 
-                            clerkOrganizationId:
-                                linkedOrganizationId ??
-                                "",
-
-                            industry,
-
-                            billingPeriod,
-                        },
-
-                        subscription_data: {
                             metadata: {
                                 purchaseId:
                                     purchase.id,
@@ -957,32 +999,131 @@ export async function POST(
 
                                 billingPeriod,
                             },
-                        },
 
-                        success_url:
-                            `${new URL(
-                                request.url,
-                            ).origin}/contratar/confirmar?session_id={CHECKOUT_SESSION_ID}`,
+                            success_url:
+                                `${new URL(
+                                    request.url,
+                                ).origin}/contratar/confirmar?session_id={CHECKOUT_SESSION_ID}`,
 
-                        cancel_url:
-                            `${new URL(
-                                request.url,
-                            ).origin}/contratar?industry=${encodeURIComponent(
+                            cancel_url:
+                                `${new URL(
+                                    request.url,
+                                ).origin}/contratar?industry=${encodeURIComponent(
+                                    industry,
+                                )}${
+                                    purchaseType ===
+                                    "trial_conversion"
+                                        ? "&purchase=trial_conversion"
+                                        : ""
+                                }`,
+
+                            expires_at:
+                                Math.floor(
+                                    expiresAt
+                                        .getTime() /
+                                        1000,
+                                ),
+                        });
+            } else {
+                checkoutSession =
+                    await stripe
+                        .checkout
+                        .sessions
+                        .create({
+                            mode:
+                                "subscription",
+
+                            locale:
+                                "es-419",
+
+                            billing_address_collection:
+                                "required",
+
+                            customer_email:
+                                linkedOwnerEmail ??
+                                undefined,
+
+                            line_items:
+                                selectedCatalogItems.map(
+                                    (item) => ({
+                                        quantity:
+                                            1,
+
+                                        price:
+                                            billingPeriod ===
+                                            "monthly"
+                                                ? item
+                                                      .stripeMonthlyPriceId!
+                                                : item
+                                                      .stripeAnnualPriceId!,
+                                    }),
+                                ),
+
+                            metadata: {
+                                purchaseId:
+                                    purchase.id,
+
+                                purchaseType,
+
+                                tenantId:
+                                    linkedTenantId ??
+                                    "",
+
+                                clerkOrganizationId:
+                                    linkedOrganizationId ??
+                                    "",
+
                                 industry,
-                            )}${
-                                purchaseType ===
-                                "trial_conversion"
-                                    ? "&purchase=trial_conversion"
-                                    : ""
-                            }`,
 
-                        expires_at:
-                            Math.floor(
-                                expiresAt
-                                    .getTime() /
-                                    1000,
-                            ),
-                    });
+                                billingPeriod,
+                            },
+
+                            subscription_data: {
+                                metadata: {
+                                    purchaseId:
+                                        purchase.id,
+
+                                    purchaseType,
+
+                                    tenantId:
+                                        linkedTenantId ??
+                                        "",
+
+                                    clerkOrganizationId:
+                                        linkedOrganizationId ??
+                                        "",
+
+                                    industry,
+
+                                    billingPeriod,
+                                },
+                            },
+
+                            success_url:
+                                `${new URL(
+                                    request.url,
+                                ).origin}/contratar/confirmar?session_id={CHECKOUT_SESSION_ID}`,
+
+                            cancel_url:
+                                `${new URL(
+                                    request.url,
+                                ).origin}/contratar?industry=${encodeURIComponent(
+                                    industry,
+                                )}${
+                                    purchaseType ===
+                                    "trial_conversion"
+                                        ? "&purchase=trial_conversion"
+                                        : ""
+                                }`,
+
+                            expires_at:
+                                Math.floor(
+                                    expiresAt
+                                        .getTime() /
+                                        1000,
+                                ),
+                        });
+            }
         } catch (
             stripeError
         ) {

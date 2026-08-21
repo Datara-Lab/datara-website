@@ -37,6 +37,10 @@ import {
 } from "@/lib/crm/inventory-audit";
 
 import {
+  getInventoryTrackedProductIds,
+} from "@/lib/crm/inventory-products";
+
+import {
   CRMPermissionError,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
@@ -768,6 +772,31 @@ export async function POST(
         404,
       );
     }
+
+    const inventoryTrackedProductIds =
+      await getInventoryTrackedProductIds(
+        tenantId,
+        stockRecords.map(
+          (stock) =>
+            stock.productId,
+        ),
+      );
+
+    const nonInventoryStock =
+      stockRecords.find(
+        (stock) =>
+          !inventoryTrackedProductIds.has(
+            stock.productId,
+          ),
+      );
+
+    if (nonInventoryStock) {
+      throw new ApiError(
+        `El elemento "${nonInventoryStock.productName}" pertenece a un tipo que no administra inventario.`,
+        400,
+      );
+    }
+
 
     for (
       const stock of

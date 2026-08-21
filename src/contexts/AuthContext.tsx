@@ -44,6 +44,9 @@ function normalizeRole(
   role?: string | null,
 ): UserRole {
   switch (role) {
+    case "org:owner":
+      return "owner";
+
     case "org:admin":
       return "admin";
 
@@ -157,27 +160,6 @@ function SignedInAuthProvider({
 
   const firstMembership =
     userMemberships.data?.[0] ?? null;
-
-  useEffect(() => {
-    if (
-      organization ||
-      !isOrganizationListLoaded ||
-      !setActive ||
-      !firstMembership
-    ) {
-      return;
-    }
-
-    void setActive({
-      organization:
-        firstMembership.organization.id,
-    });
-  }, [
-    organization,
-    isOrganizationListLoaded,
-    setActive,
-    firstMembership,
-  ]);
 
     useEffect(() => {
     if (

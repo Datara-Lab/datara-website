@@ -154,6 +154,13 @@ export const permissionModules:
     description:
       "Reglas, disparadores y acciones automáticas del CRM.",
   },
+  {
+    id: "crm-analytics",
+    label: "Analytics del CRM",
+    product: "crm",
+    description:
+      "Indicadores, embudos y análisis del desempeño comercial del CRM.",
+  },
 ];
 
 export function getPermissionModules(

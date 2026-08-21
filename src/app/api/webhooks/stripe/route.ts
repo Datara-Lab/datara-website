@@ -193,7 +193,9 @@ async function handleCompletedCheckout(
 
     if (
         purchase.purchaseType !==
-        "trial_conversion"
+            "trial_conversion" &&
+        purchase.purchaseType !==
+            "subscription_change"
     ) {
         await db
             .update(
@@ -228,12 +230,22 @@ async function handleCompletedCheckout(
         return;
     }
 
+    const isAnnualInstallments =
+        purchase.billingPeriod ===
+        "annual_installments";
+
+    if (!purchase.tenantId) {
+        throw new Error(
+            `La conversión ${purchaseId} no tiene tenant.`,
+        );
+    }
+
     if (
-        !purchase.tenantId ||
+        !isAnnualInstallments &&
         !stripeSubscriptionId
     ) {
         throw new Error(
-            `La conversión ${purchaseId} no tiene tenant o suscripción de Stripe.`,
+            `La conversión ${purchaseId} no tiene suscripción de Stripe.`,
         );
     }
 
@@ -335,51 +347,87 @@ async function handleCompletedCheckout(
             ),
         );
 
-    const stripeSubscription =
-        await stripe
-            .subscriptions
-            .retrieve(
-                stripeSubscriptionId,
+    let stripeSubscription:
+        Stripe.Subscription | null =
+        null;
+
+    let currentPeriodStart:
+        Date;
+
+    let currentPeriodEnd:
+        Date;
+
+    if (isAnnualInstallments) {
+        currentPeriodStart =
+            now;
+
+        currentPeriodEnd =
+            new Date(now);
+
+        currentPeriodEnd
+            .setUTCFullYear(
+                currentPeriodEnd
+                    .getUTCFullYear() +
+                    1,
+            );
+    } else {
+        stripeSubscription =
+            await stripe
+                .subscriptions
+                .retrieve(
+                    stripeSubscriptionId!,
+                );
+
+        const recurringItem =
+            stripeSubscription
+                .items
+                .data[0];
+
+        if (!recurringItem) {
+            throw new Error(
+                `La suscripción ${stripeSubscriptionId} no contiene partidas recurrentes.`,
+            );
+        }
+
+        currentPeriodStart =
+            new Date(
+                recurringItem
+                    .current_period_start *
+                    1000,
             );
 
-    const recurringItem =
-        stripeSubscription
-            .items
-            .data[0];
-
-    if (!recurringItem) {
-        throw new Error(
-            `La suscripción ${stripeSubscriptionId} no contiene partidas recurrentes.`,
-        );
+        currentPeriodEnd =
+            new Date(
+                recurringItem
+                    .current_period_end *
+                    1000,
+            );
     }
-
-    const currentPeriodStart =
-        new Date(
-            recurringItem
-                .current_period_start *
-                1000,
-        );
-
-    const currentPeriodEnd =
-        new Date(
-            recurringItem
-                .current_period_end *
-                1000,
-        );
 
     const [existingSubscription] =
         await db
             .select({
                 id:
                     subscriptions.id,
+
+                providerSubscriptionId:
+                    subscriptions
+                        .providerSubscriptionId,
             })
             .from(
                 subscriptions,
             )
             .where(
-                eq(
-                    subscriptions.tenantId,
-                    purchase.tenantId,
+                and(
+                    eq(
+                        subscriptions.tenantId,
+                        purchase.tenantId,
+                    ),
+
+                    eq(
+                        subscriptions.productKey,
+                        purchase.productKey,
+                    ),
                 ),
             )
             .orderBy(
@@ -391,7 +439,7 @@ async function handleCompletedCheckout(
 
     if (!existingSubscription) {
         throw new Error(
-            `El tenant ${purchase.tenantId} no tiene una suscripción de demo.`,
+            `El tenant ${purchase.tenantId} no tiene una suscripción activa para ${purchase.productKey}.`,
         );
     }
 
@@ -438,8 +486,25 @@ async function handleCompletedCheckout(
         packageKeys,
 
         expiresAt:
-            null,
+            isAnnualInstallments
+                ? currentPeriodEnd
+                : null,
     });
+
+    if (
+        purchase.purchaseType ===
+            "subscription_change" &&
+        isAnnualInstallments &&
+        existingSubscription
+            .providerSubscriptionId
+    ) {
+        await stripe
+            .subscriptions
+            .cancel(
+                existingSubscription
+                    .providerSubscriptionId,
+            );
+    }
 
     await db
         .update(
@@ -453,7 +518,9 @@ async function handleCompletedCheckout(
                 stripeCustomerId,
 
             providerSubscriptionId:
-                stripeSubscriptionId,
+                isAnnualInstallments
+                    ? null
+                    : stripeSubscriptionId,
 
             productKey:
                 purchase.productKey,
@@ -492,7 +559,8 @@ async function handleCompletedCheckout(
 
             cancelAtPeriodEnd:
                 stripeSubscription
-                    .cancel_at_period_end,
+                    ?.cancel_at_period_end ??
+                false,
 
             updatedAt:
                 now,

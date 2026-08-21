@@ -9,6 +9,8 @@ import {
 
 import QuoteFormDrawer from "@/components/crm/QuoteFormDrawer";
 
+import WorkspaceTableActions from "@/components/crm/WorkspaceTableActions";
+
 import Button from "@/components/ui/Button";
 
 import type {
@@ -619,7 +621,19 @@ export default function QuotesWorkspace() {
     );
 
   useEffect(() => {
-    void loadData();
+    const timeoutId =
+      window.setTimeout(
+        () => {
+          void loadData();
+        },
+        0,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
   }, [loadData]);
 
   async function sendQuote(
@@ -865,6 +879,47 @@ export default function QuotesWorkspace() {
                   ),
                 )}
               </select>
+
+              <WorkspaceTableActions
+                title="Cotizaciones"
+                columns={[
+                  "N.º de cotización",
+                  "Asunto",
+                  "Sucursal",
+                  "Estado",
+                  "Relacionado con",
+                  "Válida hasta",
+                  "Total",
+                  "Responsable",
+                ]}
+                rows={visibleQuotes.map(
+                  (quote) => [
+                    quote.quoteNumber,
+                    quote.subject,
+                    quote.branchName ??
+                      "Sin sucursal",
+                    quote.status,
+                    quote.relatedName ??
+                      "Sin relación",
+                    formatDate(
+                      quote.validUntil,
+                    ),
+                    formatMoney(
+                      quote.totalAmount,
+                      quote.currency,
+                    ),
+                    quote.owner.name ??
+                      quote.owner.email ??
+                      "Sin responsable",
+                  ],
+                )}
+                isRefreshing={
+                  isLoading
+                }
+                onRefresh={
+                  loadData
+                }
+              />
 
               <Button
                 onClick={() =>

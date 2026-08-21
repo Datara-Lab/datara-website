@@ -886,6 +886,9 @@ export default function DynamicField({
               <option
                 key={option.value}
                 value={option.value}
+                disabled={
+                  option.disabled
+                }
               >
                 {option.label}
               </option>
@@ -939,6 +942,9 @@ export default function DynamicField({
               <option
                 key={option.value}
                 value={option.value}
+                disabled={
+                  option.disabled
+                }
               >
                 {option.label}
               </option>

@@ -40,6 +40,15 @@ type CatalogItem = {
   annualDiscountPercent:
     number;
 
+  installmentsEnabled:
+    boolean;
+
+  installmentsDiscountPercent:
+    number;
+
+  annualInstallmentsPrice:
+    string;
+
   currency: string;
   includedUsers: number;
   includedStorageGb: string;
@@ -80,6 +89,14 @@ type CatalogDraft = {
   annualDiscountPercent:
     string;
 
+  installmentsEnabled: boolean;
+
+  installmentsDiscountPercent:
+    string;
+
+  annualInstallmentsPrice:
+    string;
+
   currency: string;
   includedUsers: string;
   includedStorageGb: string;
@@ -103,6 +120,14 @@ const EMPTY_DRAFT:
 
   annualDiscountPercent:
     "0",
+
+  installmentsEnabled: false,
+
+  installmentsDiscountPercent:
+    "10",
+
+  annualInstallmentsPrice:
+    "0.00",
 
   currency: "mxn",
   includedUsers: "0",
@@ -226,6 +251,20 @@ export default function CommercialCatalogManager() {
       1 -
       annualDiscountPercent /
         100
+    );
+
+  const installmentsDiscountPercent =
+    Number(
+    draft
+    .installmentsDiscountPercent,
+    ) || 0;
+
+    const discountedInstallmentsPrice =
+    annualBasePrice *
+    (
+      1 -
+      installmentsDiscountPercent /
+      100
     );
 
   const includedModuleIds =
@@ -477,6 +516,17 @@ export default function CommercialCatalogManager() {
           item.annualDiscountPercent,
         ),
 
+      installmentsEnabled:
+        item.installmentsEnabled,
+
+      installmentsDiscountPercent:
+        String(
+          item.installmentsDiscountPercent,
+        ),
+
+      annualInstallmentsPrice:
+        item.annualInstallmentsPrice,
+
       currency:
         item.currency,
       includedUsers:
@@ -538,6 +588,19 @@ export default function CommercialCatalogManager() {
         annualDiscountPercent:
           draft
             .annualDiscountPercent,
+
+        installmentsEnabled:
+          draft.installmentsEnabled,
+
+        installmentsDiscountPercent:
+          draft
+            .installmentsDiscountPercent,
+
+        annualInstallmentsPrice:
+          draft.installmentsEnabled
+            ? discountedInstallmentsPrice
+                .toFixed(2)
+            : "0.00",
 
         currency:
           draft.currency,
@@ -1231,7 +1294,134 @@ export default function CommercialCatalogManager() {
                   </span>
                 </label>
               </div>
-                <label className="text-sm font-bold text-slate-800">
+
+              <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      Meses sin intereses
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Permite contratar el plan anual mediante MSI.
+                    </p>
+                  </div>
+
+                  <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={
+                        draft.installmentsEnabled
+                      }
+                      disabled={
+                        isSaving
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setDraft(
+                          (
+                            currentDraft,
+                          ) => ({
+                            ...currentDraft,
+                            installmentsEnabled:
+                              event.target
+                                .checked,
+                          }),
+                        )
+                      }
+                      className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+
+                    Activar MSI
+                  </label>
+                </div>
+
+                {draft.installmentsEnabled && (
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <label className="text-sm font-bold text-slate-800">
+                      Descuento para MSI
+
+                      <select
+                        value={
+                          draft
+                            .installmentsDiscountPercent
+                        }
+                        disabled={
+                          isSaving
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          setDraft(
+                            (
+                              currentDraft,
+                            ) => ({
+                              ...currentDraft,
+                              installmentsDiscountPercent:
+                                event.target
+                                  .value,
+                            }),
+                          )
+                        }
+                        className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      >
+                        {[
+                          0,
+                          5,
+                          10,
+                          15,
+                          20,
+                          25,
+                          30,
+                        ].map(
+                          (
+                            discount,
+                          ) => (
+                            <option
+                              key={
+                                discount
+                              }
+                              value={
+                                discount
+                              }
+                            >
+                              {
+                                discount
+                              }
+                              %
+                            </option>
+                          ),
+                        )}
+                      </select>
+
+                      <span className="mt-2 block text-xs font-normal text-slate-500">
+                        Descuento aplicado al precio anual para MSI
+                      </span>
+                    </label>
+
+                    <label className="text-sm font-bold text-slate-800">
+                      Precio anual con MSI
+
+                      <input
+                        type="text"
+                        readOnly
+                        value={
+                          discountedInstallmentsPrice
+                            .toFixed(2)
+                        }
+                        className="mt-2 h-12 w-full rounded-xl border border-blue-200 bg-blue-50 px-4 font-bold text-blue-800"
+                      />
+
+                      <span className="mt-2 block text-xs font-normal text-slate-500">
+                        MXN por año
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <label className="text-sm font-bold text-slate-800">
                 Usuarios incluidos
 
                 <input

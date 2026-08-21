@@ -13,25 +13,10 @@ type Product = {
   accent: ProductAccent;
   features: string[];
   emailSubject: string;
+  status: "available" | "coming-soon";
 };
 
 const products: Product[] = [
-  {
-    name: "Datara Analytics",
-    shortName: "Analytics",
-    description:
-      "Transforma la información de tu negocio en dashboards, indicadores y reportes que facilitan la toma de decisiones.",
-    logo: "/logos/analytics.png",
-    icon: "/logos/analytics-icon.png",
-    accent: "blue",
-    features: [
-      "Dashboards ejecutivos",
-      "KPIs en tiempo real",
-      "Reportes automáticos",
-      "Análisis personalizado",
-    ],
-    emailSubject: "Solicitud de demo Datara Analytics",
-  },
   {
     name: "Datara CRM",
     shortName: "CRM",
@@ -47,6 +32,7 @@ const products: Product[] = [
       "Automatizaciones",
     ],
     emailSubject: "Solicitud de demo Datara CRM",
+    status: "available",
   },
   {
     name: "Datara Cloud",
@@ -63,6 +49,24 @@ const products: Product[] = [
       "Servicios administrados",
     ],
     emailSubject: "Solicitud de información Datara Cloud",
+    status: "available",
+  },
+  {
+    name: "Datara Analytics",
+    shortName: "Analytics",
+    description:
+      "Transforma la información de tu negocio en dashboards, indicadores y reportes que facilitan la toma de decisiones.",
+    logo: "/logos/analytics.png",
+    icon: "/logos/analytics-icon.png",
+    accent: "blue",
+    features: [
+      "Dashboards ejecutivos",
+      "KPIs en tiempo real",
+      "Reportes automáticos",
+      "Análisis personalizado",
+    ],
+    emailSubject: "Solicitud de demo Datara Analytics",
+    status: "coming-soon",
   },
 ];
 
@@ -116,17 +120,16 @@ export default function Products() {
           </span>
 
           <h2 className="mt-6 text-4xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-5xl">
-            Tres productos.
+            Dos soluciones disponibles.
             <span className="block bg-gradient-to-r from-blue-700 via-cyan-500 to-teal-500 bg-clip-text text-transparent">
-              Una sola experiencia.
+              Una plataforma que crece contigo.
             </span>
           </h2>
 
           <p className="mt-6 text-lg leading-8 text-slate-600">
-            Contrata Datara Analytics, Datara CRM, Datara Cloud o la
-            combinación que mejor se adapte a tu empresa. Tus usuarios acceden
-            con una sola cuenta y únicamente ven los productos incluidos en su
-            paquete.
+            Elige Datara CRM, Datara Cloud o combina ambos en una sola
+            plataforma. Explora nuestro catálogo para encontrar la solución
+            que mejor se adapte a las necesidades de tu empresa.
           </p>
         </div>
 
@@ -138,7 +141,12 @@ export default function Products() {
             return (
               <article
                 key={product.name}
-                className="group relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-950/5 transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-950/10"
+                className={[
+                  "group relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-950/5 transition duration-300",
+                  product.status === "available"
+                    ? "hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-950/10"
+                    : "",
+                ].join(" ")}
               >
                 <div
                   className={[
@@ -148,29 +156,22 @@ export default function Products() {
                 />
 
                 <div className="relative flex h-full flex-col">
-                  <div className="flex items-center justify-between gap-6">
-                    <Image
-                      src={product.logo}
-                      alt={product.name}
-                      width={230}
-                      height={90}
-                      className="h-16 w-auto max-w-[220px] object-contain sm:h-20"
-                    />
-
-                    <div
-                      className={[
-                        "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl",
-                        styles.iconBackground,
-                      ].join(" ")}
-                    >
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="min-w-0">
                       <Image
-                        src={product.icon}
-                        alt=""
-                        width={38}
-                        height={38}
-                        className="h-9 w-9 object-contain"
+                        src={product.logo}
+                        alt={product.name}
+                        width={230}
+                        height={90}
+                        className="h-16 w-auto max-w-[220px] object-contain sm:h-20"
                       />
                     </div>
+
+                    {product.status === "coming-soon" && (
+                      <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-blue-700">
+                        Próximamente
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="mt-8 text-3xl font-bold tracking-tight text-slate-950">
@@ -202,12 +203,24 @@ export default function Products() {
                   </div>
 
                   <div className="mt-auto pt-10">
-                    <Button
-                      href="#contacto"
-                      size="lg"
-                    >
-                      Solicitar Demo
-                    </Button>
+                    {product.status === "available" ? (
+                      <Button
+                        href={
+                          product.shortName === "CRM"
+                            ? "/catalogo/crm"
+                            : "#contacto"
+                        }
+                        size="lg"
+                      >
+                        {product.shortName === "CRM"
+                          ? "Ver catálogo"
+                          : "Solicitar información"}
+                      </Button>
+                    ) : (
+                      <div className="flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-500">
+                        Próximamente
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>

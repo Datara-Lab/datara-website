@@ -139,6 +139,18 @@ export async function GET(
                         commercialCatalogItems
                             .annualDiscountPercent,
 
+                    installmentsEnabled:
+                        commercialCatalogItems
+                            .installmentsEnabled,
+
+                    installmentsDiscountPercent:
+                        commercialCatalogItems
+                            .installmentsDiscountPercent,
+
+                    annualInstallmentsPrice:
+                        commercialCatalogItems
+                            .annualInstallmentsPrice,
+
                     currency:
                         commercialCatalogItems
                             .currency,

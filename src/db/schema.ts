@@ -356,6 +356,140 @@ export const tenantBranches =
     ],
   );
 
+export const crmProductTypes =
+  pgTable(
+    "crm_product_types",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid(
+        "tenant_id",
+      )
+        .notNull()
+        .references(
+          () => tenants.id,
+          {
+            onDelete:
+              "cascade",
+          },
+        ),
+
+      /*
+       * Clave técnica estable.
+       * El administrador edita el nombre,
+       * no esta clave interna.
+       */
+      key: text("key")
+        .notNull(),
+
+      name: text("name")
+        .notNull(),
+
+      inventoryTracked:
+        boolean(
+          "inventory_tracked",
+        )
+          .notNull()
+          .default(false),
+
+      /*
+       * Perfil opcional habilitado
+       * por el template de industria.
+       */
+      technicalProfile:
+        text(
+          "technical_profile",
+        ),
+
+      active: boolean(
+        "active",
+      )
+        .notNull()
+        .default(true),
+
+      sortOrder: integer(
+        "sort_order",
+      )
+        .notNull()
+        .default(0),
+
+      metadata: jsonb(
+        "metadata",
+      )
+        .$type<
+          Record<
+            string,
+            unknown
+          >
+        >()
+        .notNull()
+        .default({}),
+
+      createdByClerkUserId:
+        text(
+          "created_by_clerk_user_id",
+        ),
+
+      updatedByClerkUserId:
+        text(
+          "updated_by_clerk_user_id",
+        ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone:
+            true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone:
+            true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "crm_product_types_tenant_key_unique",
+      ).on(
+        table.tenantId,
+        table.key,
+      ),
+
+      uniqueIndex(
+        "crm_product_types_tenant_name_unique",
+      ).on(
+        table.tenantId,
+        table.name,
+      ),
+
+      index(
+        "crm_product_types_tenant_active_idx",
+      ).on(
+        table.tenantId,
+        table.active,
+        table.sortOrder,
+      ),
+
+      index(
+        "crm_product_types_tenant_inventory_idx",
+      ).on(
+        table.tenantId,
+        table.inventoryTracked,
+        table.active,
+      ),
+    ],
+  );
+
 export const crmProducts = pgTable(
   "crm_products",
   {
@@ -369,6 +503,15 @@ export const crmProducts = pgTable(
         onDelete: "cascade",
       }),
 
+    productTypeId: uuid(
+      "product_type_id",
+    ).references(
+      () => crmProductTypes.id,
+      {
+        onDelete: "restrict",
+      },
+    ),
+
     name: text("name").notNull(),
 
     code: text("code"),
@@ -378,6 +521,17 @@ export const crmProducts = pgTable(
     imageObjectKey: text(
       "image_object_key",
     ),
+
+    itemType: text(
+      "item_type",
+    )
+      .$type<
+        | "model"
+        | "product"
+        | "service"
+      >()
+      .notNull()
+      .default("product"),
 
     category: text("category"),
 
@@ -449,6 +603,22 @@ export const crmProducts = pgTable(
     ),
 
     index(
+      "crm_products_tenant_type_active_idx",
+    ).on(
+      table.tenantId,
+      table.itemType,
+      table.active,
+    ),
+
+    index(
+      "crm_products_tenant_product_type_active_idx",
+    ).on(
+      table.tenantId,
+      table.productTypeId,
+      table.active,
+    ),
+
+    index(
       "crm_products_tenant_name_idx",
     ).on(
       table.tenantId,
@@ -456,6 +626,131 @@ export const crmProducts = pgTable(
     ),
   ],
 );
+
+export const crmProductCategories =
+  pgTable(
+    "crm_product_categories",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid(
+        "tenant_id",
+      )
+        .notNull()
+        .references(
+          () => tenants.id,
+          {
+            onDelete:
+              "cascade",
+          },
+        ),
+
+      productTypeId: uuid(
+        "product_type_id",
+      ).references(
+        () => crmProductTypes.id,
+        {
+          onDelete:
+            "restrict",
+        },
+      ),
+
+      itemType: text(
+        "item_type",
+      )
+        .$type<
+          | "model"
+          | "product"
+          | "service"
+        >()
+        .notNull(),
+
+      name: text("name")
+        .notNull(),
+
+      active: boolean(
+        "active",
+      )
+        .notNull()
+        .default(true),
+
+      sortOrder: integer(
+        "sort_order",
+      )
+        .notNull()
+        .default(0),
+
+      metadata: jsonb(
+        "metadata",
+      )
+        .$type<
+          Record<
+            string,
+            unknown
+          >
+        >()
+        .notNull()
+        .default({}),
+
+      createdByClerkUserId:
+        text(
+          "created_by_clerk_user_id",
+        ),
+
+      updatedByClerkUserId:
+        text(
+          "updated_by_clerk_user_id",
+        ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone:
+            true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone:
+            true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "crm_product_categories_tenant_type_name_unique",
+      ).on(
+        table.tenantId,
+        table.itemType,
+        table.name,
+      ),
+
+      uniqueIndex(
+        "crm_product_categories_tenant_product_type_name_unique",
+      ).on(
+        table.tenantId,
+        table.productTypeId,
+        table.name,
+      ),
+
+      index(
+        "crm_product_categories_tenant_type_active_idx",
+      ).on(
+        table.tenantId,
+        table.itemType,
+        table.active,
+        table.sortOrder,
+      ),
+    ],
+  );
 
 export const inventoryLocations =
   pgTable(
@@ -5332,6 +5627,29 @@ export const commercialCatalogItems =
           .notNull()
           .default(0),
 
+      installmentsEnabled: boolean(
+        "installments_enabled",
+      )
+        .notNull()
+        .default(false),
+
+      installmentsDiscountPercent:
+        integer(
+          "installments_discount_percent",
+        )
+          .notNull()
+          .default(0),
+
+      annualInstallmentsPrice: numeric(
+        "annual_installments_price",
+        {
+          precision: 12,
+          scale: 2,
+        },
+      )
+        .notNull()
+        .default("0"),
+
       currency: text("currency")
         .notNull()
         .default("mxn"),
@@ -5347,6 +5665,11 @@ export const commercialCatalogItems =
       stripeAnnualPriceId: text(
         "stripe_annual_price_id",
       ),
+
+      stripeAnnualInstallmentsPriceId:
+        text(
+          "stripe_annual_installments_price_id",
+        ),
 
       includedUsers: integer(
         "included_users",

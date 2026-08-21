@@ -1,5 +1,16 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+import {
+  eq,
+} from "drizzle-orm";
+
+import { db } from "@/db";
+
+import {
+  crmLeads,
+  tenants,
+} from "@/db/schema";
+
 type ContactRequest = {
   name?: string;
   company?: string;
@@ -17,6 +28,7 @@ type ResendResponse = {
 
 type CloudflareEnv = {
   RESEND_API_KEY?: string;
+  DATARA_INTERNAL_ORGANIZATION_ID?: string;
 };
 
 function jsonResponse(data: unknown, status: number): Response {
@@ -69,7 +81,54 @@ export async function POST(request: Request): Promise<Response> {
 
     const cloudflareContext = getCloudflareContext();
     const env = cloudflareContext.env as CloudflareEnv;
+
     const resendApiKey = env.RESEND_API_KEY;
+
+    const dataraOrganizationId =
+      env.DATARA_INTERNAL_ORGANIZATION_ID;
+
+    if (!dataraOrganizationId) {
+      console.error(
+        "DATARA_INTERNAL_ORGANIZATION_ID no está configurada.",
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          message:
+            "La configuración interna de Datara no está disponible.",
+        },
+        500,
+      );
+    }
+
+    const [dataraTenant] = await db
+      .select({
+        id: tenants.id,
+      })
+      .from(tenants)
+      .where(
+        eq(
+          tenants.clerkOrganizationId,
+          dataraOrganizationId,
+        ),
+      )
+      .limit(1);
+
+    if (!dataraTenant) {
+      console.error(
+        "No se encontró el tenant interno de Datara.",
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          message:
+            "La configuración interna de Datara no es válida.",
+        },
+        500,
+      );
+    }
 
     if (!resendApiKey) {
       console.error("RESEND_API_KEY no está configurada.");
@@ -78,6 +137,57 @@ export async function POST(request: Request): Promise<Response> {
         {
           success: false,
           message: "El servicio de correo no está configurado.",
+        },
+        500,
+      );
+    }
+
+    const now = new Date();
+
+    const [lead] = await db
+      .insert(crmLeads)
+      .values({
+        tenantId: dataraTenant.id,
+        branchId: null,
+        firstName: name,
+        lastName: null,
+        email,
+        phone: phone || null,
+        mobile: null,
+        company: company || null,
+        source: "Website",
+        status: "Nuevo",
+        productId: null,
+        ownerClerkUserId: null,
+        ownerName: null,
+        ownerEmail: null,
+        commercialConsent: false,
+        notes:
+          [
+            `Producto de interés: ${product}`,
+            message
+              ? `Mensaje: ${message}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join("\n\n") || null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning({
+        id: crmLeads.id,
+      });
+
+    if (!lead) {
+      console.error(
+        "No fue posible crear el prospecto en el CRM interno de Datara.",
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          message:
+            "No fue posible registrar tu solicitud. Inténtalo nuevamente.",
         },
         500,
       );

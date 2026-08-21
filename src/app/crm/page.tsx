@@ -5,6 +5,11 @@ import PageHeader from "@/components/shared/PageHeader";
 import SectionCard from "@/components/shared/SectionCard";
 import { useAuth } from "@/contexts/AuthContext";
 
+import {
+  useEffect,
+  useState,
+} from "react";
+
 type CRMAlertTone = "success" | "warning" | "danger" | "info";
 
 type CRMAlert = {
@@ -22,60 +27,6 @@ type Opportunity = {
   stage: string;
   probability: string;
 };
-
-const metrics = [
-  {
-    label: "Prospectos activos",
-    value: "148",
-    change: "+12.4%",
-  },
-  {
-    label: "Oportunidades abiertas",
-    value: "36",
-    change: "+8.7%",
-  },
-  {
-    label: "Pipeline estimado",
-    value: "$842,500",
-    change: "+16.2%",
-  },
-  {
-    label: "Conversión comercial",
-    value: "34.2%",
-    change: "+5.1%",
-  },
-];
-
-const alerts: CRMAlert[] = [
-  {
-    id: "follow-up",
-    title: "12 prospectos requieren seguimiento",
-    description:
-      "No se ha registrado actividad reciente en oportunidades con alta probabilidad de cierre.",
-    tone: "warning",
-  },
-  {
-    id: "closing",
-    title: "Cinco oportunidades cerca del cierre",
-    description:
-      "Estas oportunidades se encuentran en negociación y requieren atención durante los próximos días.",
-    tone: "info",
-  },
-  {
-    id: "risk",
-    title: "Tres oportunidades están en riesgo",
-    description:
-      "Se detectaron oportunidades sin respuesta del cliente durante más de siete días.",
-    tone: "danger",
-  },
-  {
-    id: "performance",
-    title: "El equipo supera el objetivo mensual",
-    description:
-      "El valor del pipeline actual se encuentra 16.2% por encima del periodo anterior.",
-    tone: "success",
-  },
-];
 
 const alertStyles: Record<
   CRMAlertTone,
@@ -107,70 +58,287 @@ const alertStyles: Record<
   },
 };
 
-const pipelineStages = [
-  {
-    name: "Prospectos",
-    count: 48,
-    value: "$196,000",
-    width: 100,
-  },
-  {
-    name: "Calificación",
-    count: 31,
-    value: "$182,500",
-    width: 76,
-  },
-  {
-    name: "Propuesta",
-    count: 22,
-    value: "$248,000",
-    width: 58,
-  },
-  {
-    name: "Negociación",
-    count: 13,
-    value: "$216,000",
-    width: 34,
-  },
-];
+type CRMSummaryResponse = {
+  success: boolean;
 
-const opportunities: Opportunity[] = [
-  {
-    id: "opp-001",
-    name: "Renovación corporativa",
-    company: "Grupo Horizonte",
-    value: "$185,000",
-    stage: "Negociación",
-    probability: "80%",
-  },
-  {
-    id: "opp-002",
-    name: "Implementación regional",
-    company: "Comercial del Centro",
-    value: "$142,500",
-    stage: "Propuesta",
-    probability: "65%",
-  },
-  {
-    id: "opp-003",
-    name: "Expansión de licencias",
-    company: "Operadora Norte",
-    value: "$96,000",
-    stage: "Calificación",
-    probability: "45%",
-  },
-  {
-    id: "opp-004",
-    name: "Proyecto de automatización",
-    company: "Servicios Integrales MX",
-    value: "$84,000",
-    stage: "Propuesta",
-    probability: "60%",
-  },
-];
+  data?: {
+    metrics: {
+      activeLeads: number;
+      openDeals: number;
+      pipelineTotal: number;
+      conversionRate: number;
+    };
+
+    pipelineStages: Array<{
+      name: string;
+      count: number;
+      total: number;
+      width: number;
+    }>;
+
+    activitySummary: {
+      pendingFollowUps: number;
+      upcomingMeetings: number;
+      expiringQuotes: number;
+    };
+
+    alerts: CRMAlert[];
+
+    priorityDeals: Array<{
+      id: string;
+      name: string;
+      stage: string;
+      probability: number;
+      totalAmount: number;
+      currency: string;
+      customerId: string | null;
+      company: string;
+    }>;
+  };
+
+  error?: string;
+};
 
 export default function CRMPage() {
   const { user } = useAuth();
+
+    const [
+    summaryMetrics,
+    setSummaryMetrics,
+  ] = useState<
+    CRMSummaryResponse["data"]
+  >();
+
+  const [
+    isLoadingSummary,
+    setIsLoadingSummary,
+  ] = useState(true);
+
+  const [
+    summaryError,
+    setSummaryError,
+  ] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadSummary() {
+      try {
+        setIsLoadingSummary(true);
+        setSummaryError(null);
+
+        const response =
+          await fetch(
+            "/api/crm/summary",
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        const result =
+          (await response.json()) as
+            CRMSummaryResponse;
+
+        if (
+          !response.ok ||
+          !result.success ||
+          !result.data
+        ) {
+          throw new Error(
+            result.error ??
+              "No fue posible cargar el resumen.",
+          );
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        setSummaryMetrics(
+          result.data,
+        );
+      } catch (loadError) {
+        if (!isActive) {
+          return;
+        }
+
+        setSummaryError(
+          loadError instanceof Error
+            ? loadError.message
+            : "No fue posible cargar el resumen.",
+        );
+      } finally {
+        if (isActive) {
+          setIsLoadingSummary(false);
+        }
+      }
+    }
+
+    void loadSummary();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const metrics = [
+    {
+      label: "Prospectos activos",
+      value:
+        isLoadingSummary
+          ? "..."
+          : String(
+              summaryMetrics
+                ?.metrics
+                .activeLeads ??
+                0,
+            ),
+      change:
+        summaryError
+          ? "Sin datos"
+          : "Actual",
+    },
+    {
+      label: "Oportunidades abiertas",
+      value:
+        isLoadingSummary
+          ? "..."
+          : String(
+              summaryMetrics
+                ?.metrics
+                .openDeals ??
+                0,
+            ),
+      change:
+        summaryError
+          ? "Sin datos"
+          : "Actual",
+    },
+    {
+      label: "Pipeline estimado",
+      value:
+        isLoadingSummary
+          ? "..."
+          : new Intl.NumberFormat(
+              "es-MX",
+              {
+                style: "currency",
+                currency: "MXN",
+                maximumFractionDigits:
+                  0,
+              },
+            ).format(
+              summaryMetrics
+                ?.metrics
+                .pipelineTotal ??
+                0,
+            ),
+      change:
+        summaryError
+          ? "Sin datos"
+          : "Actual",
+    },
+    {
+      label: "Conversión comercial",
+      value:
+        isLoadingSummary
+          ? "..."
+          : `${(
+              summaryMetrics
+                ?.metrics
+                .conversionRate ??
+              0
+            ).toFixed(1)}%`,
+      change:
+        summaryError
+          ? "Sin datos"
+          : "Actual",
+    },
+  ];
+
+  const pipelineStages =
+    (
+      summaryMetrics
+        ?.pipelineStages ??
+      []
+    ).map(
+      (stage) => ({
+        name:
+          stage.name,
+
+        count:
+          stage.count,
+
+        value:
+          new Intl.NumberFormat(
+            "es-MX",
+            {
+              style:
+                "currency",
+
+              currency:
+                "MXN",
+
+              maximumFractionDigits:
+                0,
+            },
+          ).format(
+            stage.total,
+          ),
+
+        width:
+          stage.width,
+      }),
+    );
+
+  const alerts =
+    summaryMetrics
+      ?.alerts ??
+    [];
+
+  const opportunities: Opportunity[] =
+    (
+      summaryMetrics
+        ?.priorityDeals ??
+      []
+    ).map(
+      (deal) => ({
+        id:
+          deal.id,
+
+        name:
+          deal.name,
+
+        company:
+          deal.company,
+
+        value:
+          new Intl.NumberFormat(
+            "es-MX",
+            {
+              style:
+                "currency",
+
+              currency:
+                deal.currency.toUpperCase(),
+
+              maximumFractionDigits:
+                0,
+            },
+          ).format(
+            deal.totalAmount,
+          ),
+
+        stage:
+          deal.stage,
+
+        probability:
+          `${deal.probability}%`,
+      }),
+    );
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -295,7 +463,12 @@ export default function CRMPage() {
               </p>
 
               <p className="mt-3 text-3xl font-black text-slate-950">
-                12
+                {isLoadingSummary
+                  ? "..."
+                  : summaryMetrics
+                      ?.activitySummary
+                      .pendingFollowUps ??
+                    0}
               </p>
 
               <p className="mt-2 text-sm text-amber-600">
@@ -309,7 +482,12 @@ export default function CRMPage() {
               </p>
 
               <p className="mt-3 text-3xl font-black text-slate-950">
-                7
+                {isLoadingSummary
+                  ? "..."
+                  : summaryMetrics
+                      ?.activitySummary
+                      .upcomingMeetings ??
+                    0}
               </p>
 
               <p className="mt-2 text-sm text-blue-600">
@@ -323,7 +501,12 @@ export default function CRMPage() {
               </p>
 
               <p className="mt-3 text-3xl font-black text-slate-950">
-                4
+                {isLoadingSummary
+                  ? "..."
+                  : summaryMetrics
+                      ?.activitySummary
+                      .expiringQuotes ??
+                    0}
               </p>
 
               <p className="mt-2 text-sm text-red-600">

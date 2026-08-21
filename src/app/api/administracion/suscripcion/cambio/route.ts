@@ -92,12 +92,15 @@ function getBillingPeriod(
     value: unknown,
 ):
     | "monthly"
-    | "annual" {
+    | "annual"
+    | "annual_installments" {
     if (
         value ===
         "monthly" ||
         value ===
-        "annual"
+        "annual" ||
+        value ===
+        "annual_installments"
     ) {
         return value;
     }
@@ -234,6 +237,10 @@ export async function POST(
                 .select({
                     industry:
                         tenants.industry,
+
+                    clerkOrganizationId:
+                        tenants
+                            .clerkOrganizationId,
                 })
                 .from(
                     tenants,
@@ -389,6 +396,18 @@ export async function POST(
                     annualPrice:
                         commercialCatalogItems
                             .annualPrice,
+
+                    installmentsEnabled:
+                        commercialCatalogItems
+                            .installmentsEnabled,
+
+                    annualInstallmentsPrice:
+                        commercialCatalogItems
+                            .annualInstallmentsPrice,
+
+                    stripeAnnualInstallmentsPriceId:
+                        commercialCatalogItems
+                            .stripeAnnualInstallmentsPriceId,
 
                     currency:
                         commercialCatalogItems
@@ -547,7 +566,8 @@ export async function POST(
                     typeof selectedItems,
                 period:
                     | "monthly"
-                    | "annual",
+                    | "annual"
+                    | "annual_installments",
             ) =>
                 items.reduce(
                     (
@@ -559,7 +579,11 @@ export async function POST(
                             period ===
                                 "monthly"
                                 ? item.monthlyPrice
-                                : item.annualPrice,
+                                : period ===
+                                    "annual"
+                                    ? item.annualPrice
+                                    : item
+                                          .annualInstallmentsPrice,
                         ),
                     0,
                 );
@@ -692,6 +716,263 @@ export async function POST(
             createStripeClient(
                 stripeSecretKey,
             );
+
+        if (
+            billingPeriod ===
+            "annual_installments"
+        ) {
+            const itemWithoutInstallments =
+                selectedItems.find(
+                    (item) =>
+                        !item
+                            .installmentsEnabled ||
+                        !item
+                            .stripeAnnualInstallmentsPriceId,
+                );
+
+            if (
+                itemWithoutInstallments
+            ) {
+                throw new ApiError(
+                    `${itemWithoutInstallments.name} no está disponible con meses sin intereses.`,
+                    409,
+                );
+            }
+
+            const purchaseLineItems =
+                selectedItems.map(
+                    (item) => ({
+                        catalogItemId:
+                            item.id,
+
+                        itemKey:
+                            item.itemKey,
+
+                        name:
+                            item.name,
+
+                        quantity:
+                            1,
+
+                        unitAmount:
+                            Math.round(
+                                Number(
+                                    item
+                                        .annualInstallmentsPrice,
+                                ) *
+                                    100,
+                            ),
+                    }),
+                );
+
+            const now =
+                new Date();
+
+            const expiresAt =
+                new Date(
+                    now.getTime() +
+                        23 *
+                            60 *
+                            60 *
+                            1000,
+                );
+
+            const [purchase] =
+                await db
+                    .insert(
+                        commercialPurchases,
+                    )
+                    .values({
+                        purchaseType:
+                            "subscription_change",
+
+                        productKey:
+                            "crm",
+
+                        tenantId,
+
+                        clerkOrganizationId:
+                            tenant
+                                .clerkOrganizationId,
+
+                        industry:
+                            tenant.industry,
+
+                        billingPeriod:
+                            "annual_installments",
+
+                        catalogItemIds:
+                            selectedItemIds,
+
+                        lineItems:
+                            purchaseLineItems,
+
+                        currency:
+                            selectedItems[
+                                0
+                            ]?.currency ??
+                            "mxn",
+
+                        totalAmount:
+                            selectedTotal
+                                .toFixed(2),
+
+                        status:
+                            "checkout_pending",
+
+                        expiresAt,
+
+                        updatedAt:
+                            now,
+                    })
+                    .returning({
+                        id:
+                            commercialPurchases.id,
+                    });
+
+            if (!purchase) {
+                throw new ApiError(
+                    "No fue posible registrar el cambio de plan.",
+                    500,
+                );
+            }
+
+            const checkoutSession =
+                await stripe
+                    .checkout
+                    .sessions
+                    .create({
+                        mode:
+                            "payment",
+
+                        locale:
+                            "es-419",
+
+                        billing_address_collection:
+                            "required",
+
+                        payment_method_types: [
+                            "card",
+                        ],
+
+                        payment_method_options: {
+                            card: {
+                                installments: {
+                                    enabled:
+                                        true,
+                                },
+                            },
+                        },
+
+                        line_items:
+                            selectedItems.map(
+                                (item) => ({
+                                    quantity:
+                                        1,
+
+                                    price:
+                                        item
+                                            .stripeAnnualInstallmentsPriceId!,
+                                }),
+                            ),
+
+                        metadata: {
+                            purchaseId:
+                                purchase.id,
+
+                            purchaseType:
+                                "subscription_change",
+
+                            tenantId,
+
+                            industry:
+                                tenant.industry,
+
+                            billingPeriod:
+                                "annual_installments",
+                        },
+
+                        success_url:
+                            `${new URL(
+                                request.url,
+                            ).origin}/administracion/suscripcion?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+
+                        cancel_url:
+                            `${new URL(
+                                request.url,
+                            ).origin}/administracion/suscripcion?payment=cancelled`,
+
+                        expires_at:
+                            Math.floor(
+                                expiresAt
+                                    .getTime() /
+                                    1000,
+                            ),
+                    });
+
+            if (
+                !checkoutSession.url
+            ) {
+                throw new ApiError(
+                    "Stripe no generó una URL de pago.",
+                    500,
+                );
+            }
+
+            await db
+                .update(
+                    commercialPurchases,
+                )
+                .set({
+                    stripeCheckoutSessionId:
+                        checkoutSession.id,
+
+                    updatedAt:
+                        new Date(),
+                })
+                .where(
+                    eq(
+                        commercialPurchases.id,
+                        purchase.id,
+                    ),
+                );
+
+            return NextResponse.json({
+                success: true,
+
+                data: {
+                    changeType:
+                        "checkout_required",
+
+                    billingPeriod:
+                        "annual_installments",
+
+                    catalogItemIds:
+                        selectedItemIds,
+
+                    recurringTotal:
+                        selectedTotal,
+
+                    amountDueNow:
+                        selectedTotal,
+
+                    currency:
+                        selectedItems[
+                            0
+                        ]?.currency ??
+                        "mxn",
+
+                    effectiveAt:
+                        null,
+
+                    prorationDate:
+                        null,
+
+                    checkoutUrl:
+                        checkoutSession.url,
+                },
+            });
+        }
 
         const stripeSubscription =
             await stripe

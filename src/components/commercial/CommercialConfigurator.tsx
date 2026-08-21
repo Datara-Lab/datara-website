@@ -20,6 +20,11 @@ type CommercialCatalogItem = {
     monthlyPrice: string;
     annualPrice: string;
     annualDiscountPercent: number;
+
+    installmentsEnabled: boolean;
+    installmentsDiscountPercent: number;
+    annualInstallmentsPrice: string;
+
     currency: string;
     includedUsers: number;
     includedStorageGb: string;
@@ -107,11 +112,13 @@ type PlanChangePreviewResponse = {
         changeType:
             | "no_change"
             | "immediate"
-            | "scheduled";
+            | "scheduled"
+            | "checkout_required";
 
         billingPeriod:
             | "monthly"
-            | "annual";
+            | "annual"
+            | "annual_installments";
 
         catalogItemIds:
             string[];
@@ -130,6 +137,9 @@ type PlanChangePreviewResponse = {
 
         prorationDate?:
             number | null;
+
+        checkoutUrl?:
+            string;
     };
 
     error?: string;
@@ -195,6 +205,16 @@ export default function CommercialConfigurator({
         | "annual"
     >(
         "monthly",
+    );
+
+    const [
+        annualPaymentMode,
+        setAnnualPaymentMode,
+    ] = useState<
+        | "cash"
+        | "installments"
+    >(
+        "cash",
     );
 
     const [
@@ -402,7 +422,11 @@ export default function CommercialConfigurator({
                     billingPeriod ===
                     "monthly"
                         ? item.monthlyPrice
-                        : item.annualPrice,
+                        : annualPaymentMode ===
+                            "installments"
+                            ? item
+                                  .annualInstallmentsPrice
+                            : item.annualPrice,
                 ),
             0,
         );
@@ -427,6 +451,30 @@ export default function CommercialConfigurator({
             );
 
             return;
+        }
+
+                if (
+            billingPeriod ===
+                "annual" &&
+            annualPaymentMode ===
+                "installments"
+        ) {
+            const itemWithoutInstallments =
+                selectedItems.find(
+                    (item) =>
+                        !item
+                            .installmentsEnabled,
+                );
+
+            if (
+                itemWithoutInstallments
+            ) {
+                setCheckoutError(
+                    `${itemWithoutInstallments.name} no está disponible con meses sin intereses.`,
+                );
+
+                return;
+            }
         }
 
         try {
@@ -467,7 +515,13 @@ export default function CommercialConfigurator({
                                 industry:
                                     selectedIndustry,
 
-                                billingPeriod,
+                                billingPeriod:
+                                    billingPeriod ===
+                                        "annual" &&
+                                    annualPaymentMode ===
+                                        "installments"
+                                        ? "annual_installments"
+                                        : billingPeriod,
 
                                 catalogItemIds:
                                     selectedItemIds,
@@ -598,6 +652,19 @@ export default function CommercialConfigurator({
                     result.error ??
                         "No fue posible aplicar el cambio de plan.",
                 );
+            }
+
+            if (
+                result.data.changeType ===
+                    "checkout_required" &&
+                result.data.checkoutUrl
+            ) {
+                window.location.assign(
+                    result.data
+                        .checkoutUrl,
+                );
+
+                return;
             }
 
             setPlanChangePreview(
@@ -866,14 +933,6 @@ export default function CommercialConfigurator({
                                     item.id,
                                 );
 
-                            const displayedPrice =
-                                Number(
-                                    billingPeriod ===
-                                    "monthly"
-                                        ? item.monthlyPrice
-                                        : item.annualPrice,
-                                );
-
                             return (
                                 <article
                                     key={
@@ -958,7 +1017,20 @@ export default function CommercialConfigurator({
                                                         2,
                                                 },
                                             ).format(
-                                                displayedPrice,
+                                                billingPeriod ===
+                                                "monthly"
+                                                    ? Number(
+                                                          item.monthlyPrice,
+                                                      )
+                                                    : annualPaymentMode ===
+                                                        "installments" &&
+                                                      item.installmentsEnabled
+                                                      ? Number(
+                                                            item.annualInstallmentsPrice,
+                                                        )
+                                                      : Number(
+                                                            item.annualPrice,
+                                                        ),
                                             )}{" "}
                                             <span className="text-sm font-bold text-slate-500">
                                                 {item.currency.toUpperCase()}
@@ -969,12 +1041,72 @@ export default function CommercialConfigurator({
                                             {billingPeriod ===
                                             "monthly"
                                                 ? "al mes"
-                                                : "al año"}
+                                                : annualPaymentMode ===
+                                                      "installments" &&
+                                                  item.installmentsEnabled
+                                                  ? "al año · pago con MSI"
+                                                  : "al año · pago de contado"}
                                             {" · IVA incluido"}
                                         </p>
 
                                         {billingPeriod ===
                                             "annual" &&
+                                            item.installmentsEnabled && (
+                                                <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setAnnualPaymentMode(
+                                                                "cash",
+                                                            );
+
+                                                            setCheckoutError(
+                                                                null,
+                                                            );
+                                                        }}
+                                                        className={[
+                                                            "rounded-xl px-3 py-2 text-xs font-bold transition",
+                                                            annualPaymentMode ===
+                                                            "cash"
+                                                                ? "bg-white text-slate-950 shadow-sm"
+                                                                : "text-slate-500 hover:text-slate-800",
+                                                        ].join(
+                                                            " ",
+                                                        )}
+                                                    >
+                                                        Contado
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setAnnualPaymentMode(
+                                                                "installments",
+                                                            );
+
+                                                            setCheckoutError(
+                                                                null,
+                                                            );
+                                                        }}
+                                                        className={[
+                                                            "rounded-xl px-3 py-2 text-xs font-bold transition",
+                                                            annualPaymentMode ===
+                                                            "installments"
+                                                                ? "bg-blue-600 text-white shadow-sm"
+                                                                : "text-slate-500 hover:text-slate-800",
+                                                        ].join(
+                                                            " ",
+                                                        )}
+                                                    >
+                                                        3 o 6 MSI
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                        {billingPeriod ===
+                                            "annual" &&
+                                            annualPaymentMode ===
+                                                "cash" &&
                                             item.annualDiscountPercent >
                                                 0 && (
                                                 <p className="mt-2 text-sm font-bold text-emerald-700">
@@ -984,9 +1116,24 @@ export default function CommercialConfigurator({
                                                     % de descuento anual
                                                 </p>
                                             )}
+
+                                        {billingPeriod ===
+                                            "annual" &&
+                                            annualPaymentMode ===
+                                                "installments" &&
+                                            item.installmentsEnabled &&
+                                            item.installmentsDiscountPercent >
+                                                0 && (
+                                                <p className="mt-2 text-sm font-bold text-blue-700">
+                                                    {
+                                                        item.installmentsDiscountPercent
+                                                    }
+                                                    % de descuento con MSI
+                                                </p>
+                                            )}
                                     </div>
 
-                                                                        {item.includedModules
+                                    {item.includedModules
                                         .length >
                                         0 && (
                                         <div className="mt-6 border-t border-slate-200 pt-5">
@@ -1117,7 +1264,11 @@ export default function CommercialConfigurator({
                                                 billingPeriod ===
                                                 "monthly"
                                                     ? item.monthlyPrice
-                                                    : item.annualPrice,
+                                                    : annualPaymentMode ===
+                                                        "installments"
+                                                        ? item
+                                                              .annualInstallmentsPrice
+                                                        : item.annualPrice,
                                             ),
                                         )}{" "}
                                         <span className="text-xs text-slate-400">
@@ -1167,7 +1318,10 @@ export default function CommercialConfigurator({
                             {billingPeriod ===
                             "monthly"
                                 ? "Facturación mensual"
-                                : "Facturación anual"}
+                                : annualPaymentMode ===
+                                    "installments"
+                                    ? "Pago anual · 3 o 6 MSI"
+                                    : "Facturación anual · pago de contado"}
                             {" · IVA incluido"}
                         </p>
                     </div>
@@ -1210,7 +1364,11 @@ export default function CommercialConfigurator({
                                 <>
                                     <div className="mt-4 flex items-start justify-between gap-4">
                                         <span className="text-sm text-slate-500">
-                                            Nuevo total
+                                            {planChangePreview
+                                                .billingPeriod ===
+                                            "annual_installments"
+                                                ? "Pago anual a MSI"
+                                                : "Nuevo total"}
                                         </span>
 
                                         <span className="text-right text-lg font-black">
@@ -1239,11 +1397,15 @@ export default function CommercialConfigurator({
 
                                         <span className="text-right text-sm font-bold">
                                             {planChangePreview
-                                                .changeType ===
-                                            "immediate"
-                                                ? "Inmediata"
-                                                : planChangePreview.effectiveAt
-                                                  ? new Intl.DateTimeFormat(
+                                                .billingPeriod ===
+                                            "annual_installments"
+                                                ? "Después de confirmar el pago"
+                                                : planChangePreview
+                                                      .changeType ===
+                                                  "immediate"
+                                                  ? "Inmediata"
+                                                  : planChangePreview.effectiveAt
+                                                    ? new Intl.DateTimeFormat(
                                                         "es-MX",
                                                         {
                                                             day:
@@ -1269,7 +1431,11 @@ export default function CommercialConfigurator({
                                     "immediate" ? (
                                         <div className="mt-4 flex items-start justify-between gap-4 border-t border-slate-200 pt-4">
                                             <span className="text-sm text-slate-500">
-                                                Cobro estimado ahora
+                                                {planChangePreview
+                                                    .billingPeriod ===
+                                                "annual_installments"
+                                                    ? "Cobro al continuar"
+                                                    : "Cobro estimado ahora"}
                                             </span>
 
                                             <span className="text-right text-lg font-black text-blue-700">
@@ -1320,12 +1486,20 @@ export default function CommercialConfigurator({
                                             className="mt-5 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3.5 text-sm font-bold text-white transition hover:from-blue-700 hover:to-cyan-600 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             {isApplyingPlanChange
-                                                ? "Aplicando cambio..."
+                                                ? planChangePreview
+                                                      .billingPeriod ===
+                                                  "annual_installments"
+                                                    ? "Preparando pago..."
+                                                    : "Aplicando cambio..."
                                                 : planChangePreview
-                                                      .changeType ===
-                                                  "immediate"
-                                                  ? "Confirmar y aplicar ahora"
-                                                  : "Programar cambio"}
+                                                      .billingPeriod ===
+                                                  "annual_installments"
+                                                  ? "Continuar al pago"
+                                                  : planChangePreview
+                                                        .changeType ===
+                                                    "immediate"
+                                                    ? "Confirmar y aplicar ahora"
+                                                    : "Programar cambio"}
                                         </button>
                                     )}
                                 </>

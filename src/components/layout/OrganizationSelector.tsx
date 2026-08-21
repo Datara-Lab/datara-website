@@ -162,6 +162,13 @@ export default function OrganizationSelector() {
         ) ??
         null;
 
+    if (
+        !isLoading &&
+        organizations.length <= 1
+    ) {
+        return null;
+    }
+
     function markLogoAsFailed(
         tenantId: string,
     ) {

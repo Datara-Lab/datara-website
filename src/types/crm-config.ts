@@ -53,7 +53,14 @@ export type CRMFieldConfig = {
   readOnly?: boolean;
   hidden?: boolean;
 
-    /*
+  /*
+   * Perfil técnico al que pertenece el
+   * campo. La página resuelve qué tipos
+   * del tenant utilizan ese perfil.
+   */
+  technicalProfile?: string;
+
+  /*
    * Permite mostrar u ocultar un campo
    * según el valor de otro campo.
    */
@@ -69,6 +76,16 @@ export type CRMFieldConfig = {
     }
   | {
       fieldKey: string;
+
+      in: Array<
+        | string
+        | number
+        | boolean
+        | null
+      >;
+    }
+  | {
+      fieldKey: string;
       hasValue: true;
     };
 
@@ -80,6 +97,19 @@ export type CRMFieldConfig = {
     | null;
 
   options?: CRMFieldOption[];
+
+  /*
+   * Opciones que dependen del valor
+   * seleccionado en otro campo.
+   */
+  optionsByFieldValue?: {
+    fieldKey: string;
+
+    options: Record<
+      string,
+      CRMFieldOption[]
+    >;
+  };
 
   validation?: CRMFieldValidation;
 
@@ -307,6 +337,26 @@ export type CRMIndustryRoleConfig = {
     CRMIndustryRolePermissionConfig[];
 };
 
+export type CRMProductTypeTemplateConfig = {
+  key: string;
+  name: string;
+
+  inventoryTracked: boolean;
+
+  technicalProfile?:
+    | string
+    | null;
+
+  sortOrder: number;
+
+  /*
+   * Puede reutilizar un catálogo estático
+   * existente o declarar categorías propias.
+   */
+  categoryCatalogKey?: string;
+  categories?: string[];
+};
+
 export type CRMIndustryTemplateConfig = {
   id: CRMIndustry;
   name: string;
@@ -318,6 +368,9 @@ export type CRMIndustryTemplateConfig = {
 
   defaultRoles?:
     CRMIndustryRoleConfig[];
+
+  defaultProductTypes:
+    CRMProductTypeTemplateConfig[];
 
   defaultCatalogs: Record<
     string,

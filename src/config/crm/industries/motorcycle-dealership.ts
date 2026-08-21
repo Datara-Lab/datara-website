@@ -20,6 +20,7 @@ export const motorcycleDealershipTemplate:
     "documents",
     "integrations",
     "automations",
+    "crm-analytics",
     "promotions",
     "quotes",
     "inventory",
@@ -64,6 +65,49 @@ export const motorcycleDealershipTemplate:
 
           canView: true,
         },
+      ],
+    },
+  ],
+
+  defaultProductTypes: [
+    {
+      key: "model",
+      name: "Modelo",
+      inventoryTracked: true,
+      technicalProfile:
+        "motorcycle_model",
+      sortOrder: 10,
+      categoryCatalogKey:
+        "products.category",
+    },
+    {
+      key: "product",
+      name: "Producto",
+      inventoryTracked: true,
+      technicalProfile: null,
+      sortOrder: 20,
+      categories: [
+        "Cascos",
+        "Guantes",
+        "Chamarras y protección",
+        "Refacciones",
+        "Accesorios",
+        "Llantas",
+        "Lubricantes",
+      ],
+    },
+    {
+      key: "service",
+      name: "Servicio",
+      inventoryTracked: false,
+      technicalProfile: null,
+      sortOrder: 30,
+      categories: [
+        "Mantenimiento preventivo",
+        "Reparación",
+        "Diagnóstico",
+        "Instalación de accesorios",
+        "Garantía",
       ],
     },
   ],
@@ -264,10 +308,11 @@ export const motorcycleDealershipTemplate:
   terminology: {
     modules: {
       products: {
-        singular: "Modelo",
-        plural: "Modelos",
+        singular:
+          "Elemento de catálogo",
+        plural: "Catálogo",
         description:
-          "Catálogo de modelos disponibles para venta.",
+          "Modelos, productos y servicios disponibles para venta.",
       },
 
       leads: {
@@ -309,17 +354,17 @@ export const motorcycleDealershipTemplate:
     fields: {
       "products.name": "Nombre comercial",
       "products.code":
-        "Código del modelo",
+        "Código o SKU",
       "products.description":
         "Descripción",
       "products.category":
-        "Tipo de vehículo",
+        "Categoría",
       "products.unitPrice":
         "Precio de lista",
       "products.currency":
         "Moneda",
       "products.active":
-        "Modelo activo",
+        "Elemento activo",
 
       "leads.productInterest":
         "Modelo de interés",

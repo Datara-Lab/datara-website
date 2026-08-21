@@ -135,6 +135,9 @@ type StockRecord = {
   | string
   | null;
 
+  productTypeId: string;
+  productTypeName: string;
+
   category:
   | string
   | null;
@@ -195,6 +198,9 @@ type ConsolidatedStockRecord = {
   productCode:
   | string
   | null;
+
+  productTypeId: string;
+  productTypeName: string;
 
   category:
   | string
@@ -995,6 +1001,16 @@ export default function InventariosPage() {
   ] = useState("");
 
   const [
+    productTypeFilter,
+    setProductTypeFilter,
+  ] = useState("");
+
+  const [
+    categoryFilter,
+    setCategoryFilter,
+  ] = useState("");
+
+  const [
     reservationStatusFilter,
     setReservationStatusFilter,
   ] = useState("");
@@ -1703,6 +1719,77 @@ export default function InventariosPage() {
       ],
     );
 
+  const inventoryProductTypes =
+    useMemo(
+      () =>
+        Array.from(
+          new Map(
+            stocks.map(
+              (stock) => [
+                stock.productTypeId,
+                {
+                  id:
+                    stock.productTypeId,
+                  name:
+                    stock.productTypeName,
+                },
+              ],
+            ),
+          ).values(),
+        ).sort(
+          (first, second) =>
+            first.name.localeCompare(
+              second.name,
+              "es-MX",
+              {
+                sensitivity:
+                  "base",
+              },
+            ),
+        ),
+      [stocks],
+    );
+
+  const inventoryCategories =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            stocks
+              .filter(
+                (stock) =>
+                  !productTypeFilter ||
+                  stock.productTypeId ===
+                    productTypeFilter,
+              )
+              .map(
+                (stock) =>
+                  stock.category,
+              )
+              .filter(
+                (
+                  category,
+                ): category is string =>
+                  Boolean(category),
+              ),
+          ),
+        ).sort(
+          (first, second) =>
+            first.localeCompare(
+              second,
+              "es-MX",
+              {
+                sensitivity:
+                  "base",
+              },
+            ),
+        ),
+      [
+        stocks,
+        productTypeFilter,
+      ],
+    );
+
   const visibleStocks =
     useMemo<
       ConsolidatedStockRecord[]
@@ -1723,6 +1810,22 @@ export default function InventariosPage() {
               branchFilter &&
               stock.branchId !==
               branchFilter
+            ) {
+              return false;
+            }
+
+            if (
+              productTypeFilter &&
+              stock.productTypeId !==
+                productTypeFilter
+            ) {
+              return false;
+            }
+
+            if (
+              categoryFilter &&
+              stock.category !==
+                categoryFilter
             ) {
               return false;
             }
@@ -1781,6 +1884,12 @@ export default function InventariosPage() {
 
               productCode:
                 stock.productCode,
+
+              productTypeId:
+                stock.productTypeId,
+
+              productTypeName:
+                stock.productTypeName,
 
               category:
                 stock.category,
@@ -1910,6 +2019,8 @@ export default function InventariosPage() {
       stocks,
       search,
       branchFilter,
+      productTypeFilter,
+      categoryFilter,
       statusFilter,
       stockSortField,
       stockSortDirection,
@@ -4963,7 +5074,112 @@ export default function InventariosPage() {
           className="scroll-mt-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm"
         >
           <header className="border-b border-slate-200 bg-slate-50 px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            {activeView ===
+              "stocks" &&
+              inventoryProductTypes.length >
+                0 && (
+                <div className="mb-5">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                    Tipo de inventario
+                  </p>
+
+                  {inventoryProductTypes.length <=
+                  5 ? (
+                    <div className="inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
+                      <button
+                        type="button"
+                        className={[
+                          "whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition",
+                          productTypeFilter ===
+                          ""
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-slate-600 hover:bg-slate-100",
+                        ].join(" ")}
+                        onClick={() => {
+                          setProductTypeFilter(
+                            "",
+                          );
+                          setCategoryFilter(
+                            "",
+                          );
+                        }}
+                      >
+                        Todos
+                      </button>
+
+                      {inventoryProductTypes.map(
+                        (productType) => (
+                          <button
+                            key={
+                              productType.id
+                            }
+                            type="button"
+                            className={[
+                              "whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition",
+                              productTypeFilter ===
+                              productType.id
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "text-slate-600 hover:bg-slate-100",
+                            ].join(" ")}
+                            onClick={() => {
+                              setProductTypeFilter(
+                                productType.id,
+                              );
+                              setCategoryFilter(
+                                "",
+                              );
+                            }}
+                          >
+                            {
+                              productType.name
+                            }
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <select
+                      value={
+                        productTypeFilter
+                      }
+                      className="w-full max-w-sm rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      onChange={(
+                        event,
+                      ) => {
+                        setProductTypeFilter(
+                          event.target.value,
+                        );
+                        setCategoryFilter(
+                          "",
+                        );
+                      }}
+                    >
+                      <option value="">
+                        Todos los tipos
+                      </option>
+
+                      {inventoryProductTypes.map(
+                        (productType) => (
+                          <option
+                            key={
+                              productType.id
+                            }
+                            value={
+                              productType.id
+                            }
+                          >
+                            {
+                              productType.name
+                            }
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  )}
+                </div>
+              )}
+
+            <div className="flex flex-col gap-4">
               <div className="flex rounded-xl border border-slate-200 bg-white p-1">
                 <button
                   type="button"
@@ -5103,12 +5319,12 @@ export default function InventariosPage() {
                 "counts" &&
                 activeView !==
                   "audit" && (
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <input
                   type="search"
                   value={search}
                   placeholder="Buscar producto, código..."
-                  className="min-w-64 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   onChange={(event) =>
                     setSearch(
                       event.target.value,
@@ -5140,6 +5356,43 @@ export default function InventariosPage() {
                     ),
                   )}
                 </select>
+
+                {activeView ===
+                  "stocks" && (
+                    <select
+                      value={
+                        categoryFilter
+                      }
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
+                      onChange={(
+                        event,
+                      ) =>
+                        setCategoryFilter(
+                          event.target
+                            .value,
+                        )
+                      }
+                    >
+                      <option value="">
+                        Todas las categorías
+                      </option>
+
+                      {inventoryCategories.map(
+                        (category) => (
+                          <option
+                            key={
+                              category
+                            }
+                            value={
+                              category
+                            }
+                          >
+                            {category}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  )}
 
                 {activeView ===
                   "stocks" && (

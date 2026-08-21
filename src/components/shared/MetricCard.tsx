@@ -5,6 +5,7 @@ type MetricCardProps = {
   value: string;
   change?: string;
   helperText?: string;
+  comparisonText?: string;
   tone?: MetricTone;
 };
 
@@ -19,6 +20,7 @@ export default function MetricCard({
   value,
   change,
   helperText,
+  comparisonText,
   tone,
 }: MetricCardProps) {
   const resolvedTone: MetricTone =
@@ -28,6 +30,22 @@ export default function MetricCard({
       : change?.trim().startsWith("-")
         ? "negative"
         : "neutral");
+
+  const comparisonTone:
+    MetricTone =
+    comparisonText
+      ?.trim()
+      .startsWith(
+        "+",
+      )
+      ? "positive"
+      : comparisonText
+          ?.trim()
+          .startsWith(
+            "-",
+          )
+        ? "negative"
+        : "neutral";
 
   return (
     <article className="flex min-h-[170px] flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md">
@@ -41,7 +59,9 @@ export default function MetricCard({
         </p>
       </div>
 
-      {(change || helperText) && (
+      {(change ||
+        helperText ||
+        comparisonText) && (
         <div className="mt-5">
           {change && (
             <p
@@ -57,6 +77,21 @@ export default function MetricCard({
           {helperText && (
             <p className="mt-1 text-xs leading-5 text-slate-400">
               {helperText}
+            </p>
+          )}
+
+          {comparisonText && (
+            <p
+              className={[
+                "mt-1 text-xs font-semibold leading-5",
+                toneStyles[
+                  comparisonTone
+                ],
+              ].join(
+                " ",
+              )}
+            >
+              {comparisonText}
             </p>
           )}
         </div>

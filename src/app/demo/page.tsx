@@ -10,14 +10,61 @@ import {
 
 import TrialActivationForm from "@/components/onboarding/TrialActivationForm";
 
-export default async function DemoPage() {
+type DemoPageProps = {
+    searchParams: Promise<{
+        industry?: string;
+    }>;
+};
+
+const allowedIndustries = [
+    "motorcycle_dealership",
+    "professional_services",
+] as const;
+
+export default async function DemoPage({
+    searchParams,
+}: DemoPageProps) {
+    if (
+        process.env
+            .DATARA_ENVIRONMENT
+            ?.trim()
+            .toLowerCase() ===
+        "demo"
+    ) {
+        redirect(
+            "/login?redirect_url=%2Fseleccionar-empresa",
+        );
+    }
+
+    const {
+        industry,
+    } = await searchParams;
+
+    if (
+        !industry ||
+        !allowedIndustries.includes(
+            industry as (
+                typeof allowedIndustries
+            )[number],
+        )
+    ) {
+        redirect(
+            "/catalogo/crm",
+        );
+    }
+
     const {
         userId,
     } = await auth();
 
     if (!userId) {
+        const redirectUrl =
+            encodeURIComponent(
+                `/demo?industry=${industry}`,
+            );
+
         redirect(
-            "/login?redirect_url=%2Fdemo",
+            `/login?mode=sign-up&redirect_url=${redirectUrl}`,
         );
     }
 
@@ -112,7 +159,11 @@ export default async function DemoPage() {
                         </p>
 
                         <div className="mt-8">
-                            <TrialActivationForm />
+                            <TrialActivationForm
+                                initialIndustry={
+                                    industry
+                                }
+                            />
                         </div>
 
                         <p className="mt-8 text-center text-sm text-slate-500">

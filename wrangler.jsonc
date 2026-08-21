@@ -54,7 +54,7 @@
 		{
 			"bucket_name": "datara-crm-documents",
 			"binding": "datara_crm_documents",
-			"remote": true
+			"remote": false
 		}
 	]
 }

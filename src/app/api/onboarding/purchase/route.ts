@@ -393,11 +393,18 @@ export async function POST(
             );
         }
 
+        const isAnnualInstallments =
+            purchase.billingPeriod ===
+            "annual_installments";
+
         if (
-            !purchase
-                .stripeCustomerId ||
-            !purchase
-                .stripeSubscriptionId
+            !isAnnualInstallments &&
+            (
+                !purchase
+                    .stripeCustomerId ||
+                !purchase
+                    .stripeSubscriptionId
+            )
         ) {
             throw new ApiError(
                 "Stripe todavía no ha confirmado completamente la suscripción.",

@@ -64,6 +64,7 @@ export function createProductsModule(
     searchFields: [
       "name",
       "code",
+      "productTypeName",
       "category",
     ],
 
@@ -179,6 +180,39 @@ export function createProductsModule(
       },
 
       {
+        key: "productTypeId",
+
+        label: "Tipo de elemento",
+
+        placeholder:
+          "Selecciona el tipo",
+
+        type: "select",
+        required: true,
+
+        /*
+         * Las opciones se cargan desde los
+         * tipos configurados por el tenant.
+         */
+        options: [],
+
+        showInForm: true,
+        showInTable: true,
+        showInDetail: true,
+        showInFilters: true,
+
+        formOrder: 3,
+        tableOrder: 3,
+        detailOrder: 3,
+
+        tableWidth: "160px",
+
+        formSectionId: "general",
+        formRow: 2,
+        formColumn: 1,
+      },
+
+      {
         key: "category",
 
         label: getFieldLabel(
@@ -188,7 +222,7 @@ export function createProductsModule(
         ),
 
         placeholder:
-          "Selecciona el tipo de vehículo",
+          "Selecciona una categoría",
 
         type: "select",
         required: true,
@@ -208,15 +242,15 @@ export function createProductsModule(
         showInDetail: true,
         showInFilters: true,
 
-        formOrder: 3,
-        tableOrder: 3,
-        detailOrder: 3,
+        formOrder: 4,
+        tableOrder: 4,
+        detailOrder: 4,
 
         tableWidth: "170px",
 
         formSectionId: "general",
         formRow: 2,
-        formColumn: 1,
+        formColumn: 2,
       },
 
       {
@@ -272,6 +306,9 @@ export function createProductsModule(
               "Captura un año de cuatro dígitos.",
           },
 
+        technicalProfile:
+          "motorcycle_model",
+
         showInForm: true,
         showInTable: false,
         showInDetail: true,
@@ -304,6 +341,9 @@ export function createProductsModule(
             "La lista de colores es demasiado extensa.",
         },
 
+        technicalProfile:
+          "motorcycle_model",
+
         showInForm: true,
         showInTable: false,
         showInDetail: true,
@@ -331,6 +371,9 @@ export function createProductsModule(
           maxLength: 250,
         },
 
+        technicalProfile:
+          "motorcycle_model",
+
         showInForm: true,
         showInTable: false,
         showInDetail: true,
@@ -356,6 +399,9 @@ export function createProductsModule(
         validation: {
           maxLength: 100,
         },
+
+        technicalProfile:
+          "motorcycle_model",
 
         showInForm: true,
         showInTable: false,
@@ -383,6 +429,9 @@ export function createProductsModule(
         validation: {
           maxLength: 150,
         },
+
+        technicalProfile:
+          "motorcycle_model",
 
         showInForm: true,
         showInTable: false,
@@ -412,6 +461,9 @@ export function createProductsModule(
           maxLength: 150,
         },
 
+        technicalProfile:
+          "motorcycle_model",
+
         showInForm: true,
         showInTable: false,
         showInDetail: true,
@@ -439,6 +491,9 @@ export function createProductsModule(
           maxLength: 150,
         },
 
+        technicalProfile:
+          "motorcycle_model",
+
         showInForm: true,
         showInTable: false,
         showInDetail: true,
@@ -465,7 +520,11 @@ export function createProductsModule(
         validation: {
           maxLength: 100,
         },
-      showInForm: true,
+
+        technicalProfile:
+          "motorcycle_model",
+
+        showInForm: true,
         showInTable: false,
         showInDetail: true,
         showInFilters: false,
@@ -491,6 +550,9 @@ export function createProductsModule(
         validation: {
           maxLength: 100,
         },
+
+        technicalProfile:
+          "motorcycle_model",
 
         showInForm: true,
         showInTable: false,
@@ -519,6 +581,9 @@ export function createProductsModule(
           maxLength: 100,
         },
 
+        technicalProfile:
+          "motorcycle_model",
+
         showInForm: true,
         showInTable: false,
         showInDetail: true,
@@ -545,6 +610,9 @@ export function createProductsModule(
         validation: {
           maxLength: 250,
         },
+
+        technicalProfile:
+          "motorcycle_model",
 
         showInForm: true,
         showInTable: false,

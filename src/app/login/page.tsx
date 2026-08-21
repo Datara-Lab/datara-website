@@ -8,6 +8,8 @@ type LoginPageProps = {
   searchParams: Promise<{
     redirect_url?:
       string | string[];
+    mode?:
+      string | string[];
   }>;
 };
 
@@ -26,6 +28,17 @@ export default async function LoginPage({
       .redirect_url === "string"
       ? parameters.redirect_url
       : null;
+
+  const requestedMode =
+    typeof parameters.mode ===
+      "string"
+      ? parameters.mode
+      : null;
+
+  const initialMode =
+    requestedMode === "sign-up"
+      ? "sign-up"
+      : "sign-in";
 
   const redirectUrl =
     requestedRedirect?.startsWith(
@@ -51,6 +64,9 @@ export default async function LoginPage({
           redirectUrl={
             redirectUrl
           }
+        initialMode={
+          initialMode
+        }
         />
       </div>
     </main>

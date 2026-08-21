@@ -489,6 +489,21 @@ function shouldShowField(
         return false;
       }
     } else if (
+      "in" in
+      field.visibleWhen
+    ) {
+      if (
+        !field.visibleWhen.in.includes(
+          dependentValue as
+            | string
+            | number
+            | boolean
+            | null,
+        )
+      ) {
+        return false;
+      }
+    } else if (
       dependentValue !==
       field.visibleWhen.equals
     ) {
@@ -531,6 +546,31 @@ function getDynamicField(
   field: CRMFieldConfig,
   values: CRMFormValues,
 ): CRMFieldConfig {
+  if (
+    field.optionsByFieldValue
+  ) {
+    const dependentValue =
+      values[
+        field
+          .optionsByFieldValue
+          .fieldKey
+      ];
+
+    return {
+      ...field,
+
+      options:
+        typeof dependentValue ===
+          "string"
+          ? field
+              .optionsByFieldValue
+              .options[
+                dependentValue
+              ] ?? []
+          : [],
+    };
+  }
+
   if (field.key === "value") {
     const benefitsThatRequireValue = [
       "Descuento (%)",
@@ -687,6 +727,22 @@ function FormSection({
   const columns =
     group.section.columns ?? 2;
 
+  const visibleFields =
+    group.fields.filter(
+      (field) =>
+        shouldShowField(
+          field,
+          values,
+        ),
+    );
+
+  if (
+    visibleFields.length ===
+    0
+  ) {
+    return null;
+  }
+
   return (
     <section className="overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
       <header className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
@@ -709,7 +765,7 @@ function FormSection({
             : "grid-cols-1",
         ].join(" ")}
       >
-        {group.fields.map((field) =>
+        {visibleFields.map((field) =>
           renderField(
             field,
             values,
@@ -801,6 +857,22 @@ export default function DynamicForm({
         ...currentValues,
         [fieldKey]: value,
       };
+
+      for (
+        const dependentField of
+        formFields
+      ) {
+        if (
+          dependentField
+            .optionsByFieldValue
+            ?.fieldKey ===
+          fieldKey
+        ) {
+          nextValues[
+            dependentField.key
+          ] = "";
+        }
+      }
 
       /*
        * Meses sin intereses:

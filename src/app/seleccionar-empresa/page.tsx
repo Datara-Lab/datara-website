@@ -13,6 +13,7 @@ import {
 
 import {
     useEffect,
+    useRef,
     useState,
 } from "react";
 
@@ -94,6 +95,9 @@ export default function SeleccionarEmpresaPage() {
         string[]
     >([]);
 
+    const autoActivationStarted =
+        useRef(false);
+
     useEffect(() => {
         let isActive = true;
 
@@ -164,6 +168,110 @@ export default function SeleccionarEmpresaPage() {
         userMemberships.data ??
         [];
 
+    const onlyOrganizationId =
+        memberships.length === 1
+            ? memberships[0]
+                .organization.id
+            : null;
+
+    useEffect(() => {
+        if (
+            !isUserLoaded ||
+            !isSignedIn ||
+            !isOrganizationListLoaded ||
+            !setActive ||
+            !onlyOrganizationId ||
+            autoActivationStarted.current
+        ) {
+            return;
+        }
+
+        autoActivationStarted.current =
+            true;
+
+        const activateOrganization =
+            setActive;
+
+        let isCancelled =
+            false;
+
+        async function openOnlyOrganization() {
+            try {
+                setActivatingOrganizationId(
+                    onlyOrganizationId,
+                );
+
+                setError(
+                    null,
+                );
+
+                await activateOrganization({
+                    organization:
+                        onlyOrganizationId,
+
+                    navigate: async ({
+                        decorateUrl,
+                    }) => {
+                        if (isCancelled) {
+                            return;
+                        }
+
+                        const destination =
+                            decorateUrl(
+                                "/portal",
+                            );
+
+                        if (
+                            destination.startsWith(
+                                "http",
+                            )
+                        ) {
+                            window.location.href =
+                                destination;
+
+                            return;
+                        }
+
+                        router.replace(
+                            destination,
+                        );
+                    },
+                });
+            } catch (
+                activationError
+            ) {
+                if (isCancelled) {
+                    return;
+                }
+
+                setError(
+                    activationError instanceof
+                        Error
+                        ? activationError.message
+                        : "No fue posible abrir la empresa.",
+                );
+
+                setActivatingOrganizationId(
+                    null,
+                );
+            }
+        }
+
+        void openOnlyOrganization();
+
+        return () => {
+            isCancelled =
+                true;
+        };
+    }, [
+        isUserLoaded,
+        isSignedIn,
+        isOrganizationListLoaded,
+        setActive,
+        onlyOrganizationId,
+        router,
+    ]);
+
     async function selectOrganization(
         organizationId: string,
     ) {
@@ -183,13 +291,30 @@ export default function SeleccionarEmpresaPage() {
             await setActive({
                 organization:
                     organizationId,
+
+                navigate: async ({
+                    decorateUrl,
+                }) => {
+                    const destination =
+                        decorateUrl(
+                            "/portal",
+                        );
+
+                    if (
+                        destination.startsWith(
+                            "http",
+                        )
+                    ) {
+                        window.location.href =
+                            destination;
+                        return;
+                    }
+
+                    router.replace(
+                        destination,
+                    );
+                },
             });
-
-            router.replace(
-                "/portal",
-            );
-
-            router.refresh();
         } catch (
         selectionError
         ) {
@@ -207,6 +332,26 @@ export default function SeleccionarEmpresaPage() {
     }
 
     if (
+        activatingOrganizationId ||
+        (
+            isSignedIn &&
+            onlyOrganizationId
+        )
+    ) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
+                <div className="text-center">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+                    <p className="mt-5 text-sm font-semibold text-slate-500">
+                        Preparando tu Workspace...
+                    </p>
+                </div>
+            </main>
+        );
+    }
+
+    if (
         !isUserLoaded ||
         !isOrganizationListLoaded ||
         isLoadingOrganizations
@@ -214,7 +359,7 @@ export default function SeleccionarEmpresaPage() {
         return (
             <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
                 <p className="text-sm font-semibold text-slate-500">
-                    Cargando tus empresas...
+                    Preparando tus empresas...
                 </p>
             </main>
         );
@@ -394,8 +539,38 @@ export default function SeleccionarEmpresaPage() {
                                     </button>
                                 );
                             },
-                        )}
-                    </div>
+                          )}
+
+                          <button
+                              type="button"
+                              onClick={() =>
+                                  router.push(
+                                      "/contratar",
+                                  )
+                              }
+                              className="group rounded-[28px] border border-dashed border-blue-300 bg-blue-50/40 p-7 text-left transition hover:-translate-y-1 hover:border-blue-500 hover:bg-blue-50 hover:shadow-xl"
+                          >
+                              <div className="flex items-center gap-4">
+                                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-2xl font-black text-white">
+                                      +
+                                  </span>
+
+                                  <div className="min-w-0">
+                                      <h2 className="text-xl font-black text-slate-950">
+                                          Agregar empresa
+                                      </h2>
+
+                                      <p className="mt-1 text-sm text-slate-500">
+                                          Contrata productos Datara para una nueva empresa.
+                                      </p>
+                                  </div>
+                              </div>
+
+                              <p className="mt-6 text-sm font-bold text-blue-700">
+                                  Crear nuevo Workspace →
+                              </p>
+                          </button>
+                      </div>
                 )}
             </section>
         </main>

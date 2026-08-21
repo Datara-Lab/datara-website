@@ -20,6 +20,7 @@ export const professionalServicesTemplate:
         "documents",
         "integrations",
         "automations",
+        "crm-analytics",
         "promotions",
         "quotes",
         "sales-orders",
@@ -87,6 +88,10 @@ export const professionalServicesTemplate:
                     moduleId: "automations",
                     canView: true,
                 },
+                {
+                    moduleId: "crm-analytics",
+                    canView: true,
+                },
             ],
         },
         {
@@ -135,6 +140,49 @@ export const professionalServicesTemplate:
                     moduleId: "automations",
                     canView: true,
                 },
+                {
+                    moduleId: "crm-analytics",
+                    canView: true,
+                },
+            ],
+        },
+    ],
+
+    defaultProductTypes: [
+        {
+            key: "service",
+            name: "Servicio",
+            inventoryTracked: false,
+            technicalProfile: null,
+            sortOrder: 10,
+            categories: [
+                "Implementación",
+                "Consultoría",
+                "Integración",
+                "Capacitación",
+                "Soporte",
+                "Proyecto de analítica",
+            ],
+        },
+        {
+            key: "subscription",
+            name: "Suscripción",
+            inventoryTracked: false,
+            technicalProfile: null,
+            sortOrder: 20,
+            categories: [
+                "Suscripción de software",
+                "Almacenamiento",
+            ],
+        },
+        {
+            key: "product",
+            name: "Producto",
+            inventoryTracked: true,
+            technicalProfile: null,
+            sortOrder: 30,
+            categories: [
+                "Otro",
             ],
         },
     ],

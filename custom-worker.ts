@@ -5,6 +5,8 @@ type DataraCloudflareEnv =
     CloudflareEnv & {
         CRON_SECRET: string;
 
+        DATARA_PUBLIC_URL?: string;
+
         WORKER_SELF_REFERENCE: {
             fetch(
                 request: Request,
@@ -18,12 +20,23 @@ async function callInternalEndpoint(
     pathname: string,
     taskName: string,
 ) {
+    const publicUrl =
+        (
+            env
+                .DATARA_PUBLIC_URL
+                ?.trim() ||
+            "https://datara-lab.com"
+        ).replace(
+            /\/+$/,
+            "",
+        );
+
     const response =
         await env
             .WORKER_SELF_REFERENCE
             .fetch(
                 new Request(
-                    `https://datara-lab.com${pathname}`,
+                    `${publicUrl}${pathname}`,
                     {
                         method:
                             "POST",

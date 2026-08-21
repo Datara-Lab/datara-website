@@ -305,16 +305,27 @@ function formatFieldValue(
     }
 
     case "select": {
-      const textValue = String(value);
+      const textValue =
+        String(value);
+
+      const displayValue =
+        field.options?.find(
+          (option) =>
+            option.value ===
+            textValue,
+        )?.label ??
+        textValue;
 
       return (
         <span
           className={[
             "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
-            getStatusBadgeClassName(textValue),
+            getStatusBadgeClassName(
+              displayValue,
+            ),
           ].join(" ")}
         >
-          {textValue}
+          {displayValue}
         </span>
       );
     }
@@ -547,9 +558,12 @@ export default function CRMDataTable({
   );
 
   const [
-    columnPreferencesLoaded,
-    setColumnPreferencesLoaded,
-  ] = useState(false);
+    loadedColumnStorageKey,
+    setLoadedColumnStorageKey,
+  ] = useState<
+    string |
+    null
+  >(null);
 
   const columnStorageKey =
     useMemo(() => {
@@ -604,80 +618,102 @@ export default function CRMDataTable({
     );
 
   useEffect(() => {
-    setColumnPreferencesLoaded(false);
+    const timeoutId =
+      window.setTimeout(
+        () => {
+          const availableKeys =
+            availableTableFields.map(
+              (field) =>
+                field.key,
+            );
 
-    const availableKeys =
-      availableTableFields.map(
-        (field) => field.key,
+          const defaultKeys =
+            tableFields.map(
+              (field) =>
+                field.key,
+            );
+
+          if (!columnStorageKey) {
+            setVisibleColumnKeys(
+              defaultKeys,
+            );
+
+            setLoadedColumnStorageKey(
+              null,
+            );
+
+            return;
+          }
+
+          try {
+            const storedValue =
+              window.localStorage.getItem(
+                columnStorageKey,
+              );
+
+            if (!storedValue) {
+              setVisibleColumnKeys(
+                defaultKeys,
+              );
+            } else {
+              const parsedValue:
+                unknown =
+                JSON.parse(
+                  storedValue,
+                );
+
+              const validKeys =
+                Array.isArray(
+                  parsedValue,
+                )
+                  ? parsedValue.filter(
+                      (
+                        key,
+                      ): key is string =>
+                        typeof key ===
+                          "string" &&
+                        availableKeys.includes(
+                          key,
+                        ),
+                    )
+                  : [];
+
+              setVisibleColumnKeys(
+                validKeys.length >
+                  0
+                  ? validKeys
+                  : availableKeys,
+              );
+            }
+          } catch {
+            setVisibleColumnKeys(
+              defaultKeys,
+            );
+          }
+
+          setLoadedColumnStorageKey(
+            columnStorageKey,
+          );
+        },
+        0,
       );
 
-    if (!columnStorageKey) {
-      setVisibleColumnKeys(
-        tableFields.map(
-          (field) => field.key,
-        ),
+    return () => {
+      window.clearTimeout(
+        timeoutId,
       );
-      setColumnPreferencesLoaded(
-        true,
-      );
-      return;
-    }
-
-    try {
-      const storedValue =
-        window.localStorage.getItem(
-          columnStorageKey,
-        );
-
-      if (!storedValue) {
-        setVisibleColumnKeys(
-          tableFields.map(
-            (field) => field.key,
-          ),
-        );
-      } else {
-        const parsedValue: unknown =
-          JSON.parse(storedValue);
-
-        const validKeys =
-          Array.isArray(parsedValue)
-            ? parsedValue.filter(
-                (
-                  key,
-                ): key is string =>
-                  typeof key ===
-                    "string" &&
-                  availableKeys.includes(
-                    key,
-                  ),
-              )
-            : [];
-
-        setVisibleColumnKeys(
-          validKeys.length > 0
-            ? validKeys
-            : availableKeys,
-        );
-      }
-    } catch {
-      setVisibleColumnKeys(
-        tableFields.map(
-          (field) => field.key,
-        ),
-      );
-    }
-
-    setColumnPreferencesLoaded(true);
-      }, [
-        columnStorageKey,
-        availableTableFields,
-        tableFields,
-      ]);
+    };
+  }, [
+    columnStorageKey,
+    availableTableFields,
+    tableFields,
+  ]);
 
   useEffect(() => {
     if (
       !columnStorageKey ||
-      !columnPreferencesLoaded
+      loadedColumnStorageKey !==
+        columnStorageKey
     ) {
       return;
     }
@@ -689,7 +725,7 @@ export default function CRMDataTable({
       ),
     );
   }, [
-    columnPreferencesLoaded,
+    loadedColumnStorageKey,
     columnStorageKey,
     visibleColumnKeys,
   ]);
@@ -861,28 +897,45 @@ export default function CRMDataTable({
     );
   }
 
-  async function loadRecords() {
+  async function loadRecords(
+    signal?: AbortSignal,
+  ) {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(endpoint, {
-        method: "GET",
-        cache: "no-store",
-      });
+      const response = await fetch(
+        endpoint,
+        {
+          method: "GET",
+          cache: "no-store",
+          signal,
+        },
+      );
 
       const payload =
         (await response.json()) as CRMApiResponse;
 
-      if (!response.ok || !payload.success) {
+      if (
+        !response.ok ||
+        !payload.success
+      ) {
         throw new Error(
           payload.error ??
             `No fue posible cargar ${module.pluralLabel.toLowerCase()}.`,
         );
       }
 
-      setRecords(payload.data ?? []);
+      if (!signal?.aborted) {
+        setRecords(
+          payload.data ?? [],
+        );
+      }
     } catch (loadError) {
+      if (signal?.aborted) {
+        return;
+      }
+
       const message =
         loadError instanceof Error
           ? loadError.message
@@ -891,12 +944,36 @@ export default function CRMDataTable({
       setError(message);
       setRecords([]);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }
 
   useEffect(() => {
-    void loadRecords();
+    const controller =
+      new AbortController();
+
+    const timeoutId =
+      window.setTimeout(
+        () => {
+          void loadRecords(
+            controller.signal,
+          );
+        },
+        0,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+
+      controller.abort();
+    };
+
+    // `endpoint` identifica la fuente
+    // que debe recargarse.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint]);
 

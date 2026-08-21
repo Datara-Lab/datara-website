@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import WorkspaceTableActions from "@/components/crm/WorkspaceTableActions";
 import DataraTableScroll from "@/components/shared/DataraTableScroll";
 import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/ui/Button";
@@ -549,7 +550,19 @@ export default function SalesOrdersPage() {
     }, []);
 
   useEffect(() => {
-    void loadWorkspace();
+    const timeoutId =
+      window.setTimeout(
+        () => {
+          void loadWorkspace();
+        },
+        0,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
   }, [
     loadWorkspace,
   ]);
@@ -1228,6 +1241,48 @@ export default function SalesOrdersPage() {
                     ),
                   )}
                 </select>
+
+                <WorkspaceTableActions
+                  title="Órdenes de venta"
+                  columns={[
+                    "Orden",
+                    "Fecha",
+                    "Cliente",
+                    "Contacto",
+                    "Sucursal",
+                    "Partidas",
+                    "Total",
+                    "Responsable",
+                    "Estado",
+                  ]}
+                  rows={visibleOrders.map(
+                    (order) => [
+                      order.reference,
+                      formatDate(
+                        order.createdAt,
+                      ),
+                      order.customerName,
+                      order.customerEmail ??
+                        order.customerPhone ??
+                        "Sin contacto",
+                      order.branchLabel,
+                      order.items.length,
+                      formatMoney(
+                        order.totalAmount,
+                        order.currency,
+                      ),
+                      order.ownerName ??
+                        "Sin asignar",
+                      order.status,
+                    ],
+                  )}
+                  isRefreshing={
+                    isLoading
+                  }
+                  onRefresh={
+                    loadWorkspace
+                  }
+                />
               </div>
             </div>
           </header>

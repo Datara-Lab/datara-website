@@ -238,6 +238,19 @@ export async function POST(
     request: Request,
 ) {
     try {
+        if (
+            process.env
+                .DATARA_ENVIRONMENT
+                ?.trim()
+                .toLowerCase() ===
+            "demo"
+        ) {
+            throw new ApiError(
+                "La creación de pruebas está deshabilitada en este entorno.",
+                403,
+            );
+        }
+
         const {
             userId,
         } = await auth();

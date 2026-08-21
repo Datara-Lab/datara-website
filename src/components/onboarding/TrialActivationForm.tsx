@@ -36,7 +36,13 @@ type SynchronizationResponse = {
     error?: string;
 };
 
-export default function TrialActivationForm() {
+type TrialActivationFormProps = {
+    initialIndustry: string;
+};
+
+export default function TrialActivationForm({
+    initialIndustry,
+}: TrialActivationFormProps) {
     const router =
         useRouter();
 
@@ -62,6 +68,20 @@ export default function TrialActivationForm() {
         setOwnerEmail,
     ] = useState("");
 
+    const sessionEmail =
+        user
+            ?.primaryEmailAddress
+            ?.emailAddress ??
+        user
+            ?.emailAddresses[0]
+            ?.emailAddress ??
+        "";
+
+    const resolvedOwnerEmail =
+        ownerEmail ||
+        sessionEmail;
+
+
     const [
         taxId,
         setTaxId,
@@ -70,7 +90,9 @@ export default function TrialActivationForm() {
     const [
         industry,
         setIndustry,
-    ] = useState("");
+    ] = useState(
+        initialIndustry,
+    );
 
     const [
         isSubmitting,
@@ -109,7 +131,7 @@ export default function TrialActivationForm() {
                             companyName,
 
                             ownerEmail:
-                                ownerEmail
+                                resolvedOwnerEmail
                                     .trim()
                                     .toLowerCase(),
 
@@ -221,7 +243,7 @@ export default function TrialActivationForm() {
                     required
                     autoComplete="email"
                     value={
-                        ownerEmail
+                        resolvedOwnerEmail
                     }
                     disabled={
                         isSubmitting
@@ -346,54 +368,6 @@ export default function TrialActivationForm() {
 
                 <p className="mt-2 text-xs leading-5 text-slate-500">
                     Se utiliza para limitar el demo gratuito a una activación por contribuyente.
-                </p>
-            </div>
-
-            <div>
-                <label
-                    htmlFor="industry"
-                    className="text-sm font-bold text-slate-800"
-                >
-                    Industria
-                </label>
-
-                <select
-                    id="industry"
-                    name="industry"
-                    required
-                    value={
-                        industry
-                    }
-                    disabled={
-                        isSubmitting
-                    }
-                    onChange={(
-                        event,
-                    ) =>
-                        setIndustry(
-                            event.target.value,
-                        )
-                    }
-                    className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-                >
-                    <option
-                        value=""
-                        disabled
-                    >
-                        Selecciona una industria
-                    </option>
-
-                    <option value="motorcycle_dealership">
-                        Agencia de motocicletas
-                    </option>
-
-                    <option value="professional_services">
-                        Servicios profesionales
-                    </option>
-                </select>
-
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Activaremos los módulos, catálogos y roles correspondientes a la industria seleccionada.
                 </p>
             </div>
 
