@@ -542,4 +542,3 @@ export function getAnalyticsComparisonPeriod(
           ),
   };
 }
-
