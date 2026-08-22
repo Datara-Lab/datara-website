@@ -190,23 +190,36 @@ function formatCurrency(
 function formatCompactCurrency(
   value: number,
 ): string {
+  const formatCompactValue = (
+    compactValue: number,
+  ) =>
+    new Intl.NumberFormat(
+      "es-MX",
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      },
+    ).format(
+      compactValue,
+    );
+
   if (
     Math.abs(value) >=
     1_000_000
   ) {
-    return `$${(
+    return `$${formatCompactValue(
       value /
-      1_000_000
-    ).toFixed(1)} M`;
+        1_000_000,
+    )} M`;
   }
 
   if (
     Math.abs(value) >=
     1_000
   ) {
-    return `$${Math.round(
+    return `$${formatCompactValue(
       value /
-      1_000,
+        1_000,
     )} mil`;
   }
 
