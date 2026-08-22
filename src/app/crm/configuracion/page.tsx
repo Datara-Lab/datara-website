@@ -154,6 +154,19 @@ export default function ConfiguracionPage() {
           </a>
 
           <a
+            href="/crm/configuracion/asistente"
+            className="rounded-3xl border border-blue-200 bg-gradient-to-br from-white to-blue-50 p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            <h2 className="text-xl font-black text-slate-950">
+              🤖 Dara e inteligencia artificial
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Controla el asistente interno, el chatbot público y el consumo mensual compartido de IA.
+            </p>
+          </a>
+
+          <a
             href="/crm/configuracion/catalogo"
             className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >

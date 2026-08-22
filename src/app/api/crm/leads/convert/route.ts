@@ -269,6 +269,131 @@ export async function POST(
       });
     }
 
+    const normalizedEmail =
+      lead.email
+        ?.trim()
+        .toLowerCase() ??
+      null;
+
+    if (normalizedEmail) {
+      const [duplicateCustomerByEmail] =
+        await db
+          .select({
+            id:
+              crmCustomers.id,
+          })
+          .from(crmCustomers)
+          .where(
+            and(
+              eq(
+                crmCustomers.tenantId,
+                tenant.id,
+              ),
+              sql<boolean>`
+                lower(
+                  trim(
+                    coalesce(
+                      ${crmCustomers.email},
+                      ''
+                    )
+                  )
+                ) = ${normalizedEmail}
+              `,
+            ),
+          )
+          .limit(1);
+
+      if (duplicateCustomerByEmail) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Ya existe un cliente con el correo electrónico de este prospecto. Revisa el cliente existente antes de convertirlo.",
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+    }
+
+    const phoneNumbers =
+      Array.from(
+        new Set(
+          [
+            lead.phone,
+            lead.mobile,
+          ]
+            .map(
+              (value) =>
+                value
+                  ?.replace(
+                    /[^0-9]/g,
+                    "",
+                  ) ?? "",
+            )
+            .filter(Boolean),
+        ),
+      );
+
+    for (
+      const phoneNumber of
+      phoneNumbers
+    ) {
+      const [duplicateCustomerByPhone] =
+        await db
+          .select({
+            id:
+              crmCustomers.id,
+          })
+          .from(crmCustomers)
+          .where(
+            and(
+              eq(
+                crmCustomers.tenantId,
+                tenant.id,
+              ),
+              sql<boolean>`
+                (
+                  regexp_replace(
+                    coalesce(
+                      ${crmCustomers.phone},
+                      ''
+                    ),
+                    '[^0-9]',
+                    '',
+                    'g'
+                  ) = ${phoneNumber}
+                  OR
+                  regexp_replace(
+                    coalesce(
+                      ${crmCustomers.mobile},
+                      ''
+                    ),
+                    '[^0-9]',
+                    '',
+                    'g'
+                  ) = ${phoneNumber}
+                )
+              `,
+            ),
+          )
+          .limit(1);
+
+      if (duplicateCustomerByPhone) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Ya existe un cliente con el teléfono de este prospecto. Revisa el cliente existente antes de convertirlo.",
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+    }
+
     const now =
       new Date();
 
@@ -377,6 +502,42 @@ export async function POST(
         {
           status:
             error.status,
+        },
+      );
+    }
+
+    const databaseError =
+      error as {
+        cause?: {
+          code?: string;
+          constraint?: string;
+        };
+        code?: string;
+        constraint?: string;
+      };
+
+    const errorCode =
+      databaseError.cause?.code ??
+      databaseError.code;
+
+    const constraint =
+      databaseError.cause
+        ?.constraint ??
+      databaseError.constraint;
+
+    if (
+      errorCode === "23505" &&
+      constraint ===
+        "crm_customers_tenant_email_unique"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Ya existe un cliente con el correo electrónico de este prospecto. Revisa el cliente existente antes de convertirlo.",
+        },
+        {
+          status: 409,
         },
       );
     }

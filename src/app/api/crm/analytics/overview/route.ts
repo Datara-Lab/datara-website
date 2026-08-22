@@ -28,6 +28,11 @@ import {
 } from "@/db/schema";
 
 import {
+  getTenantAIConfiguration,
+  getTenantAIUsage,
+} from "@/lib/ai/entitlements";
+
+import {
   CRMBranchAccessError,
   getCRMBranchAccess,
   validateCRMBranchId,
@@ -996,6 +1001,49 @@ export async function GET(
           ),
       );
 
+    const [
+      aiConfiguration,
+      aiMessagesUsed,
+    ] =
+      await Promise.all([
+        getTenantAIConfiguration(
+          tenant.id,
+          "crm",
+        ),
+
+        getTenantAIUsage(
+          tenant.id,
+          "crm",
+        ),
+      ]);
+
+    const aiUsage =
+      aiConfiguration
+        .monthlyMessageLimit >
+      0
+        ? {
+            assistantName:
+              aiConfiguration
+                .assistantName,
+
+            used:
+              aiMessagesUsed,
+
+            limit:
+              aiConfiguration
+                .monthlyMessageLimit,
+
+            remaining:
+              Math.max(
+                0,
+
+                aiConfiguration
+                  .monthlyMessageLimit -
+                  aiMessagesUsed,
+              ),
+          }
+        : null;
+
     return NextResponse.json({
       success: true,
 
@@ -1027,6 +1075,8 @@ export async function GET(
             scopedBranchIds ??
             [],
         },
+
+      aiUsage,
 
         metrics: {
           leadsCreated:

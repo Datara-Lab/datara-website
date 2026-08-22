@@ -52,6 +52,7 @@ type CatalogItem = {
   currency: string;
   includedUsers: number;
   includedStorageGb: string;
+  includedAiMessages: number;
   moduleIds: string[];
   features: string[];
   required: boolean;
@@ -100,6 +101,7 @@ type CatalogDraft = {
   currency: string;
   includedUsers: string;
   includedStorageGb: string;
+  includedAiMessages: string;
   moduleIds: string;
   features: string;
   required: boolean;
@@ -132,6 +134,7 @@ const EMPTY_DRAFT:
   currency: "mxn",
   includedUsers: "0",
   includedStorageGb: "0.00",
+  includedAiMessages: "0",
   moduleIds: "",
   features: "",
   required: false,
@@ -535,6 +538,10 @@ export default function CommercialCatalogManager() {
         ),
       includedStorageGb:
         item.includedStorageGb,
+      includedAiMessages:
+        String(
+          item.includedAiMessages,
+        ),
       moduleIds:
         listToText(
           item.moduleIds,
@@ -608,6 +615,8 @@ export default function CommercialCatalogManager() {
           draft.includedUsers,
         includedStorageGb:
           draft.includedStorageGb,
+        includedAiMessages:
+          draft.includedAiMessages,
         moduleIds:
           textToList(
             draft.moduleIds,
@@ -1488,6 +1497,44 @@ export default function CommercialCatalogManager() {
                       ) => ({
                         ...currentDraft,
                         includedStorageGb:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                  className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="text-sm font-bold text-slate-800">
+                Consultas de IA incluidas por mes
+
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  onFocus={(
+                    event,
+                  ) =>
+                    event.currentTarget
+                      .select()
+                  }
+                  value={
+                    draft.includedAiMessages
+                  }
+                  disabled={
+                    isSaving
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDraft(
+                      (
+                        currentDraft,
+                      ) => ({
+                        ...currentDraft,
+                        includedAiMessages:
                           event.target
                             .value,
                       }),

@@ -3621,6 +3621,7 @@ export async function PATCH(
       ...itemQueries,
       ...promotionQuery,
       ...usageQueries,
+      ...releaseReservationQueries,
     ];
 
     await db.batch(

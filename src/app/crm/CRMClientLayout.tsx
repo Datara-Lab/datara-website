@@ -15,6 +15,7 @@ import CRMHeaderActions from "@/components/crm/CRMHeaderActions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCRMConfig } from "@/hooks/useCRMConfig";
 import type { NavigationItem } from "@/lib/navigation";
+import CRMAssistant from "@/components/crm/CRMAssistant";
 
 type CRMLayoutProps = {
     children: ReactNode;
@@ -577,7 +578,15 @@ export default function CRMClientLayout({
                     </div>
                 </main>
             ) : (
-                children
+                <>
+                    {children}
+
+                    <CRMAssistant
+                        companyName={
+                            user.tenantName
+                        }
+                    />
+                </>
             )}
         </AppShell>
     );

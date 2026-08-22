@@ -163,6 +163,10 @@ export async function GET(
                         commercialCatalogItems
                             .includedStorageGb,
 
+                    includedAiMessages:
+                        commercialCatalogItems
+                            .includedAiMessages,
+
                     moduleIds:
                         commercialCatalogItems
                             .moduleIds,

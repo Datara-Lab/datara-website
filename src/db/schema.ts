@@ -2426,8 +2426,8 @@ export const crmCustomers = pgTable(
       table.name,
     ),
 
-    index(
-      "crm_customers_tenant_email_idx",
+    uniqueIndex(
+      "crm_customers_tenant_email_unique",
     ).on(
       table.tenantId,
       table.email,
@@ -5687,6 +5687,12 @@ export const commercialCatalogItems =
         .notNull()
         .default("0"),
 
+      includedAiMessages: integer(
+        "included_ai_messages",
+      )
+        .notNull()
+        .default(0),
+
       moduleIds: jsonb(
         "module_ids",
       )
@@ -5804,6 +5810,13 @@ export const commercialCatalogItems =
         "commercial_catalog_items_storage_check",
         sql`
           ${table.includedStorageGb} >= 0
+        `,
+      ),
+
+      check(
+        "commercial_catalog_items_ai_messages_check",
+        sql`
+          ${table.includedAiMessages} >= 0
         `,
       ),
     ],
@@ -7433,6 +7446,89 @@ export const crmNotifications =
       ),
     ],
   );
+
+export const aiRateLimitWindows =
+  pgTable(
+    "ai_rate_limit_windows",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      scope: text("scope")
+        .$type<
+          | "internal_minute"
+          | "internal_day"
+          | "tenant_month"
+          | "public_minute"
+          | "public_day"
+        >()
+        .notNull(),
+
+      subjectKey: text(
+        "subject_key",
+      ).notNull(),
+
+      windowStartedAt: timestamp(
+        "window_started_at",
+        {
+          withTimezone: true,
+        },
+      ).notNull(),
+
+      requestCount: integer(
+        "request_count",
+      )
+        .notNull()
+        .default(1),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "ai_rate_limit_windows_subject_unique",
+      ).on(
+        table.tenantId,
+        table.scope,
+        table.subjectKey,
+        table.windowStartedAt,
+      ),
+
+      index(
+        "ai_rate_limit_windows_cleanup_idx",
+      ).on(
+        table.windowStartedAt,
+      ),
+    ],
+  );
+
+export type AIRateLimitWindow =
+  typeof aiRateLimitWindows.$inferSelect;
+
+export type NewAIRateLimitWindow =
+  typeof aiRateLimitWindows.$inferInsert;
 
 export type CRMAutomationRule =
   typeof crmAutomationRules

@@ -70,6 +70,13 @@ type CRMAnalyticsData = {
     branchIds: string[];
   };
 
+  aiUsage: {
+    assistantName: string;
+    used: number;
+    limit: number;
+    remaining: number;
+  } | null;
+
   metrics: AnalyticsMetrics;
   funnel: FunnelStep[];
   trends: TrendPoint[];
@@ -545,6 +552,10 @@ export default function CRMAnalyticsPage() {
 
   const metrics =
     analytics?.metrics;
+
+  const aiUsage =
+    analytics?.aiUsage ??
+    null;
 
   const comparisonMetrics =
     comparisonAnalytics
@@ -1315,6 +1326,88 @@ export default function CRMAnalyticsPage() {
                 )}
             </SectionCard>
           </section>
+
+      {!isLoading &&
+        aiUsage && (
+          <section className="mt-5 overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm">
+            <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.14em] text-violet-700">
+                  Consumo de inteligencia artificial
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black text-slate-950">
+                  {aiUsage.assistantName}
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Consumo mensual compartido entre el asistente interno y el chatbot público.
+                </p>
+
+                <div className="mt-5 h-3 overflow-hidden rounded-full bg-violet-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-700 via-blue-600 to-cyan-400"
+                    style={{
+                      width:
+                        `${
+                          aiUsage.limit >
+                          0
+                            ? Math.min(
+                                100,
+
+                                (
+                                  aiUsage.used /
+                                  aiUsage.limit
+                                ) *
+                                  100,
+                              )
+                            : 0
+                        }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                  <p className="text-2xl font-black text-slate-950">
+                    {formatNumber(
+                      aiUsage.used,
+                    )}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    Utilizadas
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-violet-50 px-4 py-3">
+                  <p className="text-2xl font-black text-violet-800">
+                    {formatNumber(
+                      aiUsage.remaining,
+                    )}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-violet-600">
+                    Disponibles
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-blue-50 px-4 py-3">
+                  <p className="text-2xl font-black text-blue-800">
+                    {formatNumber(
+                      aiUsage.limit,
+                    )}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-blue-600">
+                    Incluidas
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
         </>
       )}
     </div>

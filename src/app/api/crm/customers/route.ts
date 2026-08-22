@@ -412,6 +412,187 @@ async function resolveOwner(
   };
 }
 
+function normalizePhone(
+  value: unknown,
+): string | null {
+  const normalized =
+    getOptionalString(value)
+      ?.replace(
+        /[^0-9]/g,
+        "",
+      ) ?? "";
+
+  return normalized || null;
+}
+
+async function ensureCustomerIdentifiersUnique(
+  tenantId: string,
+  values: CustomerFormPayload,
+  excludedCustomerId?: string,
+) {
+  const email =
+    getOptionalString(
+      values.email,
+    )?.toLowerCase() ?? null;
+
+  const taxId =
+    getOptionalString(
+      values.taxId,
+    )?.toUpperCase() ?? null;
+
+  const phoneNumbers =
+    Array.from(
+      new Set(
+        [
+          normalizePhone(
+            values.phone,
+          ),
+          normalizePhone(
+            values.mobile,
+          ),
+        ].filter(
+          (
+            value,
+          ): value is string =>
+            Boolean(value),
+        ),
+      ),
+    );
+
+  const isAnotherCustomer = (
+    customerId: string,
+  ) =>
+    !excludedCustomerId ||
+    customerId !== excludedCustomerId;
+
+  if (email) {
+    const matches =
+      await db
+        .select({
+          id: crmCustomers.id,
+        })
+        .from(crmCustomers)
+        .where(
+          and(
+            eq(
+              crmCustomers.tenantId,
+              tenantId,
+            ),
+            eq(
+              crmCustomers.email,
+              email,
+            ),
+          ),
+        );
+
+    if (
+      matches.some(
+        (customer) =>
+          isAnotherCustomer(
+            customer.id,
+          ),
+      )
+    ) {
+      throw new ApiError(
+        "Ya existe un cliente con ese correo electrónico.",
+        409,
+      );
+    }
+  }
+
+  if (taxId) {
+    const matches =
+      await db
+        .select({
+          id: crmCustomers.id,
+        })
+        .from(crmCustomers)
+        .where(
+          and(
+            eq(
+              crmCustomers.tenantId,
+              tenantId,
+            ),
+            eq(
+              crmCustomers.taxId,
+              taxId,
+            ),
+          ),
+        );
+
+    if (
+      matches.some(
+        (customer) =>
+          isAnotherCustomer(
+            customer.id,
+          ),
+      )
+    ) {
+      throw new ApiError(
+        "Ya existe un cliente con ese RFC o identificación fiscal.",
+        409,
+      );
+    }
+  }
+
+  for (
+    const phoneNumber of
+    phoneNumbers
+  ) {
+    const matches =
+      await db
+        .select({
+          id: crmCustomers.id,
+        })
+        .from(crmCustomers)
+        .where(
+          and(
+            eq(
+              crmCustomers.tenantId,
+              tenantId,
+            ),
+            sql<boolean>`
+              (
+                regexp_replace(
+                  coalesce(
+                    ${crmCustomers.phone},
+                    ''
+                  ),
+                  '[^0-9]',
+                  '',
+                  'g'
+                ) = ${phoneNumber}
+                OR
+                regexp_replace(
+                  coalesce(
+                    ${crmCustomers.mobile},
+                    ''
+                  ),
+                  '[^0-9]',
+                  '',
+                  'g'
+                ) = ${phoneNumber}
+              )
+            `,
+          ),
+        );
+
+    if (
+      matches.some(
+        (customer) =>
+          isAnotherCustomer(
+            customer.id,
+          ),
+      )
+    ) {
+      throw new ApiError(
+        "Ya existe un cliente con ese número de teléfono.",
+        409,
+      );
+    }
+  }
+}
+
 function createErrorResponse(
   error: unknown,
   fallback: string,
@@ -452,6 +633,23 @@ function createErrorResponse(
     databaseError.cause
       ?.constraint ??
     databaseError.constraint;
+
+  if (
+    errorCode === "23505" &&
+    constraint ===
+      "crm_customers_tenant_email_unique"
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Ya existe un cliente con ese correo electrónico.",
+      },
+      {
+        status: 409,
+      },
+    );
+  }
 
   if (
     errorCode === "23505" &&
@@ -826,6 +1024,11 @@ export async function POST(
       );
     }
 
+    await ensureCustomerIdentifiersUnique(
+      tenantId,
+      values,
+    );
+
     const customerType =
       getOptionalString(
         values.customerType,
@@ -1109,6 +1312,12 @@ export async function PATCH(
         ) ??
           existingCustomer.branchId,
       );
+
+    await ensureCustomerIdentifiersUnique(
+      tenantId,
+      values,
+      recordId,
+    );
 
     const customerType =
       getOptionalString(

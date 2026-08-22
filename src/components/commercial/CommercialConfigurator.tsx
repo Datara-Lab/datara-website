@@ -28,6 +28,7 @@ type CommercialCatalogItem = {
     currency: string;
     includedUsers: number;
     includedStorageGb: string;
+    includedAiMessages: number;
     moduleIds: string[];
 
     includedModules: Array<{
