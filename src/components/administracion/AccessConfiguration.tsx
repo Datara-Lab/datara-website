@@ -116,7 +116,21 @@ export default function AccessConfiguration({
           const selectedRoleId =
             selectedRoleByProduct[product] ?? "";
 
+          const selectedGlobalRole =
+            rolesData?.globalRoles.find(
+              (role) =>
+                role.id ===
+                selectedGlobalRoleId,
+            );
+
+          const hasInheritedAccess =
+            selectedGlobalRole?.key ===
+              "owner" ||
+            selectedGlobalRole?.key ===
+              "admin";
+
           const hasAccess =
+            hasInheritedAccess ||
             selectedRoleId.length > 0;
 
           return (
@@ -136,7 +150,11 @@ export default function AccessConfiguration({
                   </h3>
 
                   <select
-                    value={selectedRoleId}
+                    value={
+                      hasInheritedAccess
+                        ? ""
+                        : selectedRoleId
+                    }
                     onChange={(event) =>
                       onProductRoleChange(
                         product,
@@ -145,12 +163,15 @@ export default function AccessConfiguration({
                     }
                     disabled={
                       isLoading ||
-                      !rolesData
+                      !rolesData ||
+                      hasInheritedAccess
                     }
                     className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100"
                   >
                     <option value="">
-                      Sin acceso
+                      {hasInheritedAccess
+                        ? "Acceso heredado por rol global"
+                        : "Sin acceso"}
                     </option>
 
                     {(
@@ -176,9 +197,11 @@ export default function AccessConfiguration({
                       : "bg-slate-200 text-slate-600",
                   ].join(" ")}
                 >
-                  {hasAccess
-                    ? "Activo"
-                    : "Inactivo"}
+                  {hasInheritedAccess
+                    ? "Heredado"
+                    : hasAccess
+                      ? "Activo"
+                      : "Inactivo"}
                 </span>
               </div>
             </section>
