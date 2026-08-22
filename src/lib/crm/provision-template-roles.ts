@@ -16,6 +16,10 @@ import {
   getCRMIndustryConfig,
 } from "@/lib/crm-config";
 
+import {
+  baseCRMProductRoles,
+} from "@/config/crm/base-roles";
+
 export async function provisionCRMTemplateRoles(
   tenantId: string,
   tenantName: string,
@@ -28,9 +32,13 @@ export async function provisionCRMTemplateRoles(
       tenantName,
     );
 
-  const templateRoles =
-    tenantConfig?.defaultRoles ??
-    [];
+  const templateRoles = [
+    ...baseCRMProductRoles,
+    ...(
+      tenantConfig?.defaultRoles ??
+      []
+    ),
+  ];
 
   if (
     templateRoles.length ===

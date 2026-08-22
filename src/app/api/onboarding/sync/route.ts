@@ -404,17 +404,24 @@ export async function POST(
         ],
       });
 
-    if (tenant.industry) {
+    if (
+      organizationProducts.includes(
+        "crm",
+      )
+    ) {
       await provisionCRMTemplateRoles(
         tenant.id,
         tenant.name,
-        tenant.industry,
+        tenant.industry ??
+          "other",
       );
 
-      await provisionCRMProductCatalog(
-        tenant.id,
-        tenant.industry,
-      );
+      if (tenant.industry) {
+        await provisionCRMProductCatalog(
+          tenant.id,
+          tenant.industry,
+        );
+      }
     }
 
     const tenantRoles = await db
