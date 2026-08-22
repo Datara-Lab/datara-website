@@ -1,5 +1,4 @@
 import {
-  clerkClient,
   currentUser,
 } from "@clerk/nextjs/server";
 import { createHash } from "crypto";
@@ -210,19 +209,6 @@ export async function POST(
       );
     }
 
-    const clerk =
-      await clerkClient();
-
-    await clerk.organizations
-      .createOrganizationMembership({
-        organizationId:
-          invitation.clerkOrganizationId,
-
-        userId: user.id,
-
-        role: "org:member",
-      });
-
     const now = new Date();
 
     const [member] = await db
@@ -364,6 +350,9 @@ export async function POST(
 
       data: {
         memberId: member.id,
+
+        redirectTo:
+          "/seleccionar-empresa",
       },
     });
   } catch (error) {

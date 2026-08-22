@@ -377,7 +377,7 @@ export default function CRMAssistant({
             {isOpen ? (
                 <section
                     aria-label={`${assistantName}, asistente de Datara CRM`}
-                    className="fixed inset-x-4 bottom-24 z-50 flex max-h-[calc(100vh-8rem)] min-h-[32rem] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/20 sm:inset-x-auto sm:right-6 sm:w-[25rem]"
+                    className="fixed inset-x-2 bottom-20 top-2 z-[70] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/20 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:top-auto sm:max-h-[calc(100dvh-8rem)] sm:min-h-[32rem] sm:w-[25rem] sm:rounded-3xl"
                 >
                     <header className="flex items-center justify-between bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-4 text-white">
                         <div className="flex items-center gap-3">
@@ -625,7 +625,7 @@ export default function CRMAssistant({
                             !current,
                     )
                 }
-                className="fixed bottom-6 right-6 z-50 flex h-14 items-center gap-3 rounded-full bg-gradient-to-r from-blue-700 to-cyan-500 px-5 font-bold text-white shadow-xl shadow-blue-950/25 transition hover:-translate-y-0.5 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
+                className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-[80] flex h-14 items-center gap-3 rounded-full bg-gradient-to-r from-blue-700 to-cyan-500 px-4 font-bold text-white shadow-xl shadow-blue-950/25 transition hover:-translate-y-0.5 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6 sm:px-5"
             >
                 {isOpen ? (
                     <X

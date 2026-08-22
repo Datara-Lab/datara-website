@@ -142,7 +142,6 @@ function SignedInAuthProvider({
 
   const {
     isLoaded: isOrganizationListLoaded,
-    setActive,
     userMemberships,
   } = useOrganizationList({
     userMemberships: {
@@ -327,7 +326,7 @@ function SignedInAuthProvider({
 
         login: () => {
           void openSignIn({
-            forceRedirectUrl:
+            fallbackRedirectUrl:
               "/seleccionar-empresa",
           });
         },
@@ -372,7 +371,7 @@ function SignedOutAuthProvider({
 
         login: () => {
           void openSignIn({
-            forceRedirectUrl:
+            fallbackRedirectUrl:
               "/portal",
           });
         },
@@ -420,7 +419,7 @@ export function AuthProvider({
 
         login: () => {
           void openSignIn({
-            forceRedirectUrl:
+            fallbackRedirectUrl:
               "/portal",
           });
         },

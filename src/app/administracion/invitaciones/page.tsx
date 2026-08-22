@@ -1,12 +1,15 @@
 "use client";
 
+import { useAuth as useClerkAuth } from "@clerk/nextjs";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
 
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/contexts/AuthContext";
 
 type InvitationStatus =
   | "pending"
@@ -33,6 +36,7 @@ type Invitation = {
   email: string;
   status: InvitationStatus;
   message: string | null;
+  url: string | null;
   globalRole: {
     id: string;
     key: string;
@@ -121,6 +125,12 @@ function formatDate(
 }
 
 export default function InvitationsPage() {
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading,
+  } = useAuth();
+  const { getToken } = useClerkAuth();
+
   const [data, setData] =
     useState<
       InvitationsResponse["data"]
@@ -137,16 +147,42 @@ export default function InvitationsPage() {
       InvitationStatus | "all"
     >("all");
 
-  useEffect(() => {
-    async function loadInvitations() {
+  const [
+    selectedInvitation,
+    setSelectedInvitation,
+  ] = useState<Invitation | null>(null);
+
+  const [
+    actionInvitationId,
+    setActionInvitationId,
+  ] = useState<string | null>(null);
+
+  const [notice, setNotice] =
+    useState<string | null>(null);
+
+  const loadInvitations = useCallback(
+    async () => {
       setIsLoading(true);
       setError(null);
 
       try {
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error(
+            "No fue posible obtener la sesión de Clerk.",
+          );
+        }
+
+        const authorizationHeaders = {
+          Authorization: `Bearer ${token}`,
+        };
+
         const response = await fetch(
           "/api/administracion/invitaciones",
           {
             cache: "no-store",
+            headers: authorizationHeaders,
           },
         );
 
@@ -155,7 +191,8 @@ export default function InvitationsPage() {
 
         if (
           !response.ok ||
-          !result.success
+          !result.success ||
+          !result.data
         ) {
           throw new Error(
             result.error ??
@@ -163,7 +200,61 @@ export default function InvitationsPage() {
           );
         }
 
-        setData(result.data);
+        const invitations =
+          await Promise.all(
+            result.data.invitations.map(
+              async (invitation) => {
+                if (
+                  invitation.status !==
+                  "pending"
+                ) {
+                  return {
+                    ...invitation,
+                    url: null,
+                  };
+                }
+
+                try {
+                  const clerkResponse =
+                    await fetch(
+                      `/api/administracion/invitaciones/${invitation.id}/administrar`,
+                      {
+                        cache: "no-store",
+                        headers:
+                          authorizationHeaders,
+                      },
+                    );
+                  const clerkResult =
+                    (await clerkResponse.json()) as {
+                      success: boolean;
+                      data?: {
+                        url: string | null;
+                      };
+                    };
+
+                  return {
+                    ...invitation,
+                    url:
+                      clerkResponse.ok &&
+                      clerkResult.success
+                        ? clerkResult.data
+                            ?.url ?? null
+                        : null,
+                  };
+                } catch {
+                  return {
+                    ...invitation,
+                    url: null,
+                  };
+                }
+              },
+            ),
+          );
+
+        setData({
+          ...result.data,
+          invitations,
+        });
       } catch (loadError) {
         setError(
           loadError instanceof Error
@@ -173,10 +264,115 @@ export default function InvitationsPage() {
       } finally {
         setIsLoading(false);
       }
+    },
+    [getToken],
+  );
+
+  useEffect(() => {
+    if (
+      isAuthLoading ||
+      !isAuthenticated
+    ) {
+      return;
     }
 
-    void loadInvitations();
-  }, []);
+    const timeoutId = window.setTimeout(
+      () => void loadInvitations(),
+      0,
+    );
+
+    return () =>
+      window.clearTimeout(timeoutId);
+  }, [
+    isAuthLoading,
+    isAuthenticated,
+    loadInvitations,
+  ]);
+
+  async function copyInvitationLink(
+    invitation: Invitation,
+  ) {
+    if (!invitation.url) {
+      setNotice(
+        "Clerk no devolvió un enlace disponible para esta invitación.",
+      );
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        invitation.url,
+      );
+      setNotice(
+        `Enlace de ${invitation.email} copiado.`,
+      );
+    } catch {
+      setNotice(
+        "No fue posible copiar el enlace. Inténtalo de nuevo.",
+      );
+    }
+  }
+
+  async function revokeInvitation(
+    invitation: Invitation,
+  ) {
+    if (
+      !window.confirm(
+        `¿Revocar la invitación de ${invitation.email}? Esta acción invalidará su enlace.`,
+      )
+    ) {
+      return;
+    }
+
+    setActionInvitationId(invitation.id);
+    setNotice(null);
+
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error(
+          "No fue posible obtener la sesión de Clerk.",
+        );
+      }
+
+      const response = await fetch(
+        `/api/administracion/invitaciones/${invitation.id}/administrar`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const result =
+        (await response.json()) as {
+          success: boolean;
+          error?: string;
+        };
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ??
+            "No fue posible revocar la invitación.",
+        );
+      }
+
+      setSelectedInvitation(null);
+      setNotice(
+        `La invitación de ${invitation.email} fue revocada.`,
+      );
+      await loadInvitations();
+    } catch (revokeError) {
+      setNotice(
+        revokeError instanceof Error
+          ? revokeError.message
+          : "No fue posible revocar la invitación.",
+      );
+    } finally {
+      setActionInvitationId(null);
+    }
+  }
 
   const filteredInvitations =
     useMemo(() => {
@@ -224,6 +420,15 @@ export default function InvitationsPage() {
                 </Button>
             </div>
             </div>
+
+        {notice ? (
+          <div
+            role="status"
+            className="mt-8 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm font-semibold text-blue-800"
+          >
+            {notice}
+          </div>
+        ) : null}
 
         {isLoading ? (
           <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
@@ -454,7 +659,11 @@ export default function InvitationsPage() {
                             <Button
                               variant="secondary"
                               size="sm"
-                              disabled
+                              onClick={() =>
+                                setSelectedInvitation(
+                                  invitation,
+                                )
+                              }
                             >
                               Ver
                             </Button>
@@ -465,7 +674,19 @@ export default function InvitationsPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  disabled
+                                  onClick={() =>
+                                    void copyInvitationLink(
+                                      invitation,
+                                    )
+                                  }
+                                  disabled={
+                                    !invitation.url
+                                  }
+                                  title={
+                                    invitation.url
+                                      ? undefined
+                                      : "Clerk no devolvió un enlace disponible"
+                                  }
                                 >
                                   Copiar enlace
                                 </Button>
@@ -473,9 +694,20 @@ export default function InvitationsPage() {
                                 <Button
                                   variant="danger"
                                   size="sm"
-                                  disabled
+                                  onClick={() =>
+                                    void revokeInvitation(
+                                      invitation,
+                                    )
+                                  }
+                                  disabled={
+                                    actionInvitationId ===
+                                    invitation.id
+                                  }
                                 >
-                                  Revocar
+                                  {actionInvitationId ===
+                                  invitation.id
+                                    ? "Revocando..."
+                                    : "Revocar"}
                                 </Button>
                               </>
                             ) : null}
@@ -490,6 +722,195 @@ export default function InvitationsPage() {
           </>
         ) : null}
       </section>
+
+      {selectedInvitation ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="invitation-detail-title"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setSelectedInvitation(null);
+            }
+          }}
+        >
+          <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">
+                  Detalle de invitación
+                </p>
+                <h2
+                  id="invitation-detail-title"
+                  className="mt-2 text-2xl font-black text-slate-950"
+                >
+                  {selectedInvitation.name}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {selectedInvitation.email}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setSelectedInvitation(null)
+                }
+                aria-label="Cerrar detalle"
+              >
+                Cerrar
+              </Button>
+            </div>
+
+            <dl className="mt-7 grid gap-5 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Estado
+                </dt>
+                <dd className="mt-1 font-semibold text-slate-800">
+                  {statusLabels[
+                    selectedInvitation.status
+                  ]}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Rol global
+                </dt>
+                <dd className="mt-1 font-semibold text-slate-800">
+                  {selectedInvitation.globalRole
+                    ?.name ?? "Sin rol global"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Invitado por
+                </dt>
+                <dd className="mt-1 font-semibold text-slate-800">
+                  {
+                    selectedInvitation.invitedBy
+                      .name
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Creada
+                </dt>
+                <dd className="mt-1 font-semibold text-slate-800">
+                  {formatDate(
+                    selectedInvitation.createdAt,
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Expira
+                </dt>
+                <dd className="mt-1 font-semibold text-slate-800">
+                  {formatDate(
+                    selectedInvitation.expiresAt,
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Actualizada
+                </dt>
+                <dd className="mt-1 font-semibold text-slate-800">
+                  {formatDate(
+                    selectedInvitation.updatedAt,
+                  )}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="mt-7">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                Productos y roles
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedInvitation.products
+                  .length > 0 ? (
+                  selectedInvitation.products.map(
+                    (product) => (
+                      <span
+                        key={product.product}
+                        className={[
+                          "rounded-full border px-3 py-1 text-xs font-bold",
+                          productClasses[
+                            product.product
+                          ],
+                        ].join(" ")}
+                      >
+                        {product.productName} ·{" "}
+                        {product.roleName}
+                      </span>
+                    ),
+                  )
+                ) : (
+                  <span className="text-sm text-slate-500">
+                    Sin productos asignados
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {selectedInvitation.message ? (
+              <div className="mt-7 rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Mensaje
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {selectedInvitation.message}
+                </p>
+              </div>
+            ) : null}
+
+            {selectedInvitation.status ===
+            "pending" ? (
+              <div className="mt-8 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-5">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    void copyInvitationLink(
+                      selectedInvitation,
+                    )
+                  }
+                  disabled={
+                    !selectedInvitation.url
+                  }
+                >
+                  Copiar enlace
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() =>
+                    void revokeInvitation(
+                      selectedInvitation,
+                    )
+                  }
+                  disabled={
+                    actionInvitationId ===
+                    selectedInvitation.id
+                  }
+                >
+                  {actionInvitationId ===
+                  selectedInvitation.id
+                    ? "Revocando..."
+                    : "Revocar"}
+                </Button>
+              </div>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

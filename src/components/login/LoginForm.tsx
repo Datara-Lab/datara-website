@@ -69,10 +69,10 @@ export default function LoginForm({
           initialMode === "sign-up" ? (
           <SignUp
             routing="hash"
-            forceRedirectUrl={
+            fallbackRedirectUrl={
               redirectUrl
             }
-            signInForceRedirectUrl={
+            signInFallbackRedirectUrl={
               redirectUrl
             }
             appearance={{
@@ -88,10 +88,10 @@ export default function LoginForm({
           ) : (
             <SignIn
               routing="hash"
-              forceRedirectUrl={
+              fallbackRedirectUrl={
                 redirectUrl
               }
-              signUpForceRedirectUrl={
+              signUpFallbackRedirectUrl={
                 redirectUrl
               }
               appearance={{

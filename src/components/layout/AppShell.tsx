@@ -6,7 +6,10 @@ import {
   usePathname,
   useRouter,
 } from "next/navigation";
-import type { ReactNode } from "react";
+import {
+  type ReactNode,
+  useState,
+} from "react";
 
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -63,6 +66,17 @@ export default function AppShell({
   const { user } = useAuth();
 
   const styles = productStyles[product];
+  const [
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+  ] = useState(false);
+
+
+  function navigateTo(href: string) {
+    setIsMobileMenuOpen(false);
+    router.push(href);
+  }
+
 
   function isNavigationItemActive(
     href: string,
@@ -77,7 +91,7 @@ export default function AppShell({
   return (
     <main className="min-h-screen bg-slate-100">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="flex min-h-20 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex min-h-16 items-center justify-between gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
           <button
             type="button"
             onClick={() =>
@@ -91,7 +105,7 @@ export default function AppShell({
               width={48}
               height={48}
               priority
-              className="h-11 w-11 shrink-0 object-contain"
+              className="h-9 w-9 shrink-0 object-contain sm:h-11 sm:w-11"
             />
 
             <div className="min-w-0">
@@ -112,7 +126,7 @@ export default function AppShell({
             </div>
           )}
 
-          <div className="flex shrink-0 items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-slate-900">
                 {user?.firstName}{" "}
@@ -123,6 +137,26 @@ export default function AppShell({
                 {user?.role}
               </p>
             </div>
+
+            <button
+              type="button"
+              aria-label={
+                isMobileMenuOpen
+                  ? "Cerrar menú"
+                  : "Abrir menú"
+              }
+              aria-expanded={
+                isMobileMenuOpen
+              }
+              onClick={() =>
+                setIsMobileMenuOpen(
+                  (current) => !current,
+                )
+              }
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl font-semibold text-slate-700 transition hover:bg-slate-100 lg:hidden"
+            >
+              {isMobileMenuOpen ? "×" : "☰"}
+            </button>
 
             <UserButton
               showName={false}
@@ -136,7 +170,7 @@ export default function AppShell({
           </div>
         </div>
 
-        <nav className="border-t border-slate-200 px-4 py-3 lg:hidden">
+        <nav className="hidden">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {navigation.map((item) => {
               const isActive =
@@ -171,7 +205,63 @@ export default function AppShell({
         </nav>
       </header>
 
-      <div className="grid min-h-[calc(100vh-80px)] lg:grid-cols-[280px_1fr]">
+      {isMobileMenuOpen ? (
+        <div className="fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/35 sm:top-20 lg:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() =>
+              setIsMobileMenuOpen(false)
+            }
+            className="absolute inset-0"
+          />
+
+          <aside className="absolute inset-y-0 right-0 flex w-[min(22rem,88vw)] flex-col border-l border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                Navegación
+              </p>
+
+              <p className="mt-1 font-black text-slate-950">
+                {productName}
+              </p>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-2">
+                {navigation.map((item) => {
+                  const isActive =
+                    isNavigationItemActive(
+                      item.href,
+                    );
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() =>
+                        navigateTo(item.href)
+                      }
+                      className={[
+                        "flex min-h-12 w-full items-center rounded-xl px-4 py-3 text-left text-sm font-semibold transition",
+                        isActive
+                          ? product === "analytics"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "bg-emerald-600 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                      ].join(" ")}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+          </aside>
+        </div>
+      ) : null}
+
+      <div className="grid min-h-[calc(100dvh-64px)] sm:min-h-[calc(100dvh-80px)] lg:grid-cols-[280px_1fr]">
         <aside className="sticky top-20 hidden h-[calc(100vh-80px)] self-start border-r border-slate-200 bg-white lg:flex lg:flex-col">
           <nav className="flex-1 overflow-y-auto px-4 py-6">
             <div className="space-y-1.5">

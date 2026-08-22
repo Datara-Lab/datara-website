@@ -9,6 +9,7 @@ import {
 
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import PortalHeader from "@/components/layout/PortalHeader";
 
@@ -17,6 +18,7 @@ import {
 } from "@/db";
 
 import {
+  tenantMembers,
   tenants,
 } from "@/db/schema";
 
@@ -253,6 +255,7 @@ export default async function PortalPage() {
   const [
     tenantRows,
     clerkUser,
+    memberRows,
   ] = await Promise.all([
     db
       .select({
@@ -275,6 +278,23 @@ export default async function PortalPage() {
       .limit(1),
 
     currentUser(),
+
+    db
+      .select({
+        globalRoleId:
+          tenantMembers.roleId,
+      })
+      .from(
+        tenantMembers,
+      )
+      .where(
+        eq(
+          tenantMembers.id,
+          authorizationContext
+            .memberId,
+        ),
+      )
+      .limit(1),
   ]);
 
   const tenant =
@@ -356,6 +376,26 @@ export default async function PortalPage() {
       return false;
     },
   );
+
+  const hasGlobalRole =
+    Boolean(
+      memberRows[0]
+        ?.globalRoleId,
+    );
+
+  const [onlyProduct] =
+    activeProducts;
+
+  if (
+    !hasGlobalRole &&
+    activeProducts.length === 1 &&
+    onlyProduct
+  ) {
+    redirect(
+      onlyProduct.route,
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50">
       <PortalHeader />

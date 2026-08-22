@@ -2,7 +2,6 @@
 
 import {
   useAuth,
-  useOrganization,
   useSignIn,
   useSignUp,
 } from "@clerk/nextjs";
@@ -13,7 +12,9 @@ import {
 import {
   Suspense,
   type FormEvent,
+  useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -28,9 +29,6 @@ function AceptarInvitacionContent() {
   } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
-  const { organization } =
-    useOrganization();
-
   const ticket =
     searchParams.get(
       "__clerk_ticket",
@@ -43,6 +41,65 @@ function AceptarInvitacionContent() {
 
   const dataraToken =
     searchParams.get("token");
+
+  const dataraStatus =
+    searchParams.get(
+      "datara_status",
+    );
+
+  const finalizationStarted =
+    useRef(false);
+
+  const finalizeDataraInvitation =
+    useCallback(
+      async () => {
+        if (!dataraToken) {
+          throw new Error(
+            "La invitación no contiene el token de Datara.",
+          );
+        }
+
+        const response = await fetch(
+          "/api/invitaciones/accept",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              token: dataraToken,
+            }),
+          },
+        );
+
+        const result =
+          (await response.json()) as {
+            success?: boolean;
+            error?: string;
+
+            data?: {
+              redirectTo?: string;
+            };
+          };
+
+        if (
+          !response.ok ||
+          result.success !== true
+        ) {
+          throw new Error(
+            result.error ??
+              "No fue posible finalizar la invitación en Datara.",
+          );
+        }
+
+        return (
+          result.data?.redirectTo ??
+          "/seleccionar-empresa"
+        );
+      },
+      [dataraToken],
+    );
 
   const [password, setPassword] =
     useState("");
@@ -180,9 +237,12 @@ function AceptarInvitacionContent() {
 
       try {
         if (isSignedIn) {
-          await finalizeDataraInvitation();
+          const destination =
+            await finalizeDataraInvitation();
 
-          router.replace("/portal");
+          router.replace(
+            destination,
+          );
           return;
         }
 
@@ -228,24 +288,22 @@ function AceptarInvitacionContent() {
               );
             }
 
-            await finalizeDataraInvitation();
+            if (!dataraToken) {
+              throw new Error(
+                "La invitación no contiene el token de Datara.",
+              );
+            }
 
             const destination =
               decorateUrl(
-                "/portal",
+                `/aceptar-invitacion?token=${encodeURIComponent(
+                  dataraToken,
+                )}&datara_status=complete`,
               );
 
-            if (
-              destination.startsWith(
-                "http",
-              )
-            ) {
-              window.location.href =
-                destination;
-              return;
-            }
-
-            router.push(destination);
+            window.location.assign(
+              destination,
+            );
           },
         });
       } catch (acceptError) {
@@ -270,6 +328,8 @@ function AceptarInvitacionContent() {
     };
   }, [
     accountStatus,
+    dataraToken,
+    finalizeDataraInvitation,
     isAuthLoaded,
     isSignedIn,
     router,
@@ -277,43 +337,65 @@ function AceptarInvitacionContent() {
     ticket,
   ]);
 
-  async function finalizeDataraInvitation() {
-  if (!dataraToken) {
-    throw new Error(
-      "La invitación no contiene el token de Datara.",
-    );
-  }
+  useEffect(() => {
+    if (
+      !isAuthLoaded ||
+      !isSignedIn ||
+      !dataraToken ||
+      dataraStatus !==
+        "complete" ||
+      finalizationStarted.current
+    ) {
+      return;
+    }
 
-  const response = await fetch(
-    "/api/invitaciones/accept",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-      body: JSON.stringify({
-        token: dataraToken,
-      }),
-    },
-  );
+    finalizationStarted.current =
+      true;
 
-  const result =
-    (await response.json()) as {
-      success?: boolean;
-      error?: string;
+    let isCancelled = false;
+
+    async function completeInvitation() {
+      setIsProcessing(true);
+      setError(null);
+
+      try {
+        const destination =
+          await finalizeDataraInvitation();
+
+        if (!isCancelled) {
+          router.replace(
+            destination,
+          );
+        }
+      } catch (finalizeError) {
+        finalizationStarted.current =
+          false;
+
+        if (!isCancelled) {
+          setError(
+            finalizeError instanceof Error
+              ? finalizeError.message
+              : "No fue posible finalizar la invitación.",
+          );
+
+          setIsProcessing(false);
+        }
+      }
+    }
+
+    void completeInvitation();
+
+    return () => {
+      isCancelled = true;
     };
-
-  if (
-    !response.ok ||
-    result.success !== true
-  ) {
-    throw new Error(
-      result.error ??
-        "No fue posible finalizar la invitación en Datara.",
-    );
-  }
-}
+  }, [
+    dataraStatus,
+    dataraToken,
+    finalizeDataraInvitation,
+    isAuthLoaded,
+    isSignedIn,
+    router,
+  ]);
 
   async function handleSignUp(
     event: FormEvent<HTMLFormElement>,
@@ -397,38 +479,23 @@ function AceptarInvitacionContent() {
             return;
           }
 
+          if (!dataraToken) {
+            setError(
+              "La invitación no contiene el token de Datara.",
+            );
+            return;
+          }
+
           const destination =
             decorateUrl(
-              "/portal",
+              `/aceptar-invitacion?token=${encodeURIComponent(
+                dataraToken,
+              )}&datara_status=complete`,
             );
 
-          void (async () => {
-            try {
-              await finalizeDataraInvitation();
-
-              if (
-                destination.startsWith(
-                  "http",
-                )
-              ) {
-                window.location.href =
-                  destination;
-                return;
-              }
-
-              router.replace(
-                destination,
-              );
-            } catch (finalizeError) {
-              setError(
-                finalizeError instanceof Error
-                  ? finalizeError.message
-                  : "No fue posible finalizar la invitación.",
-              );
-
-              setIsProcessing(false);
-            }
-          })();
+          window.location.assign(
+            destination,
+          );
         },
       });
     } catch (signUpError) {
