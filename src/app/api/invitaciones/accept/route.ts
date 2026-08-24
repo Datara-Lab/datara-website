@@ -278,6 +278,26 @@ export async function POST(
       );
     }
 
+    /*
+     * La invitación define el acceso completo del usuario.
+     * Eliminamos asignaciones anteriores antes de aplicar
+     * los roles seleccionados en esta invitación.
+     */
+    await db
+      .delete(memberProductRoles)
+      .where(
+        and(
+          eq(
+            memberProductRoles.tenantId,
+            invitation.tenantId,
+          ),
+          eq(
+            memberProductRoles.memberId,
+            member.id,
+          ),
+        ),
+      );
+
     for (
       const assignment of
       invitation.productAssignments
