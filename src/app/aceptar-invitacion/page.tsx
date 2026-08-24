@@ -499,10 +499,33 @@ function AceptarInvitacionContent() {
         },
       });
     } catch (signUpError) {
-      setError(
+      const signUpErrorMessage =
         signUpError instanceof Error
           ? signUpError.message
-          : "No fue posible crear la cuenta.",
+          : "No fue posible crear la cuenta.";
+
+      const sessionIsAlreadyActive =
+        signUpErrorMessage
+          .toLowerCase()
+          .includes(
+            "already signed in",
+          );
+
+      if (
+        sessionIsAlreadyActive &&
+        dataraToken
+      ) {
+        window.location.assign(
+          `/aceptar-invitacion?token=${encodeURIComponent(
+            dataraToken,
+          )}&datara_status=complete`,
+        );
+
+        return;
+      }
+
+      setError(
+        signUpErrorMessage,
       );
     } finally {
       setIsProcessing(false);
