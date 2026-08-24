@@ -303,6 +303,7 @@ function AceptarInvitacionContent() {
         setAccessStage(
           "permissions",
         );
+        setIsRedirecting(true);
 
         await signIn.finalize({
           navigate: async ({
@@ -330,10 +331,7 @@ function AceptarInvitacionContent() {
                 )}&datara_status=complete`,
               );
 
-            setAccessStage(
-              "workspace",
-            );
-
+            /* Conservamos permisos durante la navegación de Clerk. */
             window.location.assign(
               destination,
             );
@@ -341,6 +339,8 @@ function AceptarInvitacionContent() {
         });
       } catch (acceptError) {
         if (!isCancelled) {
+          setIsRedirecting(false);
+
           setError(
             acceptError instanceof Error
               ? acceptError.message
@@ -539,10 +539,7 @@ function AceptarInvitacionContent() {
               )}&datara_status=complete`,
             );
 
-          setAccessStage(
-            "workspace",
-          );
-
+          /* Conservamos permisos durante la navegación de Clerk. */
           window.location.assign(
             destination,
           );

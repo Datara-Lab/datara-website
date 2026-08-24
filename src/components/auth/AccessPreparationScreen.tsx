@@ -115,7 +115,7 @@ export default function AccessPreparationScreen({
           />
 
           <div
-            className="absolute inset-x-0 bottom-0 overflow-hidden transition-[height] duration-700 ease-out motion-reduce:transition-none"
+            className="absolute inset-x-0 bottom-0 overflow-hidden transition-[height] duration-1000 ease-in-out motion-reduce:transition-none"
             style={{
               height: `${progress}%`,
             }}
@@ -148,7 +148,7 @@ export default function AccessPreparationScreen({
                 <li
                   key={item.id}
                   className={[
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors",
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors duration-500 motion-reduce:transition-none",
                     isCurrent
                       ? "bg-blue-50 text-blue-800"
                       : "",

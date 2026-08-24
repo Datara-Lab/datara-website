@@ -9,6 +9,7 @@ import {
     useState,
 } from "react";
 
+import AccessPreparationScreen from "@/components/auth/AccessPreparationScreen";
 import AppShell from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import CRMHeaderActions from "@/components/crm/CRMHeaderActions";
@@ -327,19 +328,9 @@ export default function CRMClientLayout({
      */
     if (isLoading) {
         return (
-            <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
-                <div className="text-center">
-                    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
-
-                    <p className="mt-5 font-semibold text-slate-700">
-                        Cargando Datara CRM...
-                    </p>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                        Estamos preparando tu espacio de trabajo.
-                    </p>
-                </div>
-            </main>
+            <AccessPreparationScreen
+                stage="workspace"
+            />
         );
     }
 
