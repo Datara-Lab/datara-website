@@ -979,6 +979,7 @@ export async function GET(
   try {
     const {
       tenantId,
+      permissions,
     } = await getTenantContext(
       "view",
     );
@@ -1207,6 +1208,7 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data,
+      permissions,
       meta: {
         count: data.length,
       },

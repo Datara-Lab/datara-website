@@ -320,6 +320,8 @@ export async function POST(
             assignment.roleId,
 
           enabled: true,
+
+          allBranches: true,
         })
         .onConflictDoUpdate({
           target: [
@@ -331,6 +333,8 @@ export async function POST(
               assignment.roleId,
 
             enabled: true,
+
+            allBranches: true,
             updatedAt: now,
           },
         });

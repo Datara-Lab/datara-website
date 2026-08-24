@@ -300,9 +300,14 @@ export async function getCRMBranchAccess(
       ]),
     );
 
+  /*
+   * Un producto habilitado sin regiones ni sucursales
+   * explícitas representa acceso a todas las sucursales.
+   */
   return {
     memberId: member.id,
-    allBranches: false,
+    allBranches:
+      branchIds.length === 0,
     branchIds,
     primaryBranchId:
       primaryBranchId ??

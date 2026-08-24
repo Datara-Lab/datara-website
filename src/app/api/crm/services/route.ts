@@ -599,7 +599,11 @@ export async function GET() {
                   ),
                 ),
 
-            permissions.canManage
+            /*
+             * View permite consultar todas las órdenes
+             * dentro del alcance de sucursales.
+             */
+            permissions.canView
               ? undefined
               : eq(
                   crmServiceOrders
