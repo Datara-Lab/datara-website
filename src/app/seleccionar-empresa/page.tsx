@@ -8,6 +8,8 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+import AccessPreparationScreen from "@/components/auth/AccessPreparationScreen";
+
 import {
     useEffect,
     useRef,
@@ -335,15 +337,10 @@ export default function SeleccionarEmpresaPage() {
         )
     ) {
         return (
-            <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-                <div className="text-center">
-                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-                    <p className="mt-5 text-sm font-semibold text-slate-500">
-                        Preparando tu Workspace...
-                    </p>
-                </div>
-            </main>
+            <AccessPreparationScreen
+                stage="workspace"
+                error={error}
+            />
         );
     }
 
@@ -353,11 +350,10 @@ export default function SeleccionarEmpresaPage() {
         isLoadingOrganizations
     ) {
         return (
-            <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-                <p className="text-sm font-semibold text-slate-500">
-                    Preparando tus empresas...
-                </p>
-            </main>
+            <AccessPreparationScreen
+                stage="account"
+                error={error}
+            />
         );
     }
 
@@ -367,11 +363,9 @@ export default function SeleccionarEmpresaPage() {
         );
 
         return (
-            <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-                <p className="text-sm font-semibold text-slate-500">
-                    Abriendo inicio de sesión...
-                </p>
-            </main>
+            <AccessPreparationScreen
+                stage="account"
+            />
         );
     }
 

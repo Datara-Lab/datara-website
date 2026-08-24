@@ -9,6 +9,10 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
+import AccessPreparationScreen, {
+  type AccessPreparationStage,
+} from "@/components/auth/AccessPreparationScreen";
+
 import {
   Suspense,
   type FormEvent,
@@ -54,6 +58,13 @@ function AceptarInvitacionContent() {
     isRedirecting,
     setIsRedirecting,
   ] = useState(false);
+
+  const [
+    accessStage,
+    setAccessStage,
+  ] = useState<AccessPreparationStage>(
+    "invitation",
+  );
 
   const finalizeDataraInvitation =
     useCallback(
@@ -237,13 +248,22 @@ function AceptarInvitacionContent() {
     let isCancelled = false;
 
     async function acceptExistingUser() {
+      setAccessStage("account");
       setIsProcessing(true);
       setError(null);
 
       try {
         if (isSignedIn) {
+          setAccessStage(
+            "permissions",
+          );
+
           const destination =
             await finalizeDataraInvitation();
+
+          setAccessStage(
+            "workspace",
+          );
 
           router.replace(
             destination,
@@ -280,6 +300,10 @@ function AceptarInvitacionContent() {
           );
         }
 
+        setAccessStage(
+          "permissions",
+        );
+
         await signIn.finalize({
           navigate: async ({
             session,
@@ -305,6 +329,10 @@ function AceptarInvitacionContent() {
                   dataraToken,
                 )}&datara_status=complete`,
               );
+
+            setAccessStage(
+              "workspace",
+            );
 
             window.location.assign(
               destination,
@@ -360,6 +388,9 @@ function AceptarInvitacionContent() {
     let isCancelled = false;
 
     async function completeInvitation() {
+      setAccessStage(
+        "permissions",
+      );
       setIsProcessing(true);
       setError(null);
 
@@ -368,6 +399,10 @@ function AceptarInvitacionContent() {
           await finalizeDataraInvitation();
 
         if (!isCancelled) {
+          setAccessStage(
+            "workspace",
+          );
+
           router.replace(
             destination,
           );
@@ -430,6 +465,7 @@ function AceptarInvitacionContent() {
 
     const invitationTicket = ticket;
 
+    setAccessStage("account");
     setIsProcessing(true);
     setError(null);
 
@@ -470,6 +506,9 @@ function AceptarInvitacionContent() {
         );
       }
 
+      setAccessStage(
+        "permissions",
+      );
       setIsRedirecting(true);
 
       await signUp.finalize({
@@ -499,6 +538,10 @@ function AceptarInvitacionContent() {
                 dataraToken,
               )}&datara_status=complete`,
             );
+
+          setAccessStage(
+            "workspace",
+          );
 
           window.location.assign(
             destination,
@@ -546,19 +589,10 @@ function AceptarInvitacionContent() {
     isRedirecting
   ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-          <h1 className="mt-6 text-2xl font-black text-slate-950">
-            Preparando tu acceso
-          </h1>
-
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Estamos activando tu cuenta, configurando tus permisos y abriendo tu espacio de trabajo.
-          </p>
-        </div>
-      </main>
+      <AccessPreparationScreen
+        stage={accessStage}
+        error={error}
+      />
     );
   }
 
@@ -568,25 +602,10 @@ function AceptarInvitacionContent() {
     dataraToken
   ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-          <h1 className="mt-6 text-2xl font-black text-slate-950">
-            Finalizando invitación
-          </h1>
-
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Estamos configurando tu acceso y los permisos de tu cuenta.
-          </p>
-
-          {error ? (
-            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
-              {error}
-            </div>
-          ) : null}
-        </div>
-      </main>
+      <AccessPreparationScreen
+        stage="permissions"
+        error={error}
+      />
     );
   }
 
@@ -610,25 +629,10 @@ function AceptarInvitacionContent() {
     accountStatus === "sign_in"
   ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-          <h1 className="mt-6 text-2xl font-black text-slate-950">
-            Aceptando invitación
-          </h1>
-
-          <p className="mt-3 text-sm text-slate-600">
-            Estamos preparando tu acceso a Datara Workspace.
-          </p>
-
-          {error ? (
-            <p className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700">
-              {error}
-            </p>
-          ) : null}
-        </div>
-      </main>
+      <AccessPreparationScreen
+        stage={accessStage}
+        error={error}
+      />
     );
   }
 
@@ -750,15 +754,10 @@ function AceptarInvitacionContent() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-      <div className="text-center">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-        <p className="mt-5 text-sm font-semibold text-slate-600">
-          Finalizando invitación...
-        </p>
-      </div>
-    </main>
+    <AccessPreparationScreen
+      stage={accessStage}
+      error={error}
+    />
   );
 }
 
@@ -766,15 +765,9 @@ export default function AceptarInvitacionPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-
-            <p className="mt-5 text-sm font-semibold text-slate-600">
-              Cargando invitación...
-            </p>
-          </div>
-        </main>
+        <AccessPreparationScreen
+          stage="invitation"
+        />
       }
     >
       <AceptarInvitacionContent />
