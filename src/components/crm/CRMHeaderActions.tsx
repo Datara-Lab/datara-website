@@ -46,6 +46,16 @@ type NotificationsResponse = {
     error?: string;
 };
 
+type CRMSettingsAccessResponse = {
+    success: boolean;
+
+    data?: {
+        canManage?: boolean;
+    };
+
+    error?: string;
+};
+
 function formatDate(
     value: string,
 ) {
@@ -125,6 +135,11 @@ export default function CRMHeaderActions() {
         string | null
     >(null);
 
+    const [
+        canManageSettings,
+        setCanManageSettings,
+    ] = useState(false);
+
     const loadNotifications =
         useCallback(
             async () => {
@@ -183,7 +198,13 @@ export default function CRMHeaderActions() {
         );
 
     useEffect(() => {
-        void loadNotifications();
+        const initialLoadId =
+            window.setTimeout(
+                () => {
+                    void loadNotifications();
+                },
+                0,
+            );
 
         const intervalId =
             window.setInterval(
@@ -194,6 +215,10 @@ export default function CRMHeaderActions() {
             );
 
         return () => {
+            window.clearTimeout(
+                initialLoadId,
+            );
+
             window.clearInterval(
                 intervalId,
             );
@@ -201,6 +226,52 @@ export default function CRMHeaderActions() {
     }, [
         loadNotifications,
     ]);
+
+    useEffect(() => {
+        let isCancelled =
+            false;
+
+        async function loadSettingsAccess() {
+            try {
+                const response =
+                    await fetch(
+                        "/api/crm/settings/navigation",
+                        {
+                            cache:
+                                "no-store",
+                        },
+                    );
+
+                const result =
+                    (await response.json()) as
+                    CRMSettingsAccessResponse;
+
+                if (!isCancelled) {
+                    setCanManageSettings(
+                        Boolean(
+                            response.ok &&
+                            result.success &&
+                            result.data
+                                ?.canManage,
+                        ),
+                    );
+                }
+            } catch {
+                if (!isCancelled) {
+                    setCanManageSettings(
+                        false,
+                    );
+                }
+            }
+        }
+
+        void loadSettingsAccess();
+
+        return () => {
+            isCancelled =
+                true;
+        };
+    }, []);
 
     async function markAsRead(
         notificationId?:
@@ -422,6 +493,7 @@ export default function CRMHeaderActions() {
                 </div>
             </details>
 
+            {canManageSettings ? (
             <button
                 type="button"
                 onClick={() =>
@@ -454,6 +526,7 @@ export default function CRMHeaderActions() {
                     />
                 </svg>
             </button>
+            ) : null}
         </div>
     );
 }
