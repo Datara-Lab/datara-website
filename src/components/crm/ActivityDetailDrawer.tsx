@@ -15,7 +15,7 @@ type ActivityDetailDrawerProps = {
     | undefined;
 
     onClose: () => void;
-    onEdit: () => void;
+    onEdit?: () => void;
 };
 
 function formatDateTime(
@@ -453,11 +453,13 @@ export default function ActivityDetailDrawer({
                             Cerrar
                         </button>
 
-                        <Button
-                            onClick={onEdit}
-                        >
-                            Editar
-                        </Button>
+                        {onEdit ? (
+                            <Button
+                                onClick={onEdit}
+                            >
+                                Editar
+                            </Button>
+                        ) : null}
                     </div>
                 </footer>
             </aside>

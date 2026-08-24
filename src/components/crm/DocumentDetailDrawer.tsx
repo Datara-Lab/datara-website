@@ -19,6 +19,8 @@ import {
 type DocumentDetailDrawerProps = {
   isOpen: boolean;
 
+  canEdit: boolean;
+
   initialMode?:
     | "view"
     | "edit";
@@ -150,6 +152,7 @@ function getFileIcon(
 
 export default function DocumentDetailDrawer({
   isOpen,
+  canEdit,
   initialMode = "view",
   document,
   relationOptions,
@@ -201,33 +204,44 @@ export default function DocumentDetailDrawer({
       return;
     }
 
-    setIsEditing(
-      initialMode === "edit",
-    );
+    const timeoutId =
+      window.setTimeout(() => {
+        setIsEditing(
+          canEdit &&
+            initialMode === "edit",
+        );
 
-    setName(
-      document.name,
-    );
+        setName(
+          document.name,
+        );
 
-    setCategory(
-      document.category,
-    );
+        setCategory(
+          document.category,
+        );
 
-    setDescription(
-      document.description ?? "",
-    );
+        setDescription(
+          document.description ?? "",
+        );
 
-    const relation =
-      document.relations[0];
+        const relation =
+          document.relations[0];
 
-    setRelatedValue(
-      relation
-        ? `${relation.entityType}:${relation.entityId}`
-        : "",
-    );
+        setRelatedValue(
+          relation
+            ? `${relation.entityType}:${relation.entityId}`
+            : "",
+        );
 
-    setFormError(null);
+        setFormError(null);
+      }, 0);
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
   }, [
+    canEdit,
     document,
     initialMode,
     isOpen,
@@ -423,7 +437,8 @@ export default function DocumentDetailDrawer({
           </div>
         </header>
 
-        {isEditing ? (
+        {isEditing &&
+        canEdit ? (
           <form
             className="flex min-h-0 flex-1 flex-col"
             onSubmit={handleSave}
@@ -716,25 +731,29 @@ export default function DocumentDetailDrawer({
 
             <footer className="border-t border-slate-200 bg-white px-6 py-4">
               <div className="flex flex-wrap justify-between gap-3">
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  className={[
-                    "rounded-xl border px-5 py-3 font-semibold",
-                    document.status ===
+                {canEdit ? (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    className={[
+                      "rounded-xl border px-5 py-3 font-semibold",
+                      document.status ===
+                      "archived"
+                        ? "border-emerald-300 text-emerald-700"
+                        : "border-amber-300 text-amber-700",
+                    ].join(" ")}
+                    onClick={
+                      toggleArchive
+                    }
+                  >
+                    {document.status ===
                     "archived"
-                      ? "border-emerald-300 text-emerald-700"
-                      : "border-amber-300 text-amber-700",
-                  ].join(" ")}
-                  onClick={
-                    toggleArchive
-                  }
-                >
-                  {document.status ===
-                  "archived"
-                    ? "Restaurar"
-                    : "Archivar"}
-                </button>
+                      ? "Restaurar"
+                      : "Archivar"}
+                  </button>
+                ) : (
+                  <span />
+                )}
 
                 <div className="flex gap-3">
                   <button
@@ -746,16 +765,18 @@ export default function DocumentDetailDrawer({
                     Cerrar
                   </button>
 
-                                    <Button
-                    disabled={
-                      isSubmitting
-                    }
-                    onClick={() =>
-                      setIsEditing(true)
-                    }
-                  >
-                    Editar
-                  </Button>
+                  {canEdit ? (
+                    <Button
+                      disabled={
+                        isSubmitting
+                      }
+                      onClick={() =>
+                        setIsEditing(true)
+                      }
+                    >
+                      Editar
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </footer>

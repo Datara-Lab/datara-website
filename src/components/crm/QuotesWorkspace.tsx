@@ -157,6 +157,22 @@ type BranchesResponse = {
   error?: string;
 };
 
+type CRMAccessPermissions = {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canManage: boolean;
+};
+
+const noWritePermissions: CRMAccessPermissions = {
+  canView: false,
+  canCreate: false,
+  canEdit: false,
+  canDelete: false,
+  canManage: false,
+};
+
 type ApiResponse<T> = {
   success: boolean;
   data?: T;
@@ -385,6 +401,13 @@ export default function QuotesWorkspace() {
   >(null);
 
   const [
+    permissions,
+    setPermissions,
+  ] = useState<CRMAccessPermissions>(
+    noWritePermissions,
+  );
+
+  const [
     sendingQuoteId,
     setSendingQuoteId,
   ] = useState<
@@ -545,6 +568,15 @@ export default function QuotesWorkspace() {
           setQuotes(
             quotesResult.data ??
               [],
+          );
+
+          setPermissions(
+            (
+              quotesResult as typeof quotesResult & {
+                permissions?: CRMAccessPermissions;
+              }
+            ).permissions ??
+              noWritePermissions,
           );
 
           setProducts(
@@ -921,22 +953,43 @@ export default function QuotesWorkspace() {
                 }
               />
 
-              <Button
-                onClick={() =>
-                  setDrawer({
-                    isOpen:
-                      true,
+              {permissions.canCreate ? (
 
-                    mode:
-                      "create",
 
-                    record:
-                      null,
-                  })
-                }
-              >
-                Nueva cotización
-              </Button>
+                <Button
+
+
+                  onClick={() =>
+
+
+                    setDrawer({
+
+
+                      isOpen: true,
+
+
+                      mode: "create",
+
+
+                      record: null,
+
+
+                    })
+
+
+                  }
+
+
+                >
+
+
+                  Nueva cotización
+
+
+                </Button>
+
+
+              ) : null}
             </div>
           </div>
         </div>
@@ -1077,24 +1130,21 @@ export default function QuotesWorkspace() {
                           Ver
                         </Button>
 
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() =>
-                            setDrawer({
-                              isOpen:
-                                true,
-
-                              mode:
-                                "edit",
-
-                              record:
-                                quote,
-                            })
-                          }
-                        >
-                          Editar
-                        </Button>
+                        {permissions.canEdit ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              setDrawer({
+                                isOpen: true,
+                                mode: "edit",
+                                record: quote,
+                              })
+                            }
+                          >
+                            Editar
+                          </Button>
+                        ) : null}
 
                         <Button
                           href={`/api/crm/quotes/${quote.id}/pdf`}
@@ -1104,13 +1154,14 @@ export default function QuotesWorkspace() {
                           Descargar PDF
                         </Button>
 
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={
-                            sendingQuoteId ===
-                            quote.id
-                          }
+                        {permissions.canEdit ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={
+                              sendingQuoteId ===
+                              quote.id
+                            }
                           onClick={() =>
                             void sendQuote(
                               quote,
@@ -1121,7 +1172,8 @@ export default function QuotesWorkspace() {
                           quote.id
                             ? "Enviando..."
                             : "Enviar"}
-                        </Button>
+                          </Button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -1618,29 +1670,52 @@ export default function QuotesWorkspace() {
                     : "Enviar por correo"}
                 </Button>
 
-                <Button
-                  onClick={() => {
-                    const quote =
-                      selectedQuote;
+                {permissions.canEdit ? (
 
-                    setSelectedQuote(
-                      null,
-                    );
 
-                    setDrawer({
-                      isOpen:
-                        true,
+                  <Button
 
-                      mode:
-                        "edit",
 
-                      record:
-                        quote,
-                    });
-                  }}
-                >
-                  Editar
-                </Button>
+                    onClick={() => {
+
+
+                      const quote =
+
+
+                        selectedQuote;
+
+
+                      setSelectedQuote(null);
+
+
+                      setDrawer({
+
+
+                        isOpen: true,
+
+
+                        mode: "edit",
+
+
+                        record: quote,
+
+
+                      });
+
+
+                    }}
+
+
+                  >
+
+
+                    Editar
+
+
+                  </Button>
+
+
+                ) : null}
               </div>
             </footer>
           </aside>

@@ -22,10 +22,27 @@ import type {
   CRMRelatedOption,
 } from "@/types/crm-activities";
 
+type CRMAccessPermissions = {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canManage: boolean;
+};
+
+const noWritePermissions: CRMAccessPermissions = {
+  canView: false,
+  canCreate: false,
+  canEdit: false,
+  canDelete: false,
+  canManage: false,
+};
+
 type ApiResponse<T> = {
   success: boolean;
   data?: T;
   error?: string;
+  permissions?: CRMAccessPermissions;
 };
 
 type DrawerState = {
@@ -273,6 +290,13 @@ export default function ActivitiesWorkspace() {
   >(null);
 
   const [
+    permissions,
+    setPermissions,
+  ] = useState<CRMAccessPermissions>(
+    noWritePermissions,
+  );
+
+  const [
     isCreateMenuOpen,
     setIsCreateMenuOpen,
   ] = useState(false);
@@ -392,6 +416,11 @@ export default function ActivitiesWorkspace() {
           activitiesResult.data ?? [],
         );
 
+        setPermissions(
+          activitiesResult.permissions ??
+            noWritePermissions,
+        );
+
         setMembers(
           membersResult.data ?? [],
         );
@@ -465,7 +494,16 @@ export default function ActivitiesWorkspace() {
     }, []);
 
   useEffect(() => {
-    void loadData();
+    const timeoutId =
+      window.setTimeout(() => {
+        void loadData();
+      }, 0);
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
   }, [loadData]);
 
     const visibleActivities =
@@ -751,6 +789,11 @@ export default function ActivitiesWorkspace() {
                   Actualizar
                 </button>
 
+                {permissions.canCreate ? (
+
+
+                  <div className="relative">
+
                 <div className="relative">
                   <Button
                     className="w-full"
@@ -813,6 +856,12 @@ export default function ActivitiesWorkspace() {
                     </div>
                   )}
                 </div>
+
+
+                  </div>
+
+
+                ) : null}
               </div>
             </div>
 
@@ -1001,41 +1050,20 @@ export default function ActivitiesWorkspace() {
                             Ver
                           </Button>
 
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() =>
-                              openEdit(
-                                activity,
-                              )
-                            }
-                          >
-                            Editar
-                          </Button>
+                          {permissions.canEdit ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() =>
+                                openEdit(
+                                  activity,
+                                )
+                              }
+                            >
+                              Editar
+                            </Button>
+                          ) : null}
 
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() =>
-                              openView(
-                                activity,
-                              )
-                            }
-                          >
-                            Ver
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() =>
-                              openEdit(
-                                activity,
-                              )
-                            }
-                          >
-                            Editar
-                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1200,17 +1228,19 @@ export default function ActivitiesWorkspace() {
                                   Ver
                                 </button>
 
-                                <button
-                                  type="button"
-                                  className="font-semibold text-emerald-700"
-                                  onClick={() =>
-                                    openEdit(
-                                      activity,
-                                    )
-                                  }
-                                >
-                                  Editar
-                                </button>
+                                {permissions.canEdit ? (
+                                  <button
+                                    type="button"
+                                    className="font-semibold text-emerald-700"
+                                    onClick={() =>
+                                      openEdit(
+                                        activity,
+                                      )
+                                    }
+                                  >
+                                    Editar
+                                  </button>
+                                ) : null}
                               </div>
                             </div>
                           </article>
@@ -1485,13 +1515,16 @@ export default function ActivitiesWorkspace() {
               }),
             )
           }
-          onEdit={() =>
-            setDrawer(
-              (current) => ({
-                ...current,
-                mode: "edit",
-              }),
-            )
+          onEdit={
+            permissions.canEdit
+              ? () =>
+                  setDrawer(
+                    (current) => ({
+                      ...current,
+                      mode: "edit",
+                    }),
+                  )
+              : undefined
           }
         />
       ) : (

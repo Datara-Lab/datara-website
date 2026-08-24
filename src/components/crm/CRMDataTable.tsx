@@ -26,10 +26,27 @@ export type CRMRecord = {
   [key: string]: unknown;
 };
 
+type CRMAccessPermissions = {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canManage: boolean;
+};
+
+const noWritePermissions: CRMAccessPermissions = {
+  canView: false,
+  canCreate: false,
+  canEdit: false,
+  canDelete: false,
+  canManage: false,
+};
+
 type CRMApiResponse = {
   success: boolean;
   data?: CRMRecord[];
   error?: string;
+  permissions?: CRMAccessPermissions;
   meta?: {
     count?: number;
     page?: number;
@@ -591,6 +608,13 @@ export default function CRMDataTable({
     string | null
   >(null);
 
+  const [
+    permissions,
+    setPermissions,
+  ] = useState<CRMAccessPermissions>(
+    noWritePermissions,
+  );
+
   const [searchTerm, setSearchTerm] =
     useState("");
 
@@ -929,6 +953,11 @@ export default function CRMDataTable({
       if (!signal?.aborted) {
         setRecords(
           payload.data ?? [],
+        );
+
+        setPermissions(
+          payload.permissions ??
+            noWritePermissions,
         );
       }
     } catch (loadError) {
@@ -1442,7 +1471,11 @@ export default function CRMDataTable({
   }
 
   const hasActions = Boolean(
-    onView || onEdit,
+    onView ||
+      (
+        permissions.canEdit &&
+        onEdit
+      ),
   );
 
   const totalColumns =
@@ -1766,7 +1799,8 @@ export default function CRMDataTable({
               Actualizar
             </Button>
 
-            {module.allowCreate !== false &&
+            {permissions.canCreate &&
+              module.allowCreate !== false &&
               onCreate && (
                 <Button onClick={onCreate}>
                   {createLabel ??
@@ -1890,7 +1924,8 @@ export default function CRMDataTable({
                             </Button>
                           )}
 
-                          {onEdit &&
+                          {permissions.canEdit &&
+                            onEdit &&
                             module.allowEdit !==
                               false && (
                               <Button
@@ -1937,6 +1972,7 @@ export default function CRMDataTable({
                   </p>
 
                   {!searchTerm &&
+                    permissions.canCreate &&
                     module.allowCreate !==
                       false &&
                     onCreate && (

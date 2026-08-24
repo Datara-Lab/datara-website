@@ -18,6 +18,22 @@ import {
   type CRMDocumentRelationOption,
 } from "@/types/crm-documents";
 
+type CRMAccessPermissions = {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canManage: boolean;
+};
+
+const noWritePermissions: CRMAccessPermissions = {
+  canView: false,
+  canCreate: false,
+  canEdit: false,
+  canDelete: false,
+  canManage: false,
+};
+
 type ApiResponse<T> = {
   success: boolean;
   data?: T;
@@ -236,6 +252,13 @@ export default function DocumentsWorkspace() {
     string | null
   >(null);
 
+  const [
+    permissions,
+    setPermissions,
+  ] = useState<CRMAccessPermissions>(
+    noWritePermissions,
+  );
+
   const loadData =
     useCallback(async () => {
       setIsLoading(true);
@@ -325,6 +348,15 @@ export default function DocumentsWorkspace() {
 
         const nextDocuments =
           documentsResult.data ?? [];
+
+        setPermissions(
+          (
+            documentsResult as typeof documentsResult & {
+              permissions?: CRMAccessPermissions;
+            }
+          ).permissions ??
+            noWritePermissions,
+        );
 
         setDocuments(
           nextDocuments,
@@ -437,7 +469,16 @@ export default function DocumentsWorkspace() {
     }, []);
 
   useEffect(() => {
-    void loadData();
+    const timeoutId =
+      window.setTimeout(() => {
+        void loadData();
+      }, 0);
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
   }, [loadData]);
 
   const visibleDocuments =
@@ -621,15 +662,17 @@ export default function DocumentsWorkspace() {
                 Actualizar
               </button>
 
-              <Button
-                onClick={() =>
-                  setIsUploadOpen(
-                    true,
-                  )
-                }
-              >
-                Cargar documento
-              </Button>
+              {permissions.canCreate ? (
+                <Button
+                  onClick={() =>
+                    setIsUploadOpen(
+                      true,
+                    )
+                  }
+                >
+                  Cargar documento
+                </Button>
+              ) : null}
             </div>
           </div>
 
@@ -848,18 +891,20 @@ export default function DocumentsWorkspace() {
                             Ver
                           </Button>
 
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() =>
-                              openDocument(
-                                document,
-                                "edit",
-                              )
-                            }
-                          >
-                            Editar
-                          </Button>
+                          {permissions.canEdit ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() =>
+                                openDocument(
+                                  document,
+                                  "edit",
+                                )
+                              }
+                            >
+                              Editar
+                            </Button>
+                          ) : null}
 
                           <Button
                             href={`/api/crm/documents/${document.id}/content?download=1`}
@@ -955,18 +1000,20 @@ export default function DocumentsWorkspace() {
                       Ver
                     </button>
 
-                    <button
-                      type="button"
-                      className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
-                      onClick={() =>
-                        openDocument(
-                          document,
-                          "edit",
-                        )
-                      }
-                    >
-                      Editar
-                    </button>
+                    {permissions.canEdit ? (
+                      <button
+                        type="button"
+                        className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
+                        onClick={() =>
+                          openDocument(
+                            document,
+                            "edit",
+                          )
+                        }
+                      >
+                        Editar
+                      </button>
+                    ) : null}
 
                     <Button
                       href={`/api/crm/documents/${document.id}/content?download=1`}
@@ -999,16 +1046,18 @@ export default function DocumentsWorkspace() {
               Carga el primer archivo o cambia los filtros.
             </p>
 
-                        <Button
-              className="mt-5"
-              onClick={() =>
-                setIsUploadOpen(
-                  true,
-                )
-              }
-            >
-              Cargar documento
-            </Button>
+            {permissions.canCreate ? (
+              <Button
+                className="mt-5"
+                onClick={() =>
+                  setIsUploadOpen(
+                    true,
+                  )
+                }
+              >
+                Cargar documento
+              </Button>
+            ) : null}
           </div>
         )}
 
@@ -1045,6 +1094,9 @@ export default function DocumentsWorkspace() {
         }
         relationOptions={
           relationOptions
+        }
+        canEdit={
+          permissions.canEdit
         }
         onClose={() =>
           setSelectedDocument(
