@@ -636,6 +636,29 @@ export async function PATCH(
       }
     }
 
+    await db
+      .update(tenantMembers)
+      .set({
+        roleId:
+          payload.globalRoleId ??
+          null,
+
+        updatedAt:
+          new Date(),
+      })
+      .where(
+        and(
+          eq(
+            tenantMembers.id,
+            memberId,
+          ),
+          eq(
+            tenantMembers.tenantId,
+            tenantId,
+          ),
+        ),
+      );
+
     return NextResponse.json({
       success: true,
       message:

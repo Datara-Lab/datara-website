@@ -372,7 +372,7 @@ function SignedOutAuthProvider({
         login: () => {
           void openSignIn({
             fallbackRedirectUrl:
-              "/portal",
+              "/seleccionar-empresa",
           });
         },
 
@@ -420,7 +420,7 @@ export function AuthProvider({
         login: () => {
           void openSignIn({
             fallbackRedirectUrl:
-              "/portal",
+              "/seleccionar-empresa",
           });
         },
 

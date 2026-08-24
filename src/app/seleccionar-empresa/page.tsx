@@ -6,10 +6,7 @@ import {
 } from "@clerk/nextjs";
 
 import Image from "next/image";
-
-import {
-    useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import {
     useEffect,
@@ -232,7 +229,7 @@ export default function SeleccionarEmpresaPage() {
                             return;
                         }
 
-                        router.replace(
+                        window.location.assign(
                             destination,
                         );
                     },
@@ -269,7 +266,6 @@ export default function SeleccionarEmpresaPage() {
         isOrganizationListLoaded,
         setActive,
         onlyOrganizationId,
-        router,
     ]);
 
     async function selectOrganization(
@@ -310,9 +306,9 @@ export default function SeleccionarEmpresaPage() {
                         return;
                     }
 
-                    router.replace(
-                        destination,
-                    );
+                    window.location.assign(
+                            destination,
+                        );
                 },
             });
         } catch (
