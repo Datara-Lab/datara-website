@@ -548,8 +548,11 @@ export async function POST(
             tenantMembers.clerkUserId,
           ],
           set: {
-            roleId:
-              assignedRole?.id ?? null,
+            /*
+             * El rol global existente es administrado por
+             * invitaciones y Administración. No debe
+             * recalcularse durante cada sincronización.
+             */
             email:
               primaryEmail.emailAddress,
             firstName:

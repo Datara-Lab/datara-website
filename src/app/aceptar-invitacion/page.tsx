@@ -532,6 +532,34 @@ function AceptarInvitacionContent() {
     }
   }
 
+  if (
+    !ticket &&
+    dataraStatus === "complete" &&
+    dataraToken
+  ) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+          <h1 className="mt-6 text-2xl font-black text-slate-950">
+            Finalizando invitación
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Estamos configurando tu acceso y los permisos de tu cuenta.
+          </p>
+
+          {error ? (
+            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+              {error}
+            </div>
+          ) : null}
+        </div>
+      </main>
+    );
+  }
+
   if (!ticket) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
