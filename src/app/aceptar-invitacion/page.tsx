@@ -50,6 +50,11 @@ function AceptarInvitacionContent() {
   const finalizationStarted =
     useRef(false);
 
+  const [
+    isRedirecting,
+    setIsRedirecting,
+  ] = useState(false);
+
   const finalizeDataraInvitation =
     useCallback(
       async () => {
@@ -465,6 +470,8 @@ function AceptarInvitacionContent() {
         );
       }
 
+      setIsRedirecting(true);
+
       await signUp.finalize({
         navigate: ({
           session,
@@ -499,6 +506,8 @@ function AceptarInvitacionContent() {
         },
       });
     } catch (signUpError) {
+      setIsRedirecting(false);
+
       const signUpErrorMessage =
         signUpError instanceof Error
           ? signUpError.message
@@ -530,6 +539,27 @@ function AceptarInvitacionContent() {
     } finally {
       setIsProcessing(false);
     }
+  }
+
+  if (
+    isProcessing ||
+    isRedirecting
+  ) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+          <h1 className="mt-6 text-2xl font-black text-slate-950">
+            Preparando tu acceso
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Estamos activando tu cuenta, configurando tus permisos y abriendo tu espacio de trabajo.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   if (
