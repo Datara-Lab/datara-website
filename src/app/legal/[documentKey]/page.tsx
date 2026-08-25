@@ -19,18 +19,6 @@ type LegalDocumentPageProps = {
   }>;
 };
 
-export const dynamicParams =
-  false;
-
-export function generateStaticParams() {
-  return legalDocuments.map(
-    (document) => ({
-      documentKey:
-        document.key,
-    }),
-  );
-}
-
 export default async function LegalDocumentPage({
   params,
 }: LegalDocumentPageProps) {
