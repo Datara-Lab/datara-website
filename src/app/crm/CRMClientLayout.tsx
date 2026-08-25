@@ -9,7 +9,9 @@ import {
     useState,
 } from "react";
 
-import AccessPreparationScreen from "@/components/auth/AccessPreparationScreen";
+import AccessPreparationScreen, {
+    clearAccessPreparationProgress,
+} from "@/components/auth/AccessPreparationScreen";
 import AppShell from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import CRMHeaderActions from "@/components/crm/CRMHeaderActions";
@@ -186,6 +188,34 @@ export default function CRMClientLayout({
 
         return () => {
             isActive = false;
+        };
+    }, [
+        isAuthenticated,
+        isLoading,
+        user,
+    ]);
+
+    useEffect(() => {
+        if (
+            isLoading ||
+            !isAuthenticated ||
+            !user
+        ) {
+            return;
+        }
+
+        const timeoutId =
+            window.setTimeout(
+                () => {
+                    clearAccessPreparationProgress();
+                },
+                800,
+            );
+
+        return () => {
+            window.clearTimeout(
+                timeoutId,
+            );
         };
     }, [
         isAuthenticated,
