@@ -18,8 +18,8 @@ import {
 import Stripe from "stripe";
 
 import {
-    createStripeClient,
-} from "@/lib/commercial/create-stripe-client";
+    createStripeCheckoutSession,
+} from "@/lib/commercial/create-stripe-checkout-session";
 
 import {
     getCRMIndustryTemplates,
@@ -1064,10 +1064,26 @@ export async function POST(
                     now,
             });
 
-        const stripe =
-            createStripeClient(
-                stripeSecretKey,
-            );
+        /*
+         * Checkout usa REST directamente porque
+         * stripe-node presenta errores de transporte
+         * dentro del runtime de Cloudflare Workers.
+         */
+        const stripe = {
+            checkout: {
+                sessions: {
+                    create: (
+                        payload:
+                            Stripe.Checkout.SessionCreateParams,
+                    ) =>
+                        createStripeCheckoutSession({
+                            secretKey:
+                                stripeSecretKey,
+                            payload,
+                        }),
+                },
+            },
+        };
 
         let checkoutSession:
             Stripe.Checkout.Session;
