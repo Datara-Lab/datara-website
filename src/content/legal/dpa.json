@@ -1,0 +1,232 @@
+{
+  "key": "dpa",
+  "title": "Acuerdo de Tratamiento de Datos (DPA)",
+  "sourceFile": "04_DPA_Acuerdo_Tratamiento_Datos_Datara_V1.docx",
+  "version": "1.0",
+  "effectiveDate": "2026-08-15",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "VERSIÓN DE TRABAJO · SUJETA A REVISIÓN JURÍDICA ANTES DE PRODUCCIÓN"
+    },
+    {
+      "type": "title",
+      "text": "Acuerdo de Tratamiento de Datos (DPA)",
+      "level": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Anexo al Contrato SaaS de Datara"
+    },
+    {
+      "type": "paragraph",
+      "text": "Versión 1.0 | Fecha de referencia: 15 de agosto de 2026"
+    },
+    {
+      "type": "paragraph",
+      "text": "BORRADOR PARA REVISIÓN LEGAL. Documento preparado para la V1 de Datara. Los campos entre corchetes deben completarse antes de publicación o firma. Se recomienda revisión final por abogado mexicano especializado en tecnología y protección de datos."
+    },
+    {
+      "type": "heading",
+      "text": "1. Objeto y roles",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Este Acuerdo regula el tratamiento de datos personales que Datara realiza por cuenta del Cliente para prestar los servicios. Para estos tratamientos, el Cliente determina las finalidades y medios esenciales y Datara actúa como persona encargada, sin perjuicio de los tratamientos en los que Datara sea responsable por derecho propio."
+    },
+    {
+      "type": "heading",
+      "text": "2. Instrucciones documentadas",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara tratará los datos personales conforme a las instrucciones documentadas del Cliente contenidas en el Contrato, la configuración del Workspace, las acciones de usuarios autorizados y solicitudes de soporte válidas, salvo obligación legal aplicable."
+    },
+    {
+      "type": "heading",
+      "text": "3. Alcance del tratamiento",
+      "level": 2
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Elemento",
+          "Descripción"
+        ],
+        [
+          "Objeto",
+          "Prestación de CRM, Analytics, almacenamiento, organización, consulta, procesamiento, soporte, seguridad, respaldo y funcionalidades contratadas."
+        ],
+        [
+          "Duración",
+          "Durante la vigencia del servicio y los periodos limitados de conservación, recuperación, bloqueo o respaldo aplicables."
+        ],
+        [
+          "Titulares",
+          "Clientes, prospectos, contactos, empleados, proveedores, usuarios y otras personas cuyos datos el Cliente incorpore legítimamente."
+        ],
+        [
+          "Categorías de datos",
+          "Identificación, contacto, relación comercial, actividad, notas, documentos, métricas y demás campos configurados por el Cliente."
+        ],
+        [
+          "Datos sensibles",
+          "No deben cargarse salvo que el producto lo contemple expresamente y el Cliente cuente con base legal y salvaguardas adecuadas."
+        ],
+        [
+          "Operaciones",
+          "Recopilación por instrucción, registro, organización, almacenamiento, consulta, modificación, análisis, transmisión técnica, respaldo, bloqueo, eliminación o devolución."
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "4. Obligaciones del Cliente",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Cumplir la legislación aplicable y proporcionar los avisos de privacidad correspondientes a los titulares."
+    },
+    {
+      "type": "list-item",
+      "text": "Contar con consentimiento u otra base legal cuando resulte necesaria."
+    },
+    {
+      "type": "list-item",
+      "text": "Configurar roles y permisos de acuerdo con el principio de necesidad de acceso."
+    },
+    {
+      "type": "list-item",
+      "text": "No instruir a Datara a realizar tratamientos ilícitos."
+    },
+    {
+      "type": "list-item",
+      "text": "Atender como responsable las solicitudes de los titulares y comunicar a Datara las acciones técnicas necesarias."
+    },
+    {
+      "type": "heading",
+      "text": "5. Obligaciones de Datara",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Tratar datos únicamente conforme a instrucciones documentadas y para prestar el servicio."
+    },
+    {
+      "type": "list-item",
+      "text": "Mantener confidencialidad respecto de las personas autorizadas a tratar los datos."
+    },
+    {
+      "type": "list-item",
+      "text": "Implementar medidas de seguridad razonables y proporcionales al riesgo."
+    },
+    {
+      "type": "list-item",
+      "text": "Asistir razonablemente al Cliente en solicitudes de titulares cuando la respuesta requiera acciones técnicas dentro de Datara."
+    },
+    {
+      "type": "list-item",
+      "text": "Eliminar, bloquear, anonimizar, devolver o poner a disposición los datos al terminar el servicio conforme al Contrato, la ley y capacidades técnicas."
+    },
+    {
+      "type": "list-item",
+      "text": "Mantener información suficiente para demostrar razonablemente el cumplimiento de sus obligaciones contractuales como encargado."
+    },
+    {
+      "type": "heading",
+      "text": "6. Subencargados",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El Cliente autoriza de forma general a Datara a contratar subencargados necesarios para operar el servicio. Datara deberá imponer obligaciones de protección de datos sustancialmente compatibles con las que correspondan al servicio encomendado. Datara podrá mantener una lista vigente de subencargados y comunicar cambios materiales mediante el portal, correo o documentación."
+    },
+    {
+      "type": "heading",
+      "text": "7. Transferencias y ubicación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Los servicios de infraestructura pueden implicar tratamiento o almacenamiento en México o en otras jurisdicciones según los proveedores seleccionados. Antes de producción, Datara deberá documentar la ubicación y mecanismos contractuales aplicables de sus subencargados relevantes. Validar antes de producción la lista contractual de subencargados, las regiones de tratamiento y los mecanismos de transferencia."
+    },
+    {
+      "type": "heading",
+      "text": "8. Seguridad",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Control de acceso basado en autenticación y roles."
+    },
+    {
+      "type": "list-item",
+      "text": "Separación lógica de organizaciones/tenants."
+    },
+    {
+      "type": "list-item",
+      "text": "Protecciones de infraestructura, almacenamiento y comunicaciones según las capacidades de los proveedores contratados."
+    },
+    {
+      "type": "list-item",
+      "text": "Registro de eventos relevantes de seguridad y auditoría."
+    },
+    {
+      "type": "list-item",
+      "text": "Gestión de vulnerabilidades, actualizaciones y respaldos conforme a procedimientos operativos."
+    },
+    {
+      "type": "list-item",
+      "text": "Principio de mínimo privilegio para accesos administrativos."
+    },
+    {
+      "type": "heading",
+      "text": "9. Incidentes de seguridad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara notificará al Cliente sin demora indebida después de confirmar un incidente de seguridad que afecte materialmente datos personales procesados por cuenta del Cliente, proporcionando la información razonablemente disponible para que el Cliente evalúe sus obligaciones de notificación. La notificación no constituye admisión de responsabilidad."
+    },
+    {
+      "type": "heading",
+      "text": "10. Solicitudes de titulares",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Si Datara recibe directamente una solicitud relacionada claramente con datos controlados por el Cliente, podrá remitir al titular al Cliente y/o informar al Cliente, salvo prohibición legal. Datara no responderá sustantivamente en nombre del Cliente sin autorización o deber legal."
+    },
+    {
+      "type": "heading",
+      "text": "11. Eliminación lógica, bloqueo y respaldos",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara podrá implementar soft delete para registros de aplicación. Un registro eliminado por un usuario podrá permanecer bloqueado o recuperable durante el periodo configurado. La eliminación definitiva deberá propagarse a sistemas activos y, respecto de respaldos, ocurrirá mediante los ciclos normales de sobrescritura, salvo que exista obligación legal de conservación."
+    },
+    {
+      "type": "heading",
+      "text": "12. Auditoría y evidencia",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "A solicitud razonable, Datara proporcionará información sobre sus medidas y prácticas aplicables. Auditorías presenciales o pruebas extraordinarias estarán sujetas a alcance, confidencialidad, seguridad, costos y condiciones razonables para no afectar a otros clientes ni revelar información sensible de terceros."
+    },
+    {
+      "type": "heading",
+      "text": "13. Prevalencia",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "En materia de tratamiento de datos personales por cuenta del Cliente, este DPA prevalece sobre disposiciones incompatibles del Contrato, salvo que una condición específica otorgue mayor protección o sea requerida por ley."
+    }
+  ]
+}

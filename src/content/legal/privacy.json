@@ -1,0 +1,199 @@
+{
+  "key": "privacy",
+  "title": "Aviso de Privacidad Integral",
+  "sourceFile": "03_Aviso_de_Privacidad_Integral_Datara_V1.docx",
+  "version": "1.0",
+  "effectiveDate": "2026-08-15",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "VERSIÓN DE TRABAJO · SUJETA A REVISIÓN JURÍDICA ANTES DE PRODUCCIÓN"
+    },
+    {
+      "type": "title",
+      "text": "Aviso de Privacidad Integral",
+      "level": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Datos personales tratados por Datara como responsable"
+    },
+    {
+      "type": "paragraph",
+      "text": "Versión 1.0 | Fecha de referencia: 15 de agosto de 2026"
+    },
+    {
+      "type": "paragraph",
+      "text": "BORRADOR PARA REVISIÓN LEGAL. Documento preparado para la V1 de Datara. Los campos entre corchetes deben completarse antes de publicación o firma. Se recomienda revisión final por abogado mexicano especializado en tecnología y protección de datos."
+    },
+    {
+      "type": "heading",
+      "text": "1. Identidad y domicilio del responsable",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Jean Paul Augdey Rodriguez, con domicilio en San Andrés 2310, Campestre del Lago, Cuautitlán Izcalli, Estado de México, C.P. 54766, es responsable del tratamiento de los datos personales que recaba directamente para administrar su sitio, cuentas, relación comercial, soporte y operación propia de Datara."
+    },
+    {
+      "type": "heading",
+      "text": "2. Datos personales que podemos recabar",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Identificación y contacto: nombre, correo electrónico, teléfono, empresa, puesto y datos de cuenta."
+    },
+    {
+      "type": "list-item",
+      "text": "Datos de facturación y relación comercial: RFC, razón social, domicilio fiscal, datos necesarios para comprobantes y referencias de transacciones. Datara procurará no almacenar datos completos de tarjetas cuando el pago sea procesado por un proveedor especializado."
+    },
+    {
+      "type": "list-item",
+      "text": "Datos técnicos y de seguridad: dirección IP, dispositivo, navegador, identificadores de sesión, fechas de acceso, logs, eventos de autenticación y auditoría."
+    },
+    {
+      "type": "list-item",
+      "text": "Soporte y comunicaciones: mensajes, solicitudes, archivos o información que el usuario proporcione voluntariamente."
+    },
+    {
+      "type": "list-item",
+      "text": "Preferencias de producto, configuración y uso de funcionalidades para operar, mejorar y proteger el servicio."
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara no solicita datos personales sensibles para crear una cuenta estándar. Si una funcionalidad futura requiere su tratamiento, se evaluará y aplicará el régimen legal correspondiente antes de habilitarla."
+    },
+    {
+      "type": "heading",
+      "text": "3. Finalidades primarias",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Crear y administrar cuentas, organizaciones y Workspaces."
+    },
+    {
+      "type": "list-item",
+      "text": "Prestar los productos y módulos contratados."
+    },
+    {
+      "type": "list-item",
+      "text": "Autenticar usuarios, prevenir fraude, investigar incidentes y mantener la seguridad."
+    },
+    {
+      "type": "list-item",
+      "text": "Procesar pagos, facturación y obligaciones administrativas."
+    },
+    {
+      "type": "list-item",
+      "text": "Proporcionar soporte, atender solicitudes y comunicar cambios operativos."
+    },
+    {
+      "type": "list-item",
+      "text": "Cumplir obligaciones legales, contractuales, fiscales y de defensa de derechos."
+    },
+    {
+      "type": "list-item",
+      "text": "Mantener registros de auditoría y evidencia de aceptación de documentos."
+    },
+    {
+      "type": "heading",
+      "text": "4. Finalidades secundarias",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Cuando legalmente proceda, Datara podrá utilizar datos de contacto para enviar información sobre nuevos productos, funciones, contenidos o promociones. El titular podrá oponerse o solicitar dejar de recibir comunicaciones comerciales mediante el mecanismo incluido en el mensaje o escribiendo a soporte@datara-lab.com."
+    },
+    {
+      "type": "heading",
+      "text": "5. Datos procesados por cuenta de nuestros clientes",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Los datos que una empresa cliente cargue a Datara acerca de sus propios clientes, prospectos, empleados, proveedores u otras personas no se rigen exclusivamente por este Aviso. En esos casos, la empresa cliente determina las finalidades y Datara procesa la información por cuenta de dicha empresa conforme al contrato y al Acuerdo de Tratamiento de Datos. Las solicitudes de titulares relacionadas con esos datos deberán dirigirse, en principio, a la empresa que controla la relación y el tratamiento."
+    },
+    {
+      "type": "heading",
+      "text": "6. Transferencias y proveedores",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara puede apoyarse en proveedores de infraestructura, alojamiento, autenticación, almacenamiento, comunicaciones, soporte, analítica técnica, seguridad, facturación o pagos. Cuando un tercero actúe por cuenta de Datara, se procurará sujetarlo a obligaciones acordes con el tratamiento encomendado. Si una comunicación constituye una transferencia que requiera consentimiento, Datara lo recabará cuando corresponda, salvo excepción legal."
+    },
+    {
+      "type": "heading",
+      "text": "7. Conservación, bloqueo y supresión",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Los datos personales se conservarán durante el tiempo necesario para cumplir las finalidades informadas y las obligaciones administrativas, contables, fiscales, jurídicas, contractuales y de seguridad aplicables. Cuando dejen de ser necesarios, se procederá al bloqueo y/o supresión según corresponda. Los respaldos pueden conservar copias durante ciclos técnicos limitados hasta su sobrescritura segura."
+    },
+    {
+      "type": "heading",
+      "text": "8. Derechos ARCO",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El titular puede solicitar acceso, rectificación, cancelación u oposición respecto de sus datos personales, sujeto a los requisitos, plazos y excepciones legales aplicables."
+    },
+    {
+      "type": "paragraph",
+      "text": "Para ejercer derechos ARCO deberá enviar su solicitud a soporte@datara-lab.com, incluyendo: nombre del titular; medio para comunicar la respuesta; documentos que acrediten identidad o representación cuando corresponda; descripción clara de los datos y del derecho que desea ejercer; y cualquier elemento que facilite su localización."
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara comunicará la determinación y, en su caso, hará efectivo el derecho dentro de los plazos establecidos por la legislación aplicable. Podrá solicitar información adicional cuando sea necesaria para identificar al titular o localizar los datos."
+    },
+    {
+      "type": "heading",
+      "text": "9. Revocación del consentimiento y limitación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Cuando el tratamiento se base en consentimiento y la ley permita su revocación, el titular podrá solicitarla escribiendo a soporte@datara-lab.com. La revocación no tendrá efectos retroactivos y puede no proceder cuando exista otra base jurídica u obligación de conservación."
+    },
+    {
+      "type": "heading",
+      "text": "10. Cookies y tecnologías similares",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El sitio y la aplicación pueden utilizar cookies estrictamente necesarias para autenticación, seguridad, preferencias y funcionamiento. Las cookies no esenciales o de medición/marketing deberán describirse y gestionarse conforme a la Política de Cookies vigente y, cuando corresponda, mediante controles de consentimiento."
+    },
+    {
+      "type": "heading",
+      "text": "11. Seguridad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara mantiene medidas administrativas, técnicas y físicas razonables orientadas a proteger los datos contra daño, pérdida, alteración, destrucción, acceso o tratamiento no autorizado. Las medidas se revisan conforme evoluciona la plataforma y los riesgos."
+    },
+    {
+      "type": "heading",
+      "text": "12. Cambios al Aviso",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Las modificaciones materiales a este Aviso se publicarán en datara-lab.com o se comunicarán por medios apropiados. La fecha de última actualización aparecerá al inicio del documento."
+    },
+    {
+      "type": "heading",
+      "text": "13. Contacto de privacidad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Responsable: Jean Paul Augdey Rodriguez. Correo: soporte@datara-lab.com. Domicilio: San Andrés 2310, Campestre del Lago, Cuautitlán Izcalli, Estado de México, C.P. 54766."
+    }
+  ]
+}

@@ -5,6 +5,10 @@ import {
     useState,
 } from "react";
 
+import {
+    legalBundleVersion,
+} from "@/lib/legal/legal-documents";
+
 type CommercialCatalogItem = {
     id: string;
     productKey: string;
@@ -240,6 +244,16 @@ export default function CommercialConfigurator({
     );
 
     const [
+        legalDocumentsAccepted,
+        setLegalDocumentsAccepted,
+    ] = useState(false);
+
+    const [
+        recurringChargesAccepted,
+        setRecurringChargesAccepted,
+    ] = useState(false);
+
+    const [
         planChangePreview,
         setPlanChangePreview,
     ] = useState<
@@ -432,7 +446,35 @@ export default function CommercialConfigurator({
             0,
         );
 
-            async function handleCheckout() {
+    const isSubscriptionChange =
+        purchaseType ===
+        "subscription_change";
+
+    const isAnnualInstallments =
+        billingPeriod === "annual" &&
+        annualPaymentMode ===
+            "installments";
+
+    const requiresRecurringConsent =
+        !isSubscriptionChange &&
+        !isAnnualInstallments;
+
+    const checkoutTotalLabel =
+        new Intl.NumberFormat(
+            "es-MX",
+            {
+                style: "currency",
+                currency:
+                    selectedItems[
+                        0
+                    ]?.currency.toUpperCase() ??
+                    "MXN",
+                maximumFractionDigits:
+                    2,
+            },
+        ).format(selectedTotal);
+
+    async function handleCheckout() {
         if (
             !selectedIndustry
         ) {
@@ -478,6 +520,28 @@ export default function CommercialConfigurator({
             }
         }
 
+        if (
+            !isSubscriptionChange &&
+            !legalDocumentsAccepted
+        ) {
+            setCheckoutError(
+                "Debes aceptar los documentos legales para continuar.",
+            );
+
+            return;
+        }
+
+        if (
+            requiresRecurringConsent &&
+            !recurringChargesAccepted
+        ) {
+            setCheckoutError(
+                "Debes autorizar los cobros recurrentes para continuar.",
+            );
+
+            return;
+        }
+
         try {
             setIsCreatingCheckout(
                 true,
@@ -490,10 +554,6 @@ export default function CommercialConfigurator({
             setPlanChangePreview(
                 undefined,
             );
-
-            const isSubscriptionChange =
-                purchaseType ===
-                "subscription_change";
 
             const response =
                 await fetch(
@@ -526,6 +586,22 @@ export default function CommercialConfigurator({
 
                                 catalogItemIds:
                                     selectedItemIds,
+
+                                legalAcceptance:
+                                    isSubscriptionChange
+                                        ? undefined
+                                        : {
+                                            bundleVersion:
+                                                legalBundleVersion,
+
+                                            documentsAccepted:
+                                                legalDocumentsAccepted,
+
+                                            recurringChargesAccepted:
+                                                requiresRecurringConsent
+                                                    ? recurringChargesAccepted
+                                                    : false,
+                                        },
                             }),
                     },
                 );
@@ -1327,16 +1403,110 @@ export default function CommercialConfigurator({
                         </p>
                     </div>
 
+                    {!isSubscriptionChange ? (
+                        <div className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 text-slate-700">
+                            <div className="flex items-start gap-3">
+                                <input
+                                    id="legal-documents-accepted"
+                                    type="checkbox"
+                                    checked={
+                                        legalDocumentsAccepted
+                                    }
+                                    onChange={(event) => {
+                                        setLegalDocumentsAccepted(
+                                            event.target.checked,
+                                        );
+                                        setCheckoutError(null);
+                                    }}
+                                    className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+
+                                <div>
+                                    <label
+                                        htmlFor="legal-documents-accepted"
+                                        className="cursor-pointer text-sm font-semibold leading-6 text-slate-800"
+                                    >
+                                        He leído y acepto el Contrato SaaS, los Términos y Condiciones, el Aviso de Privacidad y el Acuerdo de Tratamiento de Datos.
+                                    </label>
+
+                                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                                        Documentos versión{" "}
+                                        {legalBundleVersion}.{" "}
+                                        <a
+                                            href="/legal"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="font-bold text-blue-700 underline decoration-blue-300 underline-offset-2"
+                                        >
+                                            Consultar el centro legal
+                                        </a>
+                                        .
+                                    </p>
+                                </div>
+                            </div>
+
+                            {requiresRecurringConsent ? (
+                                <div className="flex items-start gap-3 border-t border-slate-200 pt-4">
+                                    <input
+                                        id="recurring-charges-accepted"
+                                        type="checkbox"
+                                        checked={
+                                            recurringChargesAccepted
+                                        }
+                                        onChange={(event) => {
+                                            setRecurringChargesAccepted(
+                                                event.target.checked,
+                                            );
+                                            setCheckoutError(null);
+                                        }}
+                                        className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    />
+
+                                    <label
+                                        htmlFor="recurring-charges-accepted"
+                                        className="cursor-pointer text-sm leading-6 text-slate-700"
+                                    >
+                                        Autorizo cobros automáticos{" "}
+                                        <strong>
+                                            {billingPeriod === "monthly"
+                                                ? "mensuales"
+                                                : "anuales"}
+                                        </strong>{" "}
+                                        por{" "}
+                                        <strong>
+                                            {checkoutTotalLabel} MXN
+                                        </strong>
+                                        , IVA incluido, desde la contratación y hasta la cancelación o modificación del servicio.
+                                    </label>
+                                </div>
+                            ) : (
+                                <p className="border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
+                                    El pago anual a meses sin intereses no autoriza cargos recurrentes automáticos.
+                                </p>
+                            )}
+                        </div>
+                    ) : null}
+
                     <button
                         type="button"
                         disabled={
                             isCreatingCheckout ||
-                            planChangeApplied
+                            planChangeApplied ||
+                            (
+                                !isSubscriptionChange &&
+                                (
+                                    !legalDocumentsAccepted ||
+                                    (
+                                        requiresRecurringConsent &&
+                                        !recurringChargesAccepted
+                                    )
+                                )
+                            )
                         }
                         onClick={() =>
                             void handleCheckout()
                         }
-                        className="mt-6 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3.5 text-sm font-bold text-white transition hover:from-blue-700 hover:to-cyan-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="mt-6 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3.5 text-sm font-bold text-white transition hover:from-blue-700 hover:to-cyan-600 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:shadow-none"
                     >
                         {isCreatingCheckout
                             ? purchaseType ===

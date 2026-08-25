@@ -1,0 +1,192 @@
+{
+  "key": "terms",
+  "title": "Términos y Condiciones de Uso",
+  "sourceFile": "02_Terminos_y_Condiciones_Datara_V1.docx",
+  "version": "1.0",
+  "effectiveDate": "2026-08-15",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "VERSIÓN DE TRABAJO · SUJETA A REVISIÓN JURÍDICA ANTES DE PRODUCCIÓN"
+    },
+    {
+      "type": "title",
+      "text": "Términos y Condiciones de Uso",
+      "level": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Aplicables al portal, Workspace y servicios Datara"
+    },
+    {
+      "type": "paragraph",
+      "text": "Versión 1.0 | Fecha de referencia: 15 de agosto de 2026"
+    },
+    {
+      "type": "paragraph",
+      "text": "BORRADOR PARA REVISIÓN LEGAL. Documento preparado para la V1 de Datara. Los campos entre corchetes deben completarse antes de publicación o firma. Se recomienda revisión final por abogado mexicano especializado en tecnología y protección de datos."
+    },
+    {
+      "type": "heading",
+      "text": "1. Aceptación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Al crear una cuenta, acceder a un Workspace, contratar una suscripción o utilizar Datara, el usuario y, en su caso, la organización que representa aceptan estos Términos y los documentos incorporados por referencia. Si utiliza Datara por cuenta de una organización, declara estar autorizado para obligarla."
+    },
+    {
+      "type": "heading",
+      "text": "2. Elegibilidad y cuentas",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El usuario deberá proporcionar información veraz, proteger sus credenciales y notificar accesos no autorizados. Las cuentas son personales; los permisos dentro de cada Workspace se administran conforme a los roles habilitados."
+    },
+    {
+      "type": "heading",
+      "text": "3. Servicios y módulos",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara ofrece software empresarial bajo modalidad SaaS. Las funciones disponibles dependen de los productos, módulos, plan y configuración contratados. Algunas funciones podrán identificarse como beta, piloto o vista previa."
+    },
+    {
+      "type": "heading",
+      "text": "4. Contratación y cobro",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Los precios, impuestos, ciclos de facturación, descuentos y promociones se muestran en el proceso de contratación. El Cliente autoriza los cargos correspondientes cuando utilice un método de pago recurrente. Las condiciones comerciales específicas prevalecen sobre estos Términos cuando exista contradicción expresa."
+    },
+    {
+      "type": "heading",
+      "text": "5. Contenido y Datos del Cliente",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El Cliente conserva sus derechos sobre los datos y contenidos que incorpore a Datara. Otorga a Datara únicamente los permisos necesarios para prestar y operar el servicio. El Cliente es responsable de contar con autorización y base legal para cargar y tratar dicha información."
+    },
+    {
+      "type": "heading",
+      "text": "6. Eliminación de registros",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "La acción “Eliminar” puede ocultar un registro mediante eliminación lógica. El dato podrá permanecer temporalmente en sistemas activos, respaldos o registros de auditoría hasta su restauración, bloqueo, anonimización o supresión conforme a la política de conservación. Algunos registros pueden ser no eliminables y requerir cancelación o anulación."
+    },
+    {
+      "type": "heading",
+      "text": "7. Conductas prohibidas",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "No se permite vulnerar la seguridad, acceder sin autorización, interferir con la plataforma, introducir malware, utilizar Datara para actividades ilícitas, infringir derechos de terceros, revender el servicio sin autorización o realizar ingeniería inversa salvo derecho irrenunciable."
+    },
+    {
+      "type": "heading",
+      "text": "8. Propiedad de Datara",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El software, diseño, marca, documentación, plantillas y tecnología de Datara pertenecen a Datara o sus licenciantes. Ninguna disposición transfiere propiedad intelectual al usuario."
+    },
+    {
+      "type": "heading",
+      "text": "9. Privacidad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El tratamiento de datos personales que Datara realiza como responsable se describe en el Aviso de Privacidad. Cuando Datara procesa datos por cuenta de una empresa cliente, aplican el contrato y el Acuerdo de Tratamiento de Datos correspondiente."
+    },
+    {
+      "type": "heading",
+      "text": "10. Suspensión y terminación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara podrá suspender cuentas por falta de pago, riesgo de seguridad, uso ilícito, incumplimiento material o cuando sea necesario para proteger a usuarios, terceros o la plataforma. Cuando sea razonablemente posible se notificará al Cliente y se permitirá corregir el incumplimiento."
+    },
+    {
+      "type": "heading",
+      "text": "11. Disponibilidad y terceros",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara puede depender de proveedores externos. Las interrupciones de terceros, Internet o eventos fuera del control razonable de Datara pueden afectar el servicio. Un SLA solo aplicará cuando se contrate expresamente."
+    },
+    {
+      "type": "heading",
+      "text": "12. Cambios",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara podrá actualizar estos Términos. Los cambios materiales se comunicarán de manera razonable. La versión vigente deberá estar disponible en el sitio o portal."
+    },
+    {
+      "type": "heading",
+      "text": "13. Responsabilidad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Las limitaciones de responsabilidad aplicables se establecerán en el Contrato SaaS o condiciones comerciales del Cliente y operarán únicamente en la medida permitida por la ley."
+    },
+    {
+      "type": "heading",
+      "text": "14. Ley aplicable",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Estos Términos se regirán por las leyes aplicables de México. Jurisdicción propuesta: Cuautitlán Izcalli, Estado de México, sin perjuicio de normas imperativas."
+    },
+    {
+      "type": "heading",
+      "text": "15. Contacto",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Consultas generales: soporte@datara-lab.com. Privacidad: soporte@datara-lab.com."
+    },
+    {
+      "type": "heading",
+      "text": "Protección de personas consumidoras",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "Cuando la persona contratante tenga el carácter de consumidora, ninguna disposición de este documento limitará derechos irrenunciables reconocidos por la legislación mexicana. La jurisdicción pactada se aplicará sin perjuicio de los fueros y competencias que resulten obligatorios conforme a dicha legislación."
+    },
+    {
+      "type": "heading",
+      "text": "Consentimiento para cobros recurrentes",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "Los cobros automáticos recurrentes requerirán una aceptación expresa, separada y no preseleccionada. Antes de confirmar la contratación, Datara informará de forma clara la periodicidad, el importe aplicable, la fecha o regla de cobro, la renovación y el mecanismo de cancelación."
+    },
+    {
+      "type": "heading",
+      "text": "Evidencia de aceptación electrónica",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "La plataforma conservará un registro auditable con el identificador de la compra, usuario y organización cuando existan, fecha y hora, contexto de aceptación, versiones y huellas digitales de los documentos, texto del consentimiento y evidencia técnica razonable. El registro de aceptación no sustituye las obligaciones de información ni los derechos de revocación o cancelación aplicables."
+    }
+  ]
+}

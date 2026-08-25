@@ -196,14 +196,27 @@ async function synchronizeInstallmentsPrice({
 }): Promise<string | null> {
     if (!item.installmentsEnabled) {
         if (currentPriceId) {
-            await stripe.prices
-                .update(
-                    currentPriceId,
-                    {
-                        active:
-                            false,
-                    },
-                );
+            try {
+                await stripe.prices
+                    .update(
+                        currentPriceId,
+                        {
+                            active:
+                                false,
+                        },
+                    );
+            } catch (error) {
+                const isMissing =
+                    error instanceof
+                        Stripe.errors
+                            .StripeInvalidRequestError &&
+                    error.code ===
+                        "resource_missing";
+
+                if (!isMissing) {
+                    throw error;
+                }
+            }
         }
 
         return null;
@@ -301,57 +314,82 @@ export async function synchronizeStripeCatalogItem({
 }): Promise<
     StripeCatalogReferences
 > {
-    const stripeProduct =
-        item.stripeProductId
-            ? await stripe.products
-                .update(
-                    item.stripeProductId,
-                    {
-                        name:
-                            item.name,
+    const createProduct =
+        () =>
+            stripe.products.create({
+                name:
+                    item.name,
 
-                        description:
-                            item.description ??
-                            undefined,
+                description:
+                    item.description ??
+                    undefined,
 
-                        active:
-                            item.active,
+                active:
+                    item.active,
 
-                        metadata: {
-                            catalogItemId:
-                                item.id,
+                metadata: {
+                    catalogItemId:
+                        item.id,
 
-                            productKey:
-                                item.productKey,
+                    productKey:
+                        item.productKey,
 
-                            itemKey:
-                                item.itemKey,
+                    itemKey:
+                        item.itemKey,
+                },
+            });
+
+    let stripeProduct:
+        Stripe.Product;
+
+    if (item.stripeProductId) {
+        try {
+            stripeProduct =
+                await stripe.products
+                    .update(
+                        item.stripeProductId,
+                        {
+                            name:
+                                item.name,
+
+                            description:
+                                item.description ??
+                                undefined,
+
+                            active:
+                                item.active,
+
+                            metadata: {
+                                catalogItemId:
+                                    item.id,
+
+                                productKey:
+                                    item.productKey,
+
+                                itemKey:
+                                    item.itemKey,
+                            },
                         },
-                    },
-                )
-            : await stripe.products
-                .create({
-                    name:
-                        item.name,
+                    );
+        } catch (error) {
+            const isMissing =
+                error instanceof
+                    Stripe.errors
+                        .StripeInvalidRequestError &&
+                error.code ===
+                    "resource_missing";
 
-                    description:
-                        item.description ??
-                        undefined,
+            if (!isMissing) {
+                throw error;
+            }
 
-                    active:
-                        item.active,
-
-                    metadata: {
-                        catalogItemId:
-                            item.id,
-
-                        productKey:
-                            item.productKey,
-
-                        itemKey:
-                            item.itemKey,
-                    },
-                });
+            stripeProduct =
+                await createProduct();
+        }
+    } else {
+        stripeProduct =
+            await createProduct();
+    }
 
     const stripeMonthlyPriceId =
         await synchronizePrice({

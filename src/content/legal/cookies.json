@@ -1,0 +1,118 @@
+{
+  "key": "cookies",
+  "title": "Política de Cookies y Tecnologías Similares",
+  "sourceFile": "06_Politica_Cookies_Datara_V1.docx",
+  "version": "1.0",
+  "effectiveDate": "2026-08-15",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "VERSIÓN DE TRABAJO · SUJETA A REVISIÓN JURÍDICA ANTES DE PRODUCCIÓN"
+    },
+    {
+      "type": "title",
+      "text": "Política de Cookies y Tecnologías Similares",
+      "level": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Aplicable a datara-lab.com y al portal Datara"
+    },
+    {
+      "type": "paragraph",
+      "text": "Versión 1.0 | Fecha de referencia: 15 de agosto de 2026"
+    },
+    {
+      "type": "paragraph",
+      "text": "BORRADOR PARA REVISIÓN LEGAL. Documento preparado para la V1 de Datara. Los campos entre corchetes deben completarse antes de publicación o firma. Se recomienda revisión final por abogado mexicano especializado en tecnología y protección de datos."
+    },
+    {
+      "type": "heading",
+      "text": "1. Qué son",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Las cookies y tecnologías similares permiten almacenar o recuperar información en el dispositivo o navegador para habilitar funciones, recordar preferencias, mantener sesiones, medir funcionamiento y proteger el servicio."
+    },
+    {
+      "type": "heading",
+      "text": "2. Categorías previstas",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Necesarias: autenticación, seguridad, balanceo, prevención de fraude y funcionamiento básico. No deben desactivarse cuando sean indispensables para prestar el servicio solicitado."
+    },
+    {
+      "type": "list-item",
+      "text": "Preferencias: recuerdan idioma, interfaz u opciones elegidas."
+    },
+    {
+      "type": "list-item",
+      "text": "Medición/analítica: ayudan a entender rendimiento y uso agregado. No habilitada en la V1."
+    },
+    {
+      "type": "list-item",
+      "text": "Marketing: seguimiento publicitario o campañas. No habilitadas en la V1."
+    },
+    {
+      "type": "heading",
+      "text": "3. Inventario",
+      "level": 2
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Proveedor",
+          "Cookie/tecnología",
+          "Finalidad",
+          "Duración",
+          "Categoría"
+        ],
+        [
+          "Datara / autenticación",
+          "Inventario técnico pendiente de validación antes de producción",
+          "Sesión y seguridad",
+          "Inventario técnico pendiente de validación antes de producción",
+          "Necesaria"
+        ],
+        [
+          "Sin proveedor habilitado en la V1",
+          "Inventario técnico pendiente de validación antes de producción",
+          "Medición",
+          "Inventario técnico pendiente de validación antes de producción",
+          "Analítica"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "4. Gestión",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El usuario podrá gestionar cookies no necesarias mediante el panel de consentimiento cuando se habiliten. También puede utilizar controles del navegador, aunque bloquear cookies necesarias puede impedir iniciar sesión o utilizar funciones."
+    },
+    {
+      "type": "heading",
+      "text": "5. Cambios y contacto",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Esta política se actualizará cuando cambien las tecnologías utilizadas. Contacto: soporte@datara-lab.com."
+    },
+    {
+      "type": "heading",
+      "text": "Configuración prevista para la V1",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "La V1 utilizará únicamente cookies y tecnologías estrictamente necesarias para autenticación, seguridad, sesión, balanceo y procesamiento del pago. No se activarán cookies de publicidad, perfilamiento o analítica no esencial hasta implementar un inventario verificado y, cuando corresponda, un mecanismo de consentimiento."
+    }
+  ]
+}

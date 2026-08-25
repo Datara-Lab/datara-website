@@ -6067,6 +6067,129 @@ export const commercialPurchases =
     ],
   );
 
+export const commercialLegalAcceptances =
+  pgTable(
+    "commercial_legal_acceptances",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      commercialPurchaseId: uuid(
+        "commercial_purchase_id",
+      )
+        .notNull()
+        .references(
+          () =>
+            commercialPurchases.id,
+          {
+            onDelete: "restrict",
+          },
+        ),
+
+      tenantId: uuid("tenant_id")
+        .references(() => tenants.id, {
+          onDelete: "set null",
+        }),
+
+      clerkUserId: text(
+        "clerk_user_id",
+      ),
+
+      clerkOrganizationId: text(
+        "clerk_organization_id",
+      ),
+
+      ownerEmail: text(
+        "owner_email",
+      ),
+
+      legalBundleVersion: text(
+        "legal_bundle_version",
+      ).notNull(),
+
+      documentKeys: jsonb(
+        "document_keys",
+      )
+        .$type<string[]>()
+        .notNull()
+        .default([]),
+
+      documentsAccepted: boolean(
+        "documents_accepted",
+      )
+        .notNull()
+        .default(false),
+
+      recurringChargesAccepted:
+        boolean(
+          "recurring_charges_accepted",
+        )
+          .notNull()
+          .default(false),
+
+      billingPeriod: text(
+        "billing_period",
+      ).notNull(),
+
+      totalAmount: numeric(
+        "total_amount",
+        {
+          precision: 12,
+          scale: 2,
+        },
+      ).notNull(),
+
+      currency: text("currency")
+        .notNull(),
+
+      ipAddress: text(
+        "ip_address",
+      ),
+
+      userAgent: text(
+        "user_agent",
+      ),
+
+      metadata: jsonb("metadata")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      acceptedAt: timestamp(
+        "accepted_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "commercial_legal_acceptances_purchase_unique",
+      ).on(
+        table.commercialPurchaseId,
+      ),
+
+      index(
+        "commercial_legal_acceptances_tenant_idx",
+      ).on(
+        table.tenantId,
+        table.acceptedAt,
+      ),
+
+      index(
+        "commercial_legal_acceptances_user_idx",
+      ).on(
+        table.clerkUserId,
+        table.acceptedAt,
+      ),
+    ],
+  );
+
 export const subscriptions =
   pgTable(
     "subscriptions",

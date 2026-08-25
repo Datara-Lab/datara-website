@@ -31,11 +31,17 @@ import {
 
 import {
     commercialCatalogItems,
+    commercialLegalAcceptances,
     commercialPurchases,
     subscriptions,
     tenants,
     trialRedemptions,
 } from "@/db/schema";
+
+import {
+    checkoutLegalDocuments,
+    legalBundleVersion,
+} from "@/lib/legal/legal-documents";
 
 export const dynamic =
     "force-dynamic";
@@ -49,6 +55,7 @@ type CheckoutPayload = {
     industry?: unknown;
     billingPeriod?: unknown;
     catalogItemIds?: unknown;
+    legalAcceptance?: unknown;
 };
 
 class ApiError extends Error {
@@ -76,6 +83,52 @@ function isRecord(
         value !== null &&
         !Array.isArray(value)
     );
+}
+
+function validateLegalAcceptance(
+    value: unknown,
+    billingPeriod:
+        | "monthly"
+        | "annual"
+        | "annual_installments",
+): void {
+    if (!isRecord(value)) {
+        throw new ApiError(
+            "Debes aceptar los documentos legales para continuar.",
+            400,
+        );
+    }
+
+    if (
+        value.bundleVersion !==
+        legalBundleVersion
+    ) {
+        throw new ApiError(
+            "Los documentos legales fueron actualizados. Revísalos y vuelve a aceptar.",
+            400,
+        );
+    }
+
+    if (
+        value.documentsAccepted !== true
+    ) {
+        throw new ApiError(
+            "Debes aceptar los documentos legales para continuar.",
+            400,
+        );
+    }
+
+    if (
+        billingPeriod !==
+            "annual_installments" &&
+        value.recurringChargesAccepted !==
+            true
+    ) {
+        throw new ApiError(
+            "Debes autorizar los cobros recurrentes para continuar.",
+            400,
+        );
+    }
 }
 
 function getEnvironment():
@@ -315,6 +368,11 @@ export async function POST(
             getBillingPeriod(
                 payload.billingPeriod,
             );
+
+        validateLegalAcceptance(
+            payload.legalAcceptance,
+            billingPeriod,
+        );
 
         const requestedItemIds =
             getCatalogItemIds(
@@ -864,6 +922,26 @@ export async function POST(
                         1000,
             );
 
+        const forwardedFor =
+            request.headers.get(
+                "x-forwarded-for",
+            );
+
+        const ipAddress =
+            request.headers.get(
+                "cf-connecting-ip",
+            ) ??
+            forwardedFor
+                ?.split(",")[0]
+                ?.trim() ??
+            null;
+
+        const userAgent =
+            request.headers
+                .get("user-agent")
+                ?.slice(0, 1000) ??
+            null;
+
         const [purchase] =
             await db
                 .insert(
@@ -924,6 +1002,67 @@ export async function POST(
                 500,
             );
         }
+
+        await db
+            .insert(
+                commercialLegalAcceptances,
+            )
+            .values({
+                commercialPurchaseId:
+                    purchase.id,
+
+                tenantId:
+                    linkedTenantId,
+
+                clerkUserId:
+                    userId ?? null,
+
+                clerkOrganizationId:
+                    linkedOrganizationId ??
+                    orgId ??
+                    null,
+
+                ownerEmail:
+                    linkedOwnerEmail,
+
+                legalBundleVersion,
+
+                documentKeys:
+                    checkoutLegalDocuments.map(
+                        (document) =>
+                            document.key,
+                    ),
+
+                documentsAccepted:
+                    true,
+
+                recurringChargesAccepted:
+                    billingPeriod !==
+                    "annual_installments",
+
+                billingPeriod,
+
+                totalAmount:
+                    (
+                        totalAmountInCents /
+                        100
+                    ).toFixed(2),
+
+                currency,
+
+                ipAddress,
+                userAgent,
+
+                metadata: {
+                    source:
+                        "commercial_checkout",
+                    purchaseType,
+                    industry,
+                },
+
+                acceptedAt:
+                    now,
+            });
 
         const stripe =
             createStripeClient(

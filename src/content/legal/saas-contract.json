@@ -1,0 +1,320 @@
+{
+  "key": "saas-contract",
+  "title": "Contrato Marco de Prestación de Servicios SaaS",
+  "sourceFile": "01_Contrato_SaaS_Datara_V1.docx",
+  "version": "1.0",
+  "effectiveDate": "2026-08-15",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "VERSIÓN DE TRABAJO · SUJETA A REVISIÓN JURÍDICA ANTES DE PRODUCCIÓN"
+    },
+    {
+      "type": "title",
+      "text": "Contrato Marco de Prestación de Servicios SaaS",
+      "level": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara - CRM, Analytics y productos/módulos contratados"
+    },
+    {
+      "type": "paragraph",
+      "text": "Versión 1.0 | Fecha de referencia: 15 de agosto de 2026"
+    },
+    {
+      "type": "paragraph",
+      "text": "BORRADOR PARA REVISIÓN LEGAL. Documento preparado para la V1 de Datara. Los campos entre corchetes deben completarse antes de publicación o firma. Se recomienda revisión final por abogado mexicano especializado en tecnología y protección de datos."
+    },
+    {
+      "type": "heading",
+      "text": "1. Partes",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El presente Contrato Marco de Prestación de Servicios SaaS (el “Contrato”) se celebra entre Jean Paul Augdey Rodriguez, con RFC AURJ850415FN2 y domicilio en San Andrés 2310, Campestre del Lago, Cuautitlán Izcalli, Estado de México, C.P. 54766 (“Datara”), y la persona física con actividad empresarial o persona moral identificada en la orden de contratación, formulario de alta, cotización o Workspace correspondiente (el “Cliente”)."
+    },
+    {
+      "type": "paragraph",
+      "text": "Quien acepte este Contrato en representación del Cliente declara contar con facultades suficientes para obligarlo."
+    },
+    {
+      "type": "heading",
+      "text": "2. Objeto",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara otorgará al Cliente un derecho limitado, no exclusivo, no transferible y revocable de acceso y uso a los productos, módulos y funcionalidades SaaS contratados, incluyendo, según corresponda, Datara CRM, Datara Analytics y módulos adicionales habilitados en el Workspace."
+    },
+    {
+      "type": "paragraph",
+      "text": "El alcance comercial específico, número de usuarios, módulos, precio, periodicidad, promociones y servicios adicionales será el indicado en la orden de contratación o en el portal de Datara al momento de la compra."
+    },
+    {
+      "type": "heading",
+      "text": "3. Cuenta, Workspace y usuarios",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "El Cliente es responsable de la veracidad de sus datos de registro y de mantener seguras sus credenciales."
+    },
+    {
+      "type": "list-item",
+      "text": "El primer usuario habilitado como administrador podrá invitar usuarios, asignar roles y administrar permisos conforme a las funciones disponibles."
+    },
+    {
+      "type": "list-item",
+      "text": "El Cliente responde por las actividades realizadas por sus usuarios autorizados y deberá retirar accesos cuando dejen de ser necesarios."
+    },
+    {
+      "type": "list-item",
+      "text": "Datara podrá conservar registros técnicos y de auditoría razonables para seguridad, soporte, cumplimiento y prevención de abuso."
+    },
+    {
+      "type": "heading",
+      "text": "4. Suscripción, precios, impuestos y pago",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El Cliente pagará las cuotas indicadas al contratar. Salvo que se indique expresamente lo contrario, los importes no incluyen impuestos aplicables. Las promociones, descuentos y programas de referidos se regirán por sus condiciones particulares."
+    },
+    {
+      "type": "paragraph",
+      "text": "En caso de falta de pago, Datara podrá limitar o suspender el acceso después de los avisos razonables previstos en el flujo comercial aplicable. La suspensión no extingue cantidades vencidas."
+    },
+    {
+      "type": "heading",
+      "text": "5. Vigencia, renovación y cancelación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "La suscripción tendrá la periodicidad seleccionada y podrá renovarse conforme a la modalidad contratada. El Cliente podrá solicitar cancelación para evitar futuras renovaciones, sujeto a los plazos mostrados en el portal o en la orden de contratación. Salvo disposición legal o condición comercial expresa, los periodos ya iniciados no generan devolución proporcional."
+    },
+    {
+      "type": "heading",
+      "text": "6. Datos del Cliente",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Entre las partes, el Cliente conserva los derechos que le correspondan sobre la información, archivos, bases de datos, configuraciones y contenidos que cargue, conecte o genere mediante el servicio (“Datos del Cliente”). Este Contrato no transfiere a Datara la propiedad de los Datos del Cliente."
+    },
+    {
+      "type": "paragraph",
+      "text": "El Cliente instruye a Datara a alojar, organizar, transformar, consultar, respaldar y procesar los Datos del Cliente únicamente en la medida necesaria para prestar, asegurar, mantener y soportar los servicios contratados, así como conforme al Acuerdo de Tratamiento de Datos aplicable."
+    },
+    {
+      "type": "heading",
+      "text": "7. Protección de datos personales",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Cuando Datara trate datos personales por cuenta del Cliente, Datara actuará como persona encargada en los términos aplicables y seguirá las instrucciones documentadas del Cliente, sujeto a la legislación mexicana y al Acuerdo de Tratamiento de Datos. Respecto de datos que Datara recabe para administrar su propia relación comercial, cuenta, facturación, seguridad o soporte, Datara actuará como responsable conforme a su Aviso de Privacidad."
+    },
+    {
+      "type": "heading",
+      "text": "8. Eliminación, restauración y conservación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "La eliminación de registros desde la interfaz puede operar inicialmente como eliminación lógica (soft delete), por lo que el registro dejará de mostrarse en las vistas ordinarias sin ser destruido inmediatamente. Datara podrá ofrecer mecanismos de restauración, bloqueo y posterior supresión conforme a la configuración del producto, instrucciones del Cliente, obligaciones legales y periodos de conservación aplicables."
+    },
+    {
+      "type": "paragraph",
+      "text": "Determinados registros transaccionales, de auditoría, seguridad, facturación o aquellos sujetos a obligaciones legales podrán no ser eliminables desde la interfaz y, en su caso, deberán cancelarse, anularse, bloquearse o conservarse durante el plazo correspondiente."
+    },
+    {
+      "type": "heading",
+      "text": "9. Exportación y terminación",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Antes de la terminación, el Cliente deberá utilizar las herramientas de exportación disponibles o solicitar asistencia conforme al plan contratado. Tras la terminación, Datara podrá mantener los Datos del Cliente durante un periodo limitado de recuperación de 90 días naturales, tras el cual podrán ser eliminados o anonimizados, salvo conservación exigida por ley, controversia, seguridad o instrucción válida."
+    },
+    {
+      "type": "heading",
+      "text": "10. Seguridad y confidencialidad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara aplicará medidas administrativas, técnicas y físicas razonables y proporcionales a la naturaleza de los servicios y datos tratados. Ningún servicio conectado a Internet puede garantizar seguridad absoluta. Cada parte protegerá la información confidencial de la otra con un grado de cuidado no menor al utilizado para su propia información de naturaleza similar."
+    },
+    {
+      "type": "heading",
+      "text": "11. Proveedores y subencargados",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El Cliente autoriza a Datara a utilizar proveedores de infraestructura, autenticación, almacenamiento, bases de datos, comunicaciones, pagos, monitoreo y servicios relacionados necesarios para operar la plataforma. Datara procurará que los proveedores que traten Datos del Cliente estén sujetos a obligaciones de protección y confidencialidad apropiadas. La lista vigente de subencargados podrá publicarse o ponerse a disposición del Cliente."
+    },
+    {
+      "type": "heading",
+      "text": "12. Propiedad intelectual",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara y sus licenciantes conservan todos los derechos sobre el software, interfaces, diseños, marcas, documentación, modelos, plantillas, mejoras, código, metodologías y tecnología de Datara. El Cliente no podrá copiar, revender, sublicenciar, descompilar, intentar obtener código fuente ni utilizar el servicio para crear un producto sustancialmente equivalente, salvo en la medida permitida por ley."
+    },
+    {
+      "type": "heading",
+      "text": "13. Uso permitido y restricciones",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "No cargar contenido ilícito ni utilizar Datara para fraude, acoso, distribución de malware o vulneración de derechos de terceros."
+    },
+    {
+      "type": "list-item",
+      "text": "No intentar eludir controles de acceso, límites técnicos o mecanismos de seguridad."
+    },
+    {
+      "type": "list-item",
+      "text": "No utilizar credenciales de terceros sin autorización."
+    },
+    {
+      "type": "list-item",
+      "text": "El Cliente deberá contar con las bases legales, avisos y consentimientos que correspondan respecto de los datos que incorpore a Datara."
+    },
+    {
+      "type": "heading",
+      "text": "14. Disponibilidad, cambios y soporte",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara procurará mantener el servicio disponible y podrá realizar mantenimiento, actualizaciones, correcciones y mejoras. Salvo que se contrate un SLA específico, no se garantiza un porcentaje determinado de disponibilidad. Datara podrá modificar funcionalidades siempre que no elimine materialmente, sin alternativa razonable, la esencia del servicio contratado durante el periodo pagado."
+    },
+    {
+      "type": "heading",
+      "text": "15. Servicios de terceros",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Las integraciones con servicios de terceros están sujetas a la disponibilidad y condiciones de dichos terceros. Datara no controla cambios, interrupciones o decisiones de terceros que puedan afectar una integración, aunque procurará informar impactos materiales cuando sea razonablemente posible."
+    },
+    {
+      "type": "heading",
+      "text": "16. Garantías y responsabilidad",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara prestará los servicios con diligencia comercial razonable. En la máxima medida permitida por la legislación aplicable, Datara no será responsable por daños indirectos, pérdida de oportunidades, lucro cesante o pérdida derivada de instrucciones, configuraciones, datos incorrectos o uso no autorizado atribuible al Cliente."
+    },
+    {
+      "type": "paragraph",
+      "text": "PENDIENTE DE REVISIÓN JURÍDICA Definir un límite agregado de responsabilidad apropiado para el modelo comercial de Datara, por ejemplo vinculado a las cuotas pagadas por el Cliente durante un periodo previo determinado, sujeto a excepciones que legalmente no puedan limitarse."
+    },
+    {
+      "type": "heading",
+      "text": "17. Indemnización",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Cada parte responderá por sus propios actos ilícitos e incumplimientos. El Cliente mantendrá indemne a Datara frente a reclamaciones de terceros derivadas de Datos del Cliente o usos del servicio que infrinjan la ley o derechos de terceros, en la medida atribuible al Cliente."
+    },
+    {
+      "type": "heading",
+      "text": "18. Modificaciones",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Datara podrá actualizar este Contrato por cambios legales, de seguridad, producto u operación. Los cambios materiales se comunicarán con antelación razonable y, cuando corresponda, aplicarán a partir de la siguiente renovación o requerirán nueva aceptación."
+    },
+    {
+      "type": "heading",
+      "text": "19. Comunicaciones y aceptación electrónica",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Las partes reconocen que el consentimiento puede manifestarse mediante medios electrónicos. La aceptación mediante casilla, botón, flujo de contratación, firma electrónica u otro mecanismo inequívoco podrá conservarse junto con fecha, versión del documento, usuario y evidencia técnica razonable."
+    },
+    {
+      "type": "heading",
+      "text": "20. Legislación y jurisdicción",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "El Contrato se regirá por las leyes aplicables de los Estados Unidos Mexicanos. Para cualquier controversia, las partes se someten a los tribunales competentes de Cuautitlán Izcalli, Estado de México, salvo competencia irrenunciable o mecanismo distinto pactado expresamente."
+    },
+    {
+      "type": "heading",
+      "text": "21. Datos de contacto",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Soporte: soporte@datara-lab.com. Privacidad: soporte@datara-lab.com. Sitio: datara-lab.com."
+    },
+    {
+      "type": "heading",
+      "text": "22. Aceptación",
+      "level": 2
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "DATARA",
+          "CLIENTE"
+        ],
+        [
+          "Nombre: Jean Paul Augdey Rodriguez",
+          "Razón social: __________________________"
+        ],
+        [
+          "Representante: __________________________",
+          "Representante: __________________________"
+        ],
+        [
+          "Firma / aceptación electrónica: __________",
+          "Firma / aceptación electrónica: __________"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Protección de personas consumidoras",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "Cuando la persona contratante tenga el carácter de consumidora, ninguna disposición de este documento limitará derechos irrenunciables reconocidos por la legislación mexicana. La jurisdicción pactada se aplicará sin perjuicio de los fueros y competencias que resulten obligatorios conforme a dicha legislación."
+    },
+    {
+      "type": "heading",
+      "text": "Consentimiento para cobros recurrentes",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "Los cobros automáticos recurrentes requerirán una aceptación expresa, separada y no preseleccionada. Antes de confirmar la contratación, Datara informará de forma clara la periodicidad, el importe aplicable, la fecha o regla de cobro, la renovación y el mecanismo de cancelación."
+    },
+    {
+      "type": "heading",
+      "text": "Evidencia de aceptación electrónica",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "La plataforma conservará un registro auditable con el identificador de la compra, usuario y organización cuando existan, fecha y hora, contexto de aceptación, versiones y huellas digitales de los documentos, texto del consentimiento y evidencia técnica razonable. El registro de aceptación no sustituye las obligaciones de información ni los derechos de revocación o cancelación aplicables."
+    }
+  ]
+}

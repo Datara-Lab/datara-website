@@ -1,0 +1,182 @@
+{
+  "key": "retention",
+  "title": "Política de Conservación, Eliminación y Restauración de Datos",
+  "sourceFile": "05_Politica_Conservacion_Eliminacion_Datara_V1.docx",
+  "version": "1.0",
+  "effectiveDate": "2026-08-15",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "VERSIÓN DE TRABAJO · SUJETA A REVISIÓN JURÍDICA ANTES DE PRODUCCIÓN"
+    },
+    {
+      "type": "title",
+      "text": "Política de Conservación, Eliminación y Restauración de Datos",
+      "level": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Política operativa V1 de Datara"
+    },
+    {
+      "type": "paragraph",
+      "text": "Versión 1.0 | Fecha de referencia: 15 de agosto de 2026"
+    },
+    {
+      "type": "paragraph",
+      "text": "BORRADOR PARA REVISIÓN LEGAL. Documento preparado para la V1 de Datara. Los campos entre corchetes deben completarse antes de publicación o firma. Se recomienda revisión final por abogado mexicano especializado en tecnología y protección de datos."
+    },
+    {
+      "type": "heading",
+      "text": "1. Objetivo",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Definir cómo Datara conserva, elimina, bloquea, restaura y suprime información para equilibrar continuidad operativa, recuperación ante errores, privacidad, auditoría y obligaciones legales."
+    },
+    {
+      "type": "heading",
+      "text": "2. Principios",
+      "level": 2
+    },
+    {
+      "type": "list-item",
+      "text": "Minimización: conservar únicamente lo necesario para finalidades legítimas."
+    },
+    {
+      "type": "list-item",
+      "text": "Trazabilidad: registrar acciones relevantes de eliminación y restauración cuando la funcionalidad lo permita."
+    },
+    {
+      "type": "list-item",
+      "text": "Recuperabilidad controlada: utilizar soft delete para reducir pérdidas accidentales."
+    },
+    {
+      "type": "list-item",
+      "text": "Supresión efectiva: eliminar o anonimizar cuando expire la necesidad y no exista obligación de conservación."
+    },
+    {
+      "type": "list-item",
+      "text": "Separación: distinguir Datos del Cliente, datos de cuenta de Datara, logs, facturación y respaldos."
+    },
+    {
+      "type": "heading",
+      "text": "3. Modelo de eliminación V1",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "En módulos que soporten eliminación, la acción del usuario marcará inicialmente el registro con atributos equivalentes a deleted_at y deleted_by. El registro se excluirá de las vistas ordinarias y podrá conservarse para restauración durante un periodo definido."
+    },
+    {
+      "type": "heading",
+      "text": "4. Matriz inicial de conservación",
+      "level": 2
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Categoría",
+          "Acción al eliminar",
+          "Periodo V1 propuesto",
+          "Observaciones"
+        ],
+        [
+          "Registros CRM ordinarios",
+          "Soft delete",
+          "30 días 90 días naturales después de la terminación",
+          "Restaurables por Admin cuando la función exista."
+        ],
+        [
+          "Cotizaciones no finalizadas",
+          "Soft delete / cancelar",
+          "30 días 90 días naturales después de la terminación",
+          "Conservar trazabilidad si están vinculadas a operaciones."
+        ],
+        [
+          "Ventas/facturación",
+          "Cancelar/anular, no borrar libremente",
+          "Según obligaciones aplicables",
+          "No destruir evidencia contable/fiscal requerida."
+        ],
+        [
+          "Usuarios",
+          "Desactivar",
+          "Mientras exista relación + plazo legal",
+          "Conservar auditoría mínima."
+        ],
+        [
+          "Logs de seguridad",
+          "Rotación",
+          "90-365 días 12 meses para registros operativos de seguridad; 5 años para documentación fiscal; y 10 años para contratos, consentimientos y mensajes de datos que originen derechos u obligaciones",
+          "Ajustar a riesgo y costos."
+        ],
+        [
+          "Backups",
+          "Sobrescritura",
+          "30-90 días 90 días naturales",
+          "No restauración individual garantizada desde backup."
+        ],
+        [
+          "Datos tras cancelación del Workspace",
+          "Bloqueo/ventana de exportación",
+          "30/60/90 días 90 días naturales",
+          "Después eliminar/anonimizar salvo obligación."
+        ],
+        [
+          "Datos de facturación",
+          "Conservar",
+          "Plazo fiscal/legal aplicable",
+          "Validar con contador/abogado."
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "5. Papelera",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "La Papelera no es requisito de lanzamiento si el backend ya conserva soft delete. Cuando se implemente, deberá limitarse por permisos y mostrar, al menos, tipo de registro, identificador, fecha de eliminación, usuario que eliminó y acción de restauración."
+    },
+    {
+      "type": "heading",
+      "text": "6. Eliminación definitiva",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "La purga definitiva debe ejecutarse mediante proceso controlado. Antes de purgar, el sistema deberá verificar dependencias, obligaciones de conservación, bloqueos legales y relaciones que requieran anonimización o conservación de referencias mínimas."
+    },
+    {
+      "type": "heading",
+      "text": "7. Derechos de titulares",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "Una solicitud de cancelación de datos personales no equivale necesariamente a borrar de inmediato un registro empresarial completo. Datara y el Cliente deberán determinar qué datos deben bloquearse, suprimirse, anonimizarse o conservarse por obligación legal, según sus respectivos roles."
+    },
+    {
+      "type": "heading",
+      "text": "8. Responsables internos",
+      "level": 2
+    },
+    {
+      "type": "paragraph",
+      "text": "90 días naturales Responsable de privacidad; 90 días naturales responsable técnico de purgas; 90 días naturales proceso de aprobación para restauraciones o eliminaciones extraordinarias."
+    },
+    {
+      "type": "heading",
+      "text": "Criterio de conservación y supresión",
+      "level": 3
+    },
+    {
+      "type": "paragraph",
+      "text": "Los datos se conservarán únicamente durante el tiempo necesario para prestar el servicio, atender responsabilidades y cumplir obligaciones legales. Cuando dejen de ser necesarios, se bloquearán y posteriormente se suprimirán o anonimizarán. Los respaldos operativos seguirán ciclos de sobrescritura de hasta 90 días, salvo retención legal, incidente de seguridad o requerimiento de autoridad."
+    }
+  ]
+}
