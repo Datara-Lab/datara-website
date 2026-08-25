@@ -80,7 +80,7 @@ export async function createStripeCheckoutSession({
                 method: "POST",
                 headers: {
                     Authorization:
-                        `Bearer ${secretKey}`,
+                        `Bearer ${secretKey.trim()}`,
                     "Content-Type":
                         "application/x-www-form-urlencoded",
                 },
