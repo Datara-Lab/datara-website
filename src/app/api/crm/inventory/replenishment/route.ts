@@ -8,6 +8,7 @@ import {
   desc,
   eq,
   inArray,
+  sql,
 } from "drizzle-orm";
 
 import {
@@ -19,6 +20,7 @@ import { db } from "@/db";
 import {
   crmProducts,
   inventoryLocations,
+  inventoryMovements,
   inventoryReplenishmentRequestItems,
   inventoryReplenishmentRequests,
   inventoryStocks,
@@ -59,6 +61,19 @@ type ReplenishmentPayload = {
   currency?: unknown;
   notes?: unknown;
   items?: unknown;
+};
+
+type ReplenishmentReceiptPayload = {
+  id?: unknown;
+  action?: unknown;
+  reference?: unknown;
+  notes?: unknown;
+
+  items?: Array<{
+    id?: unknown;
+    receivedQuantity?: unknown;
+    unitCost?: unknown;
+  }>;
 };
 
 class ApiError extends Error {
@@ -1145,6 +1160,924 @@ export async function POST(
         status: 201,
       },
     );
+  } catch (error) {
+    return createErrorResponse(
+      error,
+    );
+  }
+}
+
+export async function PATCH(
+  request: Request,
+) {
+  try {
+    const {
+      tenantId,
+      userId,
+      branchAccess,
+    } = await getContext(
+      "manage",
+    );
+
+    const payload =
+      (await request.json()) as
+        ReplenishmentReceiptPayload;
+
+    const requestId =
+      getString(
+        payload.id,
+      );
+
+    const action =
+      getString(
+        payload.action,
+      );
+
+    if (!requestId) {
+      throw new ApiError(
+        "No fue posible identificar la solicitud de reposición.",
+        400,
+      );
+    }
+
+    if (action !== "Recibir") {
+      throw new ApiError(
+        "La acción solicitada no es válida.",
+        400,
+      );
+    }
+
+    const [replenishmentRequest] =
+      await db
+        .select({
+          id:
+            inventoryReplenishmentRequests
+              .id,
+
+          status:
+            inventoryReplenishmentRequests
+              .status,
+
+          branchId:
+            inventoryReplenishmentRequests
+              .branchId,
+
+          reference:
+            inventoryReplenishmentRequests
+              .reference,
+
+          currency:
+            inventoryReplenishmentRequests
+              .currency,
+        })
+        .from(
+          inventoryReplenishmentRequests,
+        )
+        .where(
+          and(
+            eq(
+              inventoryReplenishmentRequests
+                .id,
+              requestId,
+            ),
+
+            eq(
+              inventoryReplenishmentRequests
+                .tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .limit(1);
+
+    if (!replenishmentRequest) {
+      throw new ApiError(
+        "La solicitud de reposición no existe.",
+        404,
+      );
+    }
+
+    if (
+      !canAccessBranch(
+        replenishmentRequest.branchId,
+        branchAccess,
+      )
+    ) {
+      throw new ApiError(
+        "No tienes acceso a esta solicitud de reposición.",
+        403,
+      );
+    }
+
+    if (
+      replenishmentRequest.status ===
+      "Recibida"
+    ) {
+      throw new ApiError(
+        "La solicitud ya fue recibida.",
+        409,
+      );
+    }
+
+    if (
+      replenishmentRequest.status ===
+      "Cancelada"
+    ) {
+      throw new ApiError(
+        "No es posible recibir una solicitud cancelada.",
+        409,
+      );
+    }
+
+        if (
+      !Array.isArray(
+        payload.items,
+      ) ||
+      payload.items.length ===
+        0
+    ) {
+      throw new ApiError(
+        "Captura al menos una partida para recibir.",
+        400,
+      );
+    }
+
+    const requestItems =
+      await db
+        .select({
+          id:
+            inventoryReplenishmentRequestItems
+              .id,
+
+          stockId:
+            inventoryReplenishmentRequestItems
+              .stockId,
+
+          branchId:
+            inventoryReplenishmentRequestItems
+              .branchId,
+
+          locationId:
+            inventoryReplenishmentRequestItems
+              .locationId,
+
+          productId:
+            inventoryReplenishmentRequestItems
+              .productId,
+
+          productName:
+            crmProducts.name,
+
+          requestedQuantity:
+            inventoryReplenishmentRequestItems
+              .requestedQuantity,
+
+          receivedQuantity:
+            inventoryReplenishmentRequestItems
+              .receivedQuantity,
+
+          currentUnitCost:
+            inventoryReplenishmentRequestItems
+              .unitCost,
+
+          stockQuantity:
+            inventoryStocks.quantity,
+
+          stockAverageUnitCost:
+            inventoryStocks
+              .averageUnitCost,
+
+          stockLastUnitCost:
+            inventoryStocks
+              .lastUnitCost,
+        })
+        .from(
+          inventoryReplenishmentRequestItems,
+        )
+        .innerJoin(
+          inventoryStocks,
+          and(
+            eq(
+              inventoryReplenishmentRequestItems
+                .stockId,
+              inventoryStocks.id,
+            ),
+            eq(
+              inventoryStocks
+                .tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .innerJoin(
+          crmProducts,
+          and(
+            eq(
+              inventoryReplenishmentRequestItems
+                .productId,
+              crmProducts.id,
+            ),
+            eq(
+              crmProducts.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(
+              inventoryReplenishmentRequestItems
+                .tenantId,
+              tenantId,
+            ),
+            eq(
+              inventoryReplenishmentRequestItems
+                .requestId,
+              requestId,
+            ),
+          ),
+        );
+
+    const requestItemsById =
+      new Map(
+        requestItems.map(
+          (item) => [
+            item.id,
+            item,
+          ],
+        ),
+      );
+
+    const receiptItems =
+      payload.items.map(
+        (
+          rawItem,
+          index,
+        ) => {
+          if (
+            !rawItem ||
+            typeof rawItem !==
+              "object" ||
+            Array.isArray(
+              rawItem,
+            )
+          ) {
+            throw new ApiError(
+              `La partida ${index + 1} no tiene un formato válido.`,
+              400,
+            );
+          }
+
+          const itemId =
+            getString(
+              rawItem.id,
+            );
+
+          const receivedQuantity =
+            getPositiveInteger(
+              rawItem.receivedQuantity,
+            );
+
+          const unitCostValue =
+            rawItem.unitCost ===
+              null ||
+            rawItem.unitCost ===
+              undefined ||
+            rawItem.unitCost ===
+              ""
+              ? undefined
+              : Number(
+                  rawItem.unitCost,
+                );
+
+          if (!itemId) {
+            throw new ApiError(
+              `No fue posible identificar la partida ${index + 1}.`,
+              400,
+            );
+          }
+
+          if (
+            receivedQuantity ===
+              undefined
+          ) {
+            throw new ApiError(
+              `La cantidad recibida de la partida ${index + 1} debe ser un entero mayor que cero.`,
+              400,
+            );
+          }
+
+          if (
+            unitCostValue !==
+              undefined &&
+            (
+              !Number.isFinite(
+                unitCostValue,
+              ) ||
+              unitCostValue < 0
+            )
+          ) {
+            throw new ApiError(
+              `El costo unitario de la partida ${index + 1} no es válido.`,
+              400,
+            );
+          }
+
+          const existingItem =
+            requestItemsById.get(
+              itemId,
+            );
+
+          if (!existingItem) {
+            throw new ApiError(
+              `La partida ${index + 1} no pertenece a esta solicitud.`,
+              400,
+            );
+          }
+
+          const pendingQuantity =
+            existingItem
+              .requestedQuantity -
+            existingItem
+              .receivedQuantity;
+
+          if (
+            receivedQuantity >
+            pendingQuantity
+          ) {
+            throw new ApiError(
+              `"${existingItem.productName}" tiene ${pendingQuantity} unidad(es) pendientes por recibir.`,
+              409,
+            );
+          }
+
+          const fallbackUnitCost =
+            Number(
+              existingItem
+                .currentUnitCost ??
+              existingItem
+                .stockLastUnitCost ??
+              existingItem
+                .stockAverageUnitCost ??
+              0,
+            );
+
+          const unitCost =
+            unitCostValue ??
+            (
+              Number.isFinite(
+                fallbackUnitCost,
+              )
+                ? fallbackUnitCost
+                : 0
+            );
+
+          return {
+            ...existingItem,
+
+            receivedNow:
+              receivedQuantity,
+
+            unitCost:
+              Math.round(
+                unitCost *
+                  100,
+              ) / 100,
+          };
+        },
+      );
+
+    const receiptItemIds =
+      receiptItems.map(
+        (item) =>
+          item.id,
+      );
+
+    if (
+      new Set(
+        receiptItemIds,
+      ).size !==
+      receiptItemIds.length
+    ) {
+      throw new ApiError(
+        "La recepción contiene partidas duplicadas.",
+        400,
+      );
+    }
+
+    const user =
+      await currentUser();
+
+    const receivedByName =
+      [
+        user?.firstName,
+        user?.lastName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim() ||
+      user?.emailAddresses[0]
+        ?.emailAddress ||
+      "Usuario";
+
+    const now =
+      new Date();
+
+    const receiptReference =
+      getString(
+        payload.reference,
+      ) ??
+      replenishmentRequest
+        .reference;
+
+    const receiptNotes =
+      getString(
+        payload.notes,
+      );
+
+    const stockQueries =
+      receiptItems.map(
+        (item) => {
+          const previousQuantity =
+            Number(
+              item.stockQuantity,
+            );
+
+          const previousAverageCost =
+            Number(
+              item.stockAverageUnitCost ??
+              0,
+            );
+
+          const nextQuantity =
+            previousQuantity +
+            item.receivedNow;
+
+          const nextAverageCost =
+            nextQuantity > 0
+              ? (
+                  (
+                    previousQuantity *
+                    (
+                      Number.isFinite(
+                        previousAverageCost,
+                      )
+                        ? previousAverageCost
+                        : 0
+                    )
+                  ) +
+                  (
+                    item.receivedNow *
+                    item.unitCost
+                  )
+                ) /
+                nextQuantity
+              : item.unitCost;
+
+          const normalizedAverageCost =
+            Math.round(
+              nextAverageCost *
+                100,
+            ) / 100;
+
+          return db
+            .update(
+              inventoryStocks,
+            )
+            .set({
+              quantity:
+                sql`${inventoryStocks.quantity} + ${item.receivedNow}`,
+
+              averageUnitCost:
+                String(
+                  normalizedAverageCost,
+                ),
+
+              lastUnitCost:
+                String(
+                  item.unitCost,
+                ),
+
+              updatedAt:
+                now,
+            })
+            .where(
+              and(
+                eq(
+                  inventoryStocks.id,
+                  item.stockId,
+                ),
+                eq(
+                  inventoryStocks
+                    .tenantId,
+                  tenantId,
+                ),
+              ),
+            );
+        },
+      );
+
+    const itemUpdateQueries =
+      receiptItems.map(
+        (item) => {
+          const nextReceivedQuantity =
+            item.receivedQuantity +
+            item.receivedNow;
+
+          const totalCost =
+            nextReceivedQuantity *
+            item.unitCost;
+
+          return db
+            .update(
+              inventoryReplenishmentRequestItems,
+            )
+            .set({
+              receivedQuantity:
+                nextReceivedQuantity,
+
+              unitCost:
+                String(
+                  item.unitCost,
+                ),
+
+              totalCost:
+                String(
+                  Math.round(
+                    totalCost *
+                      100,
+                  ) / 100,
+                ),
+
+              notes:
+                receiptNotes ??
+                null,
+
+              updatedAt:
+                now,
+            })
+            .where(
+              and(
+                eq(
+                  inventoryReplenishmentRequestItems
+                    .id,
+                  item.id,
+                ),
+                eq(
+                  inventoryReplenishmentRequestItems
+                    .tenantId,
+                  tenantId,
+                ),
+                eq(
+                  inventoryReplenishmentRequestItems
+                    .requestId,
+                  requestId,
+                ),
+              ),
+            );
+        },
+      );
+
+    const movementQueries =
+      receiptItems.map(
+        (item) => {
+          const previousQuantity =
+            Number(
+              item.stockQuantity,
+            );
+
+          const resultingQuantity =
+            previousQuantity +
+            item.receivedNow;
+
+          const previousAverageCost =
+            Number(
+              item.stockAverageUnitCost ??
+              0,
+            );
+
+          const resultingAverageCost =
+            resultingQuantity > 0
+              ? (
+                  (
+                    previousQuantity *
+                    (
+                      Number.isFinite(
+                        previousAverageCost,
+                      )
+                        ? previousAverageCost
+                        : 0
+                    )
+                  ) +
+                  (
+                    item.receivedNow *
+                    item.unitCost
+                  )
+                ) /
+                resultingQuantity
+              : item.unitCost;
+
+          return db
+            .insert(
+              inventoryMovements,
+            )
+            .values({
+              id:
+                crypto.randomUUID(),
+
+              tenantId,
+
+              branchId:
+                item.branchId,
+
+              locationId:
+                item.locationId,
+
+              productId:
+                item.productId,
+
+              stockId:
+                item.stockId,
+
+              type:
+                "Entrada",
+
+              quantity:
+                item.receivedNow,
+
+              previousQuantity,
+
+              resultingQuantity,
+
+              unitCost:
+                String(
+                  item.unitCost,
+                ),
+
+              totalCost:
+                String(
+                  Math.round(
+                    item.receivedNow *
+                      item.unitCost *
+                      100,
+                  ) / 100,
+                ),
+
+              resultingAverageCost:
+                String(
+                  Math.round(
+                    resultingAverageCost *
+                      100,
+                  ) / 100,
+                ),
+
+              reason:
+                "Recepción de reposición",
+
+              reference:
+                receiptReference,
+
+              performedByClerkUserId:
+                userId,
+
+              performedByName:
+                receivedByName,
+
+              metadata: {
+                replenishmentRequestId:
+                  requestId,
+
+                replenishmentReference:
+                  replenishmentRequest
+                    .reference,
+
+                productName:
+                  item.productName,
+
+                receivedQuantity:
+                  item.receivedNow,
+              },
+
+              createdAt:
+                now,
+            });
+        },
+      );
+
+    const receivedQuantityByItem =
+      new Map(
+        receiptItems.map(
+          (item) => [
+            item.id,
+            item.receivedQuantity +
+              item.receivedNow,
+          ],
+        ),
+      );
+
+    const fullyReceived =
+      requestItems.every(
+        (item) =>
+          (
+            receivedQuantityByItem.get(
+              item.id,
+            ) ??
+            item.receivedQuantity
+          ) >=
+          item.requestedQuantity,
+      );
+
+    const nextStatus =
+      fullyReceived
+        ? "Recibida"
+        : "Recibida parcialmente";
+
+    const requestUpdateQuery =
+      db
+        .update(
+          inventoryReplenishmentRequests,
+        )
+        .set({
+          status:
+            nextStatus,
+
+          receivedAt:
+            fullyReceived
+              ? now
+              : null,
+
+          updatedAt:
+            now,
+
+          metadata: {
+            receivedByClerkUserId:
+              userId,
+
+            receivedByName,
+
+            lastReceiptAt:
+              now.toISOString(),
+
+            lastReceiptReference:
+              receiptReference,
+          },
+        })
+        .where(
+          and(
+            eq(
+              inventoryReplenishmentRequests
+                .id,
+              requestId,
+            ),
+            eq(
+              inventoryReplenishmentRequests
+                .tenantId,
+              tenantId,
+            ),
+          ),
+        );
+
+    const auditQueries =
+      receiptItems.map(
+        (item) =>
+          createInventoryAuditQuery({
+            tenantId,
+
+            branchId:
+              item.branchId,
+
+            locationId:
+              item.locationId,
+
+            productId:
+              item.productId,
+
+            entityType:
+              "Solicitud de reposición",
+
+            entityId:
+              requestId,
+
+            action:
+              "Recibir",
+
+            summary:
+              `Se recibieron ${item.receivedNow} unidad(es) de ${item.productName} para la solicitud ${replenishmentRequest.reference}.`,
+
+            reason:
+              receiptNotes ??
+              "Recepción de reposición",
+
+            actorClerkUserId:
+              userId,
+
+            actorName:
+              receivedByName,
+
+            before: {
+              status:
+                replenishmentRequest
+                  .status,
+
+              quantity:
+                item.stockQuantity,
+
+              receivedQuantity:
+                item.receivedQuantity,
+            },
+
+            after: {
+              status:
+                nextStatus,
+
+              quantity:
+                item.stockQuantity +
+                item.receivedNow,
+
+              receivedQuantity:
+                item.receivedQuantity +
+                item.receivedNow,
+
+              unitCost:
+                item.unitCost,
+
+              reference:
+                receiptReference,
+            },
+
+            metadata: {
+              requestId,
+
+              replenishmentReference:
+                replenishmentRequest
+                  .reference,
+
+              requestItemId:
+                item.id,
+            },
+          }),
+      );
+
+    const batchQueries = [
+      ...stockQueries,
+      ...itemUpdateQueries,
+      ...movementQueries,
+      requestUpdateQuery,
+      ...auditQueries,
+    ];
+
+    await db.batch(
+      batchQueries as unknown as
+        Parameters<
+          typeof db.batch
+        >[0],
+    );
+
+    return NextResponse.json({
+      success: true,
+
+      message:
+        fullyReceived
+          ? "La solicitud fue recibida completamente y el inventario fue actualizado."
+          : "La recepción parcial fue registrada y el inventario fue actualizado.",
+
+      data: {
+        id:
+          replenishmentRequest.id,
+
+        reference:
+          replenishmentRequest
+            .reference,
+
+        status:
+          nextStatus,
+
+        receivedAt:
+          fullyReceived
+            ? now.toISOString()
+            : null,
+
+        receivedItems:
+          receiptItems.map(
+            (item) => ({
+              id:
+                item.id,
+
+              productId:
+                item.productId,
+
+              productName:
+                item.productName,
+
+              quantity:
+                item.receivedNow,
+
+              unitCost:
+                item.unitCost,
+            }),
+          ),
+      },
+    });
   } catch (error) {
     return createErrorResponse(
       error,

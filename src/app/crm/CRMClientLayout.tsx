@@ -54,6 +54,18 @@ type NavigationSettingsResponse = {
     error?: string;
 };
 
+type AssistantAccessResponse = {
+    success: boolean;
+
+    data?: {
+        enabled: boolean;
+        isReadOnly: boolean;
+        isAdministrator: boolean;
+    };
+
+    error?: string;
+};
+
 export default function CRMClientLayout({
     children,
 }: CRMLayoutProps) {
@@ -113,6 +125,13 @@ export default function CRMClientLayout({
         hiddenNavigationItemIds,
         setHiddenNavigationItemIds,
     ] = useState<string[]>([]);
+
+        const [
+        assistantEnabled,
+        setAssistantEnabled,
+    ] = useState<boolean | null>(
+        null,
+    );
 
     useEffect(() => {
         if (
@@ -185,6 +204,50 @@ export default function CRMClientLayout({
         }
 
         void loadNavigationOrder();
+
+                async function loadAssistantAccess() {
+            try {
+                const response =
+                    await fetch(
+                        "/api/crm/assistant/access",
+                        {
+                            cache:
+                                "no-store",
+                        },
+                    );
+
+                const result =
+                    (await response.json()) as
+                        AssistantAccessResponse;
+
+                if (
+                    !response.ok ||
+                    !result.success ||
+                    !isActive
+                ) {
+                    if (isActive) {
+                        setAssistantEnabled(
+                            false,
+                        );
+                    }
+
+                    return;
+                }
+
+                setAssistantEnabled(
+                    result.data?.enabled ??
+                        false,
+                );
+            } catch {
+                if (isActive) {
+                    setAssistantEnabled(
+                        false,
+                    );
+                }
+            }
+        }
+
+        void loadAssistantAccess();
 
         return () => {
             isActive = false;
@@ -602,11 +665,14 @@ export default function CRMClientLayout({
                 <>
                     {children}
 
-                    <CRMAssistant
-                        companyName={
-                            user.tenantName
-                        }
-                    />
+                    {assistantEnabled ===
+                    true ? (
+                        <CRMAssistant
+                            companyName={
+                                user.tenantName
+                            }
+                        />
+                    ) : null}
                 </>
             )}
         </AppShell>

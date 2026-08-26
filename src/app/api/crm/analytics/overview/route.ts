@@ -28,6 +28,10 @@ import {
 } from "@/db/schema";
 
 import {
+  getAITopUpSummary,
+} from "@/lib/ai/credits";
+
+import {
   getTenantAIConfiguration,
   getTenantAIUsage,
 } from "@/lib/ai/entitlements";
@@ -1004,6 +1008,7 @@ export async function GET(
     const [
       aiConfiguration,
       aiMessagesUsed,
+      aiExtraCredits,
     ] =
       await Promise.all([
         getTenantAIConfiguration(
@@ -1015,32 +1020,58 @@ export async function GET(
           tenant.id,
           "crm",
         ),
+
+        getAITopUpSummary(
+          tenant.id,
+          "crm",
+        ),
       ]);
 
     const aiUsage =
       aiConfiguration
         .monthlyMessageLimit >
-      0
+        0 ||
+      aiExtraCredits.original >
+        0
         ? {
             assistantName:
               aiConfiguration
                 .assistantName,
 
-            used:
-              aiMessagesUsed,
+            monthly: {
+              used:
+                aiMessagesUsed,
 
-            limit:
-              aiConfiguration
-                .monthlyMessageLimit,
-
-            remaining:
-              Math.max(
-                0,
-
+              limit:
                 aiConfiguration
-                  .monthlyMessageLimit -
-                  aiMessagesUsed,
-              ),
+                  .monthlyMessageLimit,
+
+              remaining:
+                Math.max(
+                  0,
+
+                  aiConfiguration
+                    .monthlyMessageLimit -
+                    aiMessagesUsed,
+                ),
+            },
+
+            extra: {
+              original:
+                aiExtraCredits.original,
+
+              used:
+                aiExtraCredits.used,
+
+              remaining:
+                aiExtraCredits.remaining,
+
+              nextExpiresAt:
+                aiExtraCredits
+                  .nextExpiresAt
+                  ?.toISOString() ??
+                null,
+            },
           }
         : null;
 

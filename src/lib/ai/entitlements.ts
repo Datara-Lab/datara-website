@@ -19,6 +19,10 @@ import {
   getMonthWindowStart,
 } from "@/lib/ai/rate-limit";
 
+import {
+  consumeAITopUpCredit,
+} from "@/lib/ai/credits";
+
 import type {
   DataraProduct,
 } from "@/lib/auth/types";
@@ -47,6 +51,232 @@ const DEFAULT_DEMO_MONTHLY_LIMIT =
 
 const DEFAULT_TRIAL_MONTHLY_LIMIT =
   100;
+
+type AIMonthlyWindow = {
+  start: Date;
+  end: Date;
+};
+
+function createAnchoredMonthDate(
+  anchor: Date,
+  monthOffset: number,
+): Date {
+  const absoluteMonth =
+    anchor.getUTCMonth() +
+    monthOffset;
+
+  const targetYear =
+    anchor.getUTCFullYear() +
+    Math.floor(
+      absoluteMonth / 12,
+    );
+
+  const targetMonth =
+    (
+      (
+        absoluteMonth % 12
+      ) +
+      12
+    ) % 12;
+
+  const lastDay =
+    new Date(
+      Date.UTC(
+        targetYear,
+        targetMonth + 1,
+        0,
+      ),
+    ).getUTCDate();
+
+  return new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth,
+      Math.min(
+        anchor.getUTCDate(),
+        lastDay,
+      ),
+      anchor.getUTCHours(),
+      anchor.getUTCMinutes(),
+      anchor.getUTCSeconds(),
+      anchor.getUTCMilliseconds(),
+    ),
+  );
+}
+
+function getAnchoredMonthlyWindow(
+  anchor: Date,
+  referenceDate =
+    new Date(),
+): AIMonthlyWindow {
+  if (
+    referenceDate.getTime() <
+    anchor.getTime()
+  ) {
+    return {
+      start:
+        new Date(anchor),
+
+      end:
+        createAnchoredMonthDate(
+          anchor,
+          1,
+        ),
+    };
+  }
+
+  let monthOffset =
+    (
+      referenceDate
+        .getUTCFullYear() -
+      anchor.getUTCFullYear()
+    ) *
+      12 +
+    (
+      referenceDate
+        .getUTCMonth() -
+      anchor.getUTCMonth()
+    );
+
+  let start =
+    createAnchoredMonthDate(
+      anchor,
+      monthOffset,
+    );
+
+  if (
+    start.getTime() >
+    referenceDate.getTime()
+  ) {
+    monthOffset -= 1;
+
+    start =
+      createAnchoredMonthDate(
+        anchor,
+        monthOffset,
+      );
+  }
+
+  return {
+    start,
+
+    end:
+      createAnchoredMonthDate(
+        anchor,
+        monthOffset + 1,
+      ),
+  };
+}
+
+async function getTenantAIMonthlyWindow(
+  tenantId: string,
+  product: DataraProduct,
+  referenceDate =
+    new Date(),
+): Promise<AIMonthlyWindow> {
+  const calendarStart =
+    getMonthWindowStart(
+      referenceDate,
+    );
+
+  const calendarEnd =
+    new Date(
+      Date.UTC(
+        calendarStart
+          .getUTCFullYear(),
+
+        calendarStart
+          .getUTCMonth() + 1,
+
+        1,
+      ),
+    );
+
+  const [subscription] =
+    await db
+      .select({
+        planKey:
+          subscriptions.planKey,
+
+        currentPeriodStart:
+          subscriptions
+            .currentPeriodStart,
+
+        currentPeriodEnd:
+          subscriptions
+            .currentPeriodEnd,
+      })
+      .from(
+        subscriptions,
+      )
+      .where(
+        and(
+          eq(
+            subscriptions
+              .tenantId,
+            tenantId,
+          ),
+
+          eq(
+            subscriptions
+              .productKey,
+            product,
+          ),
+
+          inArray(
+            subscriptions.status,
+            [
+              "trialing",
+              "active",
+            ],
+          ),
+        ),
+      )
+      .orderBy(
+        desc(
+          subscriptions
+            .createdAt,
+        ),
+      )
+      .limit(1);
+
+  if (
+    !subscription
+      ?.currentPeriodStart
+  ) {
+    return {
+      start:
+        calendarStart,
+      end:
+        calendarEnd,
+    };
+  }
+
+  if (
+    subscription.planKey
+      .startsWith(
+        "trial-",
+      )
+  ) {
+    return {
+      start:
+        subscription
+          .currentPeriodStart,
+
+      end:
+        subscription
+          .currentPeriodEnd ??
+        calendarEnd,
+    };
+  }
+
+  return getAnchoredMonthlyWindow(
+    subscription
+      .currentPeriodStart,
+
+    referenceDate,
+  );
+}
 
 function getConfiguredLimit(
   value: string | undefined,
@@ -156,34 +386,42 @@ export async function getTenantAIConfiguration(
     );
 
   const dataraEnvironment =
-    process.env
-      .DATARA_ENVIRONMENT
-      ?.trim()
-      .toLowerCase();
+  process.env
+    .DATARA_ENVIRONMENT
+    ?.trim()
+    .toLowerCase();
 
-  const usesDemoQuota =
-    dataraEnvironment ===
-      "demo" ||
-    process.env.NODE_ENV ===
-      "development";
+/*
+ * La cuota técnica solo aplica durante
+ * el desarrollo local. Los Workers demo
+ * deben respetar la suscripción y su
+ * fecha real de vencimiento.
+ */
+const usesLocalDevelopmentQuota =
+  process.env.NODE_ENV ===
+    "development" &&
+  dataraEnvironment !==
+    "demo";
 
-  if (usesDemoQuota) {
-    return {
-      assistantName,
-      internalAssistantEnabled,
-      publicChatbotEnabled,
+if (
+  usesLocalDevelopmentQuota
+) {
+  return {
+    assistantName,
+    internalAssistantEnabled,
+    publicChatbotEnabled,
 
-      monthlyMessageLimit:
-        getConfiguredLimit(
-          process.env
-            .AI_DEMO_MONTHLY_MESSAGE_LIMIT,
+    monthlyMessageLimit:
+      getConfiguredLimit(
+        process.env
+          .AI_DEMO_MONTHLY_MESSAGE_LIMIT,
 
-          DEFAULT_DEMO_MONTHLY_LIMIT,
-        ),
-    };
-  }
+        DEFAULT_DEMO_MONTHLY_LIMIT,
+      ),
+  };
+}
 
-  const [subscription] =
+const [subscription] =
     await db
       .select({
         planKey:
@@ -192,6 +430,10 @@ export async function getTenantAIConfiguration(
         catalogItemIds:
           subscriptions
             .catalogItemIds,
+
+    currentPeriodEnd:
+      subscriptions
+        .currentPeriodEnd,
       })
       .from(
         subscriptions,
@@ -238,7 +480,37 @@ export async function getTenantAIConfiguration(
     };
   }
 
-  const catalogItemIds =
+  const isTrialSubscription =
+  subscription.planKey
+    .startsWith(
+      "trial-",
+    );
+
+/*
+ * La vigencia se valida en cada petición.
+ * Así el chatbot se desactiva aunque el
+ * cron todavía no haya cerrado el trial.
+ */
+if (
+  isTrialSubscription &&
+  (
+    !subscription
+      .currentPeriodEnd ||
+    subscription
+      .currentPeriodEnd
+      .getTime() <=
+      Date.now()
+  )
+) {
+  return {
+    assistantName,
+    internalAssistantEnabled,
+    publicChatbotEnabled,
+    monthlyMessageLimit: 0,
+  };
+}
+
+const catalogItemIds =
     subscription
       .catalogItemIds;
 
@@ -281,10 +553,7 @@ export async function getTenantAIConfiguration(
   if (
     monthlyMessageLimit ===
       0 &&
-    subscription.planKey
-      .startsWith(
-        "trial-",
-      )
+    isTrialSubscription
   ) {
     monthlyMessageLimit =
       getConfiguredLimit(
@@ -307,6 +576,12 @@ export async function getTenantAIUsage(
   tenantId: string,
   product: DataraProduct,
 ): Promise<number> {
+  const monthlyWindow =
+    await getTenantAIMonthlyWindow(
+      tenantId,
+      product,
+    );
+
   const [usage] =
     await db
       .select({
@@ -344,7 +619,7 @@ export async function getTenantAIUsage(
             aiRateLimitWindows
               .windowStartedAt,
 
-            getMonthWindowStart(),
+            monthlyWindow.start,
           ),
         ),
       )
@@ -359,36 +634,63 @@ export async function consumeTenantAIQuota(
   product: DataraProduct,
   limit: number,
 ): Promise<ConsumeTenantAIQuotaResult> {
-  if (limit < 1) {
+  if (limit > 0) {
+    const monthlyWindow =
+      await getTenantAIMonthlyWindow(
+        tenantId,
+        product,
+      );
+
+    const monthlyQuota =
+      await consumeAIRateLimit({
+        tenantId,
+        scope:
+          "tenant_month",
+
+        subjectKey:
+          product,
+
+        windowStartedAt:
+          monthlyWindow.start,
+
+        limit,
+      });
+
+    if (monthlyQuota.allowed) {
+      return {
+        allowed: true,
+        limit,
+        remaining:
+          monthlyQuota.remaining,
+      };
+    }
+  }
+
+  const topUpCredit =
+    await consumeAITopUpCredit(
+      tenantId,
+      product,
+    );
+
+  if (topUpCredit.allowed) {
     return {
-      allowed: false,
-      limit: 0,
-      remaining: 0,
+      allowed: true,
+
+      limit:
+        Math.max(
+          limit,
+          topUpCredit.remaining +
+            1,
+        ),
+
+      remaining:
+        topUpCredit.remaining,
     };
   }
 
-  const result =
-    await consumeAIRateLimit({
-      tenantId,
-      scope:
-        "tenant_month",
-
-      subjectKey:
-        product,
-
-      windowStartedAt:
-        getMonthWindowStart(),
-
-      limit,
-    });
-
   return {
-    allowed:
-      result.allowed,
-
+    allowed: false,
     limit,
-
-    remaining:
-      result.remaining,
+    remaining: 0,
   };
 }

@@ -6,6 +6,81 @@ export type CRMKnowledgeArticle = {
   content: string;
 };
 
+const CRM_KNOWLEDGE_ARTICLE_MODULES:
+  Record<string, string[]> = {
+  "organization-structure-module": [
+    "organization-structure",
+  ],
+
+  "catalog-module": [
+    "products",
+  ],
+
+  "leads-module": [
+    "leads",
+  ],
+
+  "automations-module": [
+    "automations",
+  ],
+
+  "customers-module": [
+    "contacts",
+  ],
+
+  "deals-module": [
+    "deals",
+  ],
+
+  "settings-module": [
+    "crm-settings",
+  ],
+
+    "users-module": [
+      "crm-users",
+  ],
+
+    "roles-module": [
+      "crm-users",
+  ],
+
+  "inventory-module": [
+    "inventory",
+  ],
+
+  "quotes-module": [
+    "quotes",
+  ],
+
+  "sales-orders-module": [
+    "sales-orders",
+  ],
+
+  "services-module": [
+    "services",
+  ],
+
+  "activities-module": [
+    "activities",
+  ],
+
+  "promotions-module": [
+    "promotions",
+  ],
+
+  "documents-module": [
+    "documents",
+  ],
+};
+
+const CRM_ADMIN_ONLY_ARTICLE_IDS =
+  new Set<string>([
+    "users-module",
+    "roles-module",
+    "organization-structure-module",
+    "settings-module",
+  ]);
+
 const CRM_KNOWLEDGE_ARTICLES:
   CRMKnowledgeArticle[] = [
     {
@@ -186,6 +261,625 @@ Si una categoría no aparece al crear o editar un elemento:
 4. Si no tienes acceso a Configuración, solicita ayuda a un administrador.
       `.trim(),
     },
+    {
+      id:
+        "users-module",
+
+      title:
+        "Administración de usuarios",
+
+      keywords: [
+        "administrar usuarios",
+        "usuarios del crm",
+        "invitar usuario",
+        "invitar miembro",
+        "crear usuario",
+        "agregar usuario",
+        "editar usuario",
+        "cambiar rol usuario",
+        "rol global usuario",
+        "rol por producto",
+        "acceso por producto",
+        "quitar acceso producto",
+        "acceso a sucursales",
+        "todas las sucursales",
+        "sucursal principal",
+        "acceso por region",
+        "eliminar usuario",
+        "remover usuario",
+        "usuario eliminado",
+        "invitacion usuario",
+        "invitacion pendiente",
+        "invitacion expira",
+      ],
+
+      matchTerms: [
+        "usuario",
+        "usuarios",
+        "miembro",
+        "miembros",
+        "invitacion",
+        "invitaciones",
+        "rol",
+        "roles",
+        "acceso",
+        "accesos",
+        "producto",
+        "productos",
+        "sucursal",
+        "sucursales",
+        "region",
+        "regiones",
+      ],
+
+      content: `
+ADMINISTRACIÓN DE USUARIOS
+
+Ruta: Administración > Usuarios.
+
+Esta función es administrativa y está disponible para usuarios con
+permisos administrativos suficientes.
+
+FINALIDAD
+
+Usuarios permite administrar los miembros de la organización y sus accesos
+a los productos contratados.
+
+La pantalla puede mostrar información como:
+
+- Nombre.
+- Correo electrónico.
+- Estado.
+- Rol global.
+- Accesos por producto.
+
+INVITAR UN USUARIO
+
+1. Entra a Administración.
+2. Selecciona Usuarios.
+3. Selecciona Invitar usuario.
+4. Captura Nombre, Apellidos y Correo electrónico.
+5. Configura el rol global cuando corresponda.
+6. Configura los productos a los que tendrá acceso.
+7. Selecciona el rol correspondiente para cada producto.
+8. Envía la invitación.
+
+Datara valida el formato del correo electrónico antes de crear la
+invitación.
+
+PRODUCTOS Y ROLES EN LA INVITACIÓN
+
+Solo pueden asignarse productos que estén habilitados para la empresa.
+
+El rol seleccionado para cada producto debe pertenecer a ese mismo
+producto.
+
+Por ejemplo, un rol de Datara CRM no puede utilizarse como rol de Datara
+Analytics o Datara Cloud.
+
+El rol global, cuando se selecciona, también debe ser un rol global válido.
+
+VIGENCIA DE LA INVITACIÓN
+
+Las invitaciones se crean con una vigencia de 30 días.
+
+Mientras no haya sido aceptada, Datara conserva la invitación con estado
+Pendiente.
+
+Si se vuelve a generar una invitación para el mismo correo dentro de la
+misma empresa, Datara actualiza la invitación pendiente con la nueva
+configuración de accesos.
+
+CONFIGURAR UN USUARIO EXISTENTE
+
+Un administrador puede modificar los accesos de un miembro existente.
+
+Entre las opciones administrables pueden encontrarse:
+
+- Rol global.
+- Rol por producto.
+- Acceso a Datara CRM.
+- Acceso a Datara Analytics.
+- Acceso a Datara Cloud.
+- Acceso a todas las sucursales.
+- Acceso a regiones específicas.
+- Acceso a sucursales específicas.
+- Sucursal principal.
+
+Los productos disponibles dependen de los productos habilitados para la
+empresa.
+
+QUITAR EL ACCESO A UN PRODUCTO
+
+Si se elimina el rol asignado a un producto, Datara elimina el acceso del
+usuario a ese producto.
+
+También se eliminan las asignaciones de regiones y sucursales relacionadas
+con ese producto.
+
+ACCESO POR SUCURSAL
+
+Cuando el usuario no tiene acceso a todas las sucursales, pueden asignarse
+regiones y sucursales específicas.
+
+Datara valida que las regiones y sucursales seleccionadas pertenezcan a la
+misma organización.
+
+Para cada producto solo puede existir una sucursal principal.
+
+ELIMINAR UN USUARIO
+
+Un administrador puede eliminar a otro usuario de la organización.
+
+Al eliminarlo:
+
+- Se elimina su membresía activa de la organización.
+- Se eliminan sus roles por producto.
+- Se eliminan sus accesos por región.
+- Se eliminan sus accesos por sucursal.
+- El usuario queda registrado en Datara con estado Removed para conservar
+  trazabilidad administrativa.
+
+RESTRICCIONES DE ELIMINACIÓN
+
+Un administrador no puede eliminar su propio usuario.
+
+El propietario de la organización no puede ser eliminado.
+
+Si el usuario ya se encontraba eliminado, Datara no vuelve a procesar la
+operación.
+
+PERMISOS
+
+La administración de usuarios requiere permisos administrativos.
+
+No debe indicarse a un usuario operativo que puede administrar miembros,
+roles o accesos si su perfil no cuenta con ese nivel de autorización.
+      `.trim(),
+    },
+    {
+      id:
+        "roles-module",
+
+      title:
+        "Administración de roles y permisos",
+
+      keywords: [
+        "roles y permisos",
+        "crear rol",
+        "nuevo rol",
+        "editar rol",
+        "eliminar rol",
+        "rol personalizado",
+        "rol del sistema",
+        "rol global",
+        "rol de crm",
+        "rol de analytics",
+        "rol de cloud",
+        "permisos por modulo",
+        "permiso de lectura",
+        "permiso para crear",
+        "permiso para editar",
+        "permiso para eliminar",
+        "permiso de gestion",
+        "can view",
+        "can create",
+        "can edit",
+        "can delete",
+        "can manage",
+        "rol asignado usuario",
+        "no puedo eliminar rol",
+      ],
+
+      matchTerms: [
+        "rol",
+        "roles",
+        "permiso",
+        "permisos",
+        "acceso",
+        "accesos",
+        "modulo",
+        "modulos",
+        "administrador",
+        "personalizado",
+        "sistema",
+      ],
+
+      content: `
+ADMINISTRACIÓN DE ROLES Y PERMISOS
+
+Ruta: Administración > Roles y permisos.
+
+Esta función es administrativa.
+
+FINALIDAD
+
+Roles y permisos permite definir qué acciones puede realizar un usuario
+dentro del Workspace y de los productos de Datara.
+
+Los roles pueden ser:
+
+- Globales.
+- Específicos de Datara CRM.
+- Específicos de Datara Analytics.
+- Específicos de Datara Cloud.
+
+CREAR UN ROL
+
+1. Entra a Administración.
+2. Selecciona Roles y permisos.
+3. Selecciona Nuevo rol.
+4. Captura el Nombre.
+5. Opcionalmente captura una Descripción.
+6. Selecciona el producto al que pertenece el rol.
+7. Configura los permisos por módulo.
+8. Guarda el rol.
+
+El nombre del rol es obligatorio y no puede superar 100 caracteres.
+
+PRODUCTO DEL ROL
+
+Un rol puede ser global o pertenecer a uno de estos productos:
+
+- Datara CRM.
+- Datara Analytics.
+- Datara Cloud.
+
+Los permisos disponibles dependen del producto seleccionado.
+
+Datara no permite asignar a un rol permisos de módulos que pertenecen a
+otro producto.
+
+PERMISOS POR MÓDULO
+
+Cada módulo puede administrar los siguientes niveles:
+
+- Ver.
+- Crear.
+- Editar.
+- Eliminar.
+- Gestionar.
+
+Los permisos superiores incluyen automáticamente los anteriores.
+
+Esto significa:
+
+Gestionar
+incluye Eliminar, Editar, Crear y Ver.
+
+Eliminar
+incluye Editar, Crear y Ver.
+
+Editar
+incluye Crear y Ver.
+
+Crear
+incluye Ver.
+
+No puede repetirse el mismo módulo más de una vez dentro de la
+configuración de un mismo rol.
+
+ROLES DEL SISTEMA
+
+Datara puede incluir roles del sistema.
+
+Los roles del sistema están protegidos.
+
+En un rol del sistema:
+
+- El nombre no se modifica.
+- La descripción no se modifica.
+- Sus permisos sí pueden actualizarse cuando la interfaz lo permita.
+- El rol no puede eliminarse.
+
+ROLES PERSONALIZADOS
+
+Los roles creados por la empresa son roles personalizados.
+
+En ellos pueden modificarse:
+
+- Nombre.
+- Descripción.
+- Permisos por módulo.
+
+EDITAR UN ROL
+
+1. Entra a Administración > Roles y permisos.
+2. Selecciona el rol.
+3. Selecciona Editar rol.
+4. Modifica los permisos disponibles.
+5. Si es un rol personalizado, también puedes modificar nombre y
+   descripción.
+6. Guarda los cambios.
+
+Al guardar, Datara reemplaza la configuración de permisos anterior por la
+nueva configuración seleccionada.
+
+ELIMINAR UN ROL
+
+Solo pueden eliminarse roles personalizados.
+
+Datara bloquea la eliminación cuando:
+
+- El rol es un rol del sistema.
+- El rol está asignado como rol global a uno o más usuarios.
+- El rol está asignado a uno o más usuarios dentro de algún producto.
+
+Si un rol está en uso, primero debe retirarse o cambiarse la asignación de
+los usuarios correspondientes.
+
+RELACIÓN CON USUARIOS
+
+Los roles se asignan posteriormente desde la administración de Usuarios.
+
+Un usuario puede tener:
+
+- Un rol global.
+- Un rol específico por producto.
+
+El rol seleccionado para un producto debe pertenecer a ese mismo producto.
+
+IMPORTANTE
+
+No debe indicarse a usuarios operativos que pueden administrar roles,
+permisos o asignaciones administrativas.
+
+Estas funciones requieren privilegios administrativos suficientes.
+      `.trim(),
+    },
+    {
+      id:
+        "organization-structure-module",
+
+      title:
+        "Administración de regiones y sucursales",
+
+      keywords: [
+        "regiones y sucursales",
+        "estructura organizacional",
+        "estructura de la empresa",
+        "crear region",
+        "nueva region",
+        "editar region",
+        "eliminar region",
+        "desactivar region",
+        "region inactiva",
+        "crear sucursal",
+        "nueva sucursal",
+        "editar sucursal",
+        "eliminar sucursal",
+        "desactivar sucursal",
+        "sucursal inactiva",
+        "codigo de sucursal",
+        "codigo de region",
+        "prefijo de folio",
+        "folio sucursal",
+        "zona horaria sucursal",
+        "direccion sucursal",
+        "usuario por sucursal",
+        "usuario por region",
+        "sucursal principal",
+        "organizar sucursales",
+      ],
+
+      matchTerms: [
+        "region",
+        "regiones",
+        "sucursal",
+        "sucursales",
+        "estructura",
+        "territorial",
+        "zona",
+        "codigo",
+        "folio",
+        "direccion",
+        "usuario",
+        "usuarios",
+      ],
+
+      content: `
+ADMINISTRACIÓN DE REGIONES Y SUCURSALES
+
+Ruta: Administración > Regiones y sucursales.
+
+Esta función es administrativa.
+
+FINALIDAD
+
+Regiones y sucursales permite organizar territorialmente la operación de
+la empresa y utilizar esa estructura para controlar el alcance de los
+usuarios.
+
+Las regiones pueden agrupar sucursales por criterios geográficos o
+comerciales.
+
+REGIONES
+
+Una región puede almacenar:
+
+- Nombre.
+- Código.
+- Descripción.
+- Estado Activo o Inactivo.
+
+CREAR UNA REGIÓN
+
+1. Entra a Administración.
+2. Selecciona Regiones y sucursales.
+3. Selecciona Nueva región.
+4. Captura el Nombre.
+5. Captura el Código.
+6. Opcionalmente captura una Descripción.
+7. Define si la región estará Activa.
+8. Guarda la región.
+
+El Nombre y el Código son obligatorios.
+
+Datara normaliza el Código de la región a mayúsculas.
+
+EDITAR UNA REGIÓN
+
+1. Entra a Administración > Regiones y sucursales.
+2. Localiza la región.
+3. Selecciona la opción de edición.
+4. Modifica Nombre, Código, Descripción o Estado.
+5. Guarda los cambios.
+
+REGIONES INACTIVAS
+
+Una región puede marcarse como Inactiva sin eliminarla.
+
+Las regiones inactivas no están disponibles para nuevas asignaciones
+operativas desde las interfaces correspondientes.
+
+Desactivar una región no equivale a eliminarla.
+
+ELIMINAR UNA REGIÓN
+
+Datara permite eliminar físicamente una región únicamente cuando no tiene
+relaciones que impidan la operación.
+
+No puede eliminarse una región cuando:
+
+- Tiene una o más sucursales asociadas.
+- Tiene uno o más usuarios asignados mediante acceso regional.
+
+En esos casos, primero deben corregirse o retirarse las relaciones
+correspondientes.
+
+SUCURSALES
+
+Una sucursal puede almacenar:
+
+- Nombre.
+- Código.
+- Región.
+- Prefijo de folio.
+- Teléfono.
+- Correo electrónico.
+- Zona horaria.
+- Estado Activo o Inactivo.
+- Dirección.
+
+La Dirección puede incluir:
+
+- País.
+- Estado.
+- Ciudad.
+- Código postal.
+- Calle.
+- Número exterior.
+- Número interior.
+- Colonia.
+- Referencia.
+
+CREAR UNA SUCURSAL
+
+1. Entra a Administración > Regiones y sucursales.
+2. En la sección Sucursales selecciona Nueva sucursal.
+3. Captura el Nombre.
+4. Captura el Código.
+5. Opcionalmente selecciona una Región.
+6. Completa los demás datos administrativos y de ubicación que
+   correspondan.
+7. Define si la sucursal estará Activa.
+8. Guarda la sucursal.
+
+El Nombre y el Código son obligatorios.
+
+Datara normaliza el Código de la sucursal a mayúsculas.
+
+La sucursal puede existir sin estar relacionada con una región.
+
+REGIÓN DE UNA SUCURSAL
+
+Cuando se selecciona una región, Datara valida que esa región pertenezca a
+la misma organización.
+
+No puede relacionarse una sucursal con una región de otra empresa.
+
+PREFIJO DE FOLIO
+
+La sucursal puede almacenar un Prefijo de folio.
+
+Cuando se captura, Datara lo normaliza a mayúsculas.
+
+DIRECCIÓN Y CÓDIGO POSTAL
+
+La interfaz permite capturar manualmente la información de dirección.
+
+También puede consultarse un código postal utilizando el País y Código
+postal.
+
+Cuando la consulta encuentra información disponible, Datara puede
+completar datos como:
+
+- País.
+- Estado.
+- Ciudad.
+- Zona horaria.
+
+Estos datos pueden revisarse antes de guardar la sucursal.
+
+EDITAR UNA SUCURSAL
+
+1. Entra a Administración > Regiones y sucursales.
+2. Localiza la sucursal.
+3. Selecciona la opción de edición.
+4. Modifica la información requerida.
+5. Guarda los cambios.
+
+La región asignada también puede cambiarse o retirarse.
+
+SUCURSALES INACTIVAS
+
+Una sucursal puede marcarse como Inactiva sin eliminarla.
+
+Desactivar una sucursal no equivale a eliminarla físicamente.
+
+ELIMINAR UNA SUCURSAL
+
+Datara no permite eliminar una sucursal cuando existen usuarios asignados
+directamente a ella.
+
+Primero deben modificarse los accesos de los usuarios correspondientes.
+
+Si no existen asignaciones que bloqueen la operación, la sucursal puede
+eliminarse físicamente.
+
+RELACIÓN CON USUARIOS
+
+La estructura de Regiones y sucursales se utiliza en la administración de
+accesos.
+
+Según su configuración, un usuario puede tener:
+
+- Acceso a todas las sucursales.
+- Acceso a regiones específicas.
+- Acceso a sucursales específicas.
+- Una sucursal principal por producto.
+
+Eliminar o modificar una región o sucursal puede afectar la estructura
+utilizada para controlar esos accesos.
+
+RECOMENDACIÓN OPERATIVA
+
+Cuando una región o sucursal dejará de utilizarse pero todavía tiene
+relaciones operativas, es preferible revisar primero si debe marcarse como
+Inactiva en lugar de eliminarla.
+
+No deben eliminarse estructuras únicamente para ocultarlas de nuevas
+operaciones.
+
+PERMISOS
+
+La administración de regiones y sucursales requiere privilegios
+administrativos.
+
+No debe indicarse a usuarios operativos que pueden crear, modificar,
+eliminar o reorganizar la estructura territorial de la empresa.
+      `.trim(),
+    },
 
     {
       id:
@@ -277,18 +971,64 @@ admitan identidad empresarial.
 
 CONFIGURAR EL MENÚ DEL CRM
 
-Configuración > Menú permite administrar las opciones configurables de la
-navegación del CRM.
+Configuración > Menú abre la configuración de navegación del CRM.
 
-Dependiendo de la configuración disponible, la empresa puede personalizar
-nombres visibles de algunos módulos y su presentación dentro del menú.
+Desde esta sección se puede administrar:
 
-Cambiar el nombre visible de un módulo no modifica necesariamente su ruta
-interna ni su funcionamiento.
+- El orden de los módulos.
+- El nombre visible de los módulos.
+- La visibilidad de módulos configurables.
+- El orden recomendado.
 
-Si un módulo no aparece en el menú, no asumas que fue eliminado. Puede
-deberse a la configuración de navegación, a los módulos disponibles para
-la empresa o a los permisos del usuario.
+ORDEN DE NAVEGACIÓN
+
+Los módulos se organizan por secciones.
+
+Utiliza las flechas para mover cada módulo dentro de su propia sección.
+
+Después de realizar cambios selecciona Guardar orden.
+
+RENOMBRAR MÓDULOS
+
+El nombre visible de un módulo puede modificarse desde esta pantalla.
+
+El nuevo nombre puede tener hasta 60 caracteres.
+
+Cambiar el nombre visible no modifica necesariamente:
+
+- La ruta interna.
+- El identificador del módulo.
+- Sus permisos.
+- Su funcionamiento.
+
+OCULTAR O MOSTRAR MÓDULOS
+
+Los módulos configurables pueden ocultarse o mostrarse en la navegación.
+
+Ocultar un módulo del menú no significa eliminarlo del sistema ni retirar
+automáticamente sus permisos.
+
+Algunos elementos están protegidos y no pueden ocultarse desde esta
+pantalla.
+
+Entre ellos:
+
+- Inicio.
+- Usuarios del CRM.
+- Configuración del CRM.
+
+RESTAURAR ORDEN RECOMENDADO
+
+La acción Restaurar orden recomendado permite recuperar la organización
+predeterminada disponible para el menú.
+
+Después de restaurar, guarda los cambios para conservar la configuración.
+
+PERMISOS DEL MENÚ
+
+Los usuarios autorizados pueden consultar el orden configurado.
+
+Solo el dueño o un administrador pueden modificarlo desde esta pantalla.
 
 CATEGORÍAS DEL CATÁLOGO
 
@@ -309,26 +1049,134 @@ Si una categoría no aparece al crear o editar un elemento:
 
 CONFIGURACIÓN DE RESERVAS DE INVENTARIO
 
-Configuración > Reservas se utiliza para administrar las opciones
-disponibles relacionadas con el comportamiento de reservas de inventario.
+Configuración > Reservas abre la Política de reservas.
 
-Las reservas forman parte del control de disponibilidad de productos en
-Inventarios y pueden relacionarse con operaciones comerciales como
-oportunidades.
+Esta sección define cuánto tiempo puede permanecer apartado el inventario
+antes de volver a estar disponible.
 
-No modifiques parámetros de reservas si no conoces su efecto operativo.
-Si tienes dudas sobre una configuración específica, consulta con un
-administrador de la empresa.
+DURACIÓN POR ETAPA
+
+Datara permite configurar plazos independientes, expresados en horas, para:
+
+- Reserva manual.
+- Oportunidad calificada.
+- Propuesta o cotización.
+- Negociación.
+- Anticipo confirmado.
+
+La interfaz muestra también el equivalente aproximado del plazo en días.
+
+PLAZO MÁXIMO
+
+La política incluye un Plazo máximo permitido.
+
+Los plazos configurados para cada etapa no deben superar ese máximo.
+
+El plazo máximo permitido por la interfaz puede configurarse hasta 2160
+horas.
+
+EXTENSIONES
+
+La opción Permitir extensiones determina si los usuarios autorizados pueden
+ampliar la duración de una reserva activa.
+
+Una extensión no debe superar el plazo máximo configurado.
+
+LIBERACIÓN AUTOMÁTICA
+
+La opción Liberar automáticamente al vencer permite que las unidades de una
+reserva vencida vuelvan a estar disponibles sin intervención manual.
+
+Si esta opción no está habilitada, no debe asumirse que una reserva vencida
+se libera automáticamente.
+
+PERMISOS DE LA POLÍTICA
+
+Los usuarios con acceso de consulta pueden visualizar la política.
+
+Solo el dueño o un administrador pueden modificarla desde esta pantalla.
+
+No deben modificarse estos parámetros sin considerar su efecto sobre la
+disponibilidad de Inventarios y los procesos comerciales.
 
 CONFIGURAR EL ASISTENTE
 
-Configuración > Asistente permite administrar las opciones disponibles del
-asistente interno de Datara CRM.
+Configuración > Asistente permite administrar la inteligencia artificial
+relacionada con Datara CRM.
 
-El nombre público del asistente puede ser personalizado por cada empresa.
+IDENTIDAD DEL ASISTENTE
 
-Cambiar el nombre del asistente no modifica sus permisos ni le concede
-acceso a información privada de la empresa.
+La empresa puede personalizar el Nombre público del asistente.
+
+El nombre debe tener entre 2 y 40 caracteres.
+
+Ese nombre se utiliza tanto para el asistente interno como para el chatbot
+público.
+
+Cambiar el nombre no modifica sus permisos, su alcance ni le concede
+acceso adicional a información de la empresa.
+
+CRÉDITOS DE INTELIGENCIA ARTIFICIAL
+
+La pantalla muestra dos tipos de créditos:
+
+- Créditos mensuales.
+- Créditos extra.
+
+El asistente interno y el chatbot público consumen primero los créditos
+mensuales y después los créditos extra.
+
+CRÉDITOS MENSUALES
+
+La interfaz muestra:
+
+- Créditos utilizados.
+- Créditos disponibles.
+- Límite mensual.
+
+La bolsa mensual se restablece en cada periodo mensual.
+
+Los créditos mensuales no utilizados no se acumulan para el siguiente
+periodo.
+
+CRÉDITOS EXTRA
+
+Los créditos extra se utilizan después de agotar los créditos mensuales.
+
+La interfaz puede mostrar:
+
+- Créditos originales.
+- Créditos utilizados.
+- Créditos disponibles.
+- Próxima fecha de vencimiento de una bolsa extra.
+
+ASISTENTE INTERNO
+
+La opción del asistente interno permite activar o desactivar la guía de
+Datara CRM disponible para los empleados.
+
+Cuando está activo, los usuarios que además cumplen las reglas de acceso
+del asistente pueden consultarlo desde el CRM.
+
+Desactivar esta opción impide el uso del asistente interno aunque el
+usuario tenga permisos operativos.
+
+CHATBOT PÚBLICO
+
+La opción Chatbot público permite activar o desactivar la atención
+automatizada para visitantes desde el sitio web autorizado de la empresa.
+
+El chatbot público y el asistente interno comparten el consumo de créditos
+de inteligencia artificial.
+
+ACTIVAR O DESACTIVAR
+
+Desde esta pantalla pueden administrarse por separado:
+
+- Asistente interno.
+- Chatbot público.
+
+No debe asumirse que activar uno activa automáticamente el otro.
 
 ACCESO A CONFIGURACIÓN
 
@@ -345,7 +1193,290 @@ disponibilidad de opciones puede variar según la configuración y versión
 del CRM.
       `.trim(),
     },
-        {
+    {
+      id:
+        "automations-module",
+
+      title:
+        "Uso del módulo Automatizaciones",
+
+      keywords: [
+        "crear automatizacion",
+        "nueva automatizacion",
+        "editar automatizacion",
+        "eliminar automatizacion",
+        "activar automatizacion",
+        "desactivar automatizacion",
+        "regla automatica",
+        "disparador automatizacion",
+        "condicion automatizacion",
+        "accion automatizacion",
+        "acciones programadas",
+        "automatizacion con retraso",
+        "enviar correo automaticamente",
+        "crear actividad automaticamente",
+        "crear notificacion automaticamente",
+        "cambiar estado automaticamente",
+        "asignar responsable automaticamente",
+        "historial automatizaciones",
+      ],
+
+      matchTerms: [
+        "automatizacion",
+        "automatizaciones",
+        "regla",
+        "reglas",
+        "disparador",
+        "disparadores",
+        "condicion",
+        "condiciones",
+        "accion",
+        "acciones",
+        "programada",
+        "programadas",
+        "correo",
+        "notificacion",
+      ],
+
+      content: `
+MÓDULO AUTOMATIZACIONES
+
+Ruta: Automatizaciones (/crm/automatizaciones).
+
+FINALIDAD DEL MÓDULO
+
+Automatizaciones permite crear reglas que reaccionan a eventos del CRM y
+ejecutan una o más acciones cuando se cumplen las condiciones configuradas.
+
+Una automatización puede utilizarse para automatizar seguimientos, tareas,
+cambios de estado, notificaciones y correos.
+
+ENTIDADES DISPONIBLES
+
+Las automatizaciones pueden configurarse sobre:
+
+- Prospectos.
+- Clientes.
+- Oportunidades.
+- Actividades.
+- Órdenes de venta.
+
+DISPARADORES
+
+Los disparadores disponibles son:
+
+- Al crear.
+- Al actualizar.
+- Al cambiar estado.
+
+El disparador determina qué evento inicia la evaluación de la regla.
+
+CONDICIONES
+
+Una automatización puede incluir condiciones adicionales.
+
+Los operadores disponibles son:
+
+- Es igual a.
+- No es igual a.
+- Contiene.
+- No contiene.
+- Está vacío.
+- No está vacío.
+- Es mayor que.
+- Es menor que.
+- Cambió.
+
+Algunas condiciones no requieren un valor adicional, por ejemplo:
+
+- Está vacío.
+- No está vacío.
+- Cambió.
+
+Las condiciones pueden utilizar campos del registro como:
+
+- Estado.
+- Etapa.
+- Origen.
+- Tipo de cliente.
+- Consentimiento comercial.
+- Canal de adquisición.
+- Método de pago.
+- Prioridad.
+- Tipo.
+- Nombre del cliente.
+- Correo del cliente.
+- Total.
+- Fecha estimada de cierre.
+- Fecha de cierre.
+- Fecha de confirmación.
+- Fecha de entrega.
+- Fecha de inicio.
+- Fecha de fin.
+- Fecha de vencimiento.
+- Fecha de conclusión.
+- Fecha de creación.
+- Fecha de actualización.
+
+ACCIONES
+
+Toda automatización debe incluir al menos una acción.
+
+Una automatización puede tener como máximo 10 acciones.
+
+Las acciones disponibles son:
+
+- Asignar responsable.
+- Actualizar campo.
+- Cambiar estado.
+- Crear actividad.
+- Crear notificación.
+- Enviar correo.
+
+ASIGNAR RESPONSABLE
+
+La acción Asignar responsable requiere seleccionar un usuario válido de la
+empresa.
+
+Datara valida que el usuario utilizado en la acción pertenezca a la misma
+empresa.
+
+ACTUALIZAR CAMPO
+
+Actualizar campo permite modificar un campo del registro utilizando el
+valor configurado en la acción.
+
+CAMBIAR ESTADO
+
+Cambiar estado permite asignar un nuevo estado al registro cuando se
+ejecuta la automatización.
+
+CREAR ACTIVIDAD
+
+La acción Crear actividad puede definir:
+
+- Tipo de actividad.
+- Asunto.
+- Descripción.
+- Prioridad.
+- Vencimiento.
+- Responsable.
+
+El Tipo de actividad y el Asunto son obligatorios.
+
+El vencimiento opcional se expresa en minutos y no puede superar 525600
+minutos.
+
+CREAR NOTIFICACIÓN
+
+La acción Crear notificación requiere:
+
+- Título.
+- Mensaje.
+
+También puede definirse un destinatario específico.
+
+ENVIAR CORREO
+
+La acción Enviar correo puede dirigir el mensaje a:
+
+- El correo del registro.
+- El cliente relacionado.
+- El responsable.
+- Un correo fijo.
+
+Cuando se utiliza un correo fijo, debe capturarse una dirección válida.
+
+La acción puede configurar:
+
+- Destinatario.
+- Asunto.
+- Mensaje.
+- Correo de respuesta.
+
+El Asunto y el Mensaje son obligatorios.
+
+PROGRAMACIÓN DE ACCIONES
+
+Las acciones pueden ejecutarse:
+
+- Inmediatamente.
+- Con retraso.
+
+El retraso puede expresarse en:
+
+- Minutos.
+- Horas.
+- Días.
+- Meses.
+
+El retraso debe ser un número entero mayor que cero.
+
+Los máximos permitidos son:
+
+- 5256000 minutos.
+- 87600 horas.
+- 3650 días.
+- 120 meses.
+
+La programación puede calcularse a partir del momento del evento o de un
+campo de fecha válido del registro.
+
+ACTIVAR O DESACTIVAR UNA AUTOMATIZACIÓN
+
+Una automatización puede estar Activa o Inactiva.
+
+Desactivarla evita nuevas ejecuciones de la regla sin necesidad de
+eliminarla.
+
+EDITAR UNA AUTOMATIZACIÓN
+
+Una regla existente puede modificarse para cambiar:
+
+- Nombre.
+- Descripción.
+- Sucursal.
+- Entidad.
+- Disparador.
+- Condiciones.
+- Acciones.
+- Estado Activo o Inactivo.
+- Comportamiento ante errores.
+
+ELIMINAR UNA AUTOMATIZACIÓN
+
+La interfaz permite eliminar una automatización.
+
+Al eliminarla, también se cancelan sus trabajos pendientes.
+
+La eliminación pide confirmación antes de continuar.
+
+HISTORIAL
+
+Automatizaciones incluye un historial de ejecuciones.
+
+El historial permite revisar información como:
+
+- Regla ejecutada.
+- Disparador.
+- Resultados de las acciones.
+- Estado de ejecución.
+
+La interfaz también puede mostrar la próxima acción programada de una
+regla cuando existen trabajos pendientes.
+
+IMPORTANTE
+
+Una automatización no debe considerarse una sustitución de permisos.
+
+Las acciones se ejecutan dentro de las reglas y validaciones disponibles
+en Datara.
+
+No deben configurarse automatizaciones con usuarios, correos o campos que
+no correspondan a la empresa o al registro esperado.
+      `.trim(),
+    },
+    {
       id:
         "inventory-module",
 
@@ -4000,7 +5131,8 @@ CREAR UN PROSPECTO
 3. Captura la información requerida.
 4. Selecciona una sucursal.
 5. Opcionalmente relaciona un producto.
-6. Selecciona un responsable cuando corresponda.
+6. Opcionalmente selecciona un responsable. Si no seleccionas uno, Datara
+   asignará automáticamente como responsable al usuario que crea el prospecto.
 7. Guarda el prospecto.
 
 VALIDACIONES DE CONTACTO
@@ -5310,6 +6442,10 @@ function matchesTerm(
 
 export function getRelevantCRMKnowledge(
   question: string,
+  options?: {
+    allowedModuleIds?: string[];
+    isAdministrator?: boolean;
+  },
 ): CRMKnowledgeArticle[] {
   const normalizedQuestion =
     normalizeSearchText(
@@ -5321,8 +6457,50 @@ export function getRelevantCRMKnowledge(
       question,
     );
 
+  const allowedModuleIds =
+    new Set(
+      options
+        ?.allowedModuleIds ??
+        [],
+    );
+
+  const isAdministrator =
+    options
+      ?.isAdministrator ??
+    false;
+
   return CRM_KNOWLEDGE_ARTICLES.filter(
     (article) => {
+      if (
+        CRM_ADMIN_ONLY_ARTICLE_IDS.has(
+          article.id,
+        ) &&
+        !isAdministrator
+      ) {
+        return false;
+      }
+
+      const articleModuleIds =
+        CRM_KNOWLEDGE_ARTICLE_MODULES[
+          article.id
+        ] ?? [];
+
+      if (
+        articleModuleIds.length > 0
+      ) {
+        const hasModuleAccess =
+          articleModuleIds.some(
+            (moduleId) =>
+              allowedModuleIds.has(
+                moduleId,
+              ),
+          );
+
+        if (!hasModuleAccess) {
+          return false;
+        }
+      }
+
       const matchesPhrase =
         article.keywords.some(
           (keyword) =>

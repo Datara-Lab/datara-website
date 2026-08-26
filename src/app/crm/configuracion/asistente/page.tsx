@@ -25,9 +25,18 @@ type AISettingsData = {
     boolean;
 
   usage: {
-    used: number;
-    limit: number;
-    remaining: number;
+    monthly: {
+      used: number;
+      limit: number;
+      remaining: number;
+    };
+
+    extra: {
+      original: number;
+      used: number;
+      remaining: number;
+      nextExpiresAt: string | null;
+    };
   };
 };
 
@@ -347,16 +356,37 @@ export default function AIAssistantSettingsPage() {
     }
   }
 
-  const usagePercentage =
+  const monthlyUsagePercentage =
     settings &&
-    settings.usage.limit >
+    settings.usage.monthly
+      .limit >
       0
       ? Math.min(
           100,
 
           (
-            settings.usage.used /
-            settings.usage.limit
+            settings.usage.monthly
+              .used /
+            settings.usage.monthly
+              .limit
+          ) *
+            100,
+        )
+      : 0;
+
+  const extraUsagePercentage =
+    settings &&
+    settings.usage.extra
+      .original >
+      0
+      ? Math.min(
+          100,
+
+          (
+            settings.usage.extra
+              .used /
+            settings.usage.extra
+              .original
           ) *
             100,
         )
@@ -469,47 +499,117 @@ export default function AIAssistantSettingsPage() {
             </section>
 
             <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-              <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
-                Consumo mensual compartido
-              </p>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                  Créditos de inteligencia artificial
+                </p>
 
-              <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-4xl font-black text-slate-950">
-                    {settings.usage.remaining.toLocaleString(
-                      "es-MX",
-                    )}
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    consultas disponibles de{" "}
-                    {settings.usage.limit.toLocaleString(
-                      "es-MX",
-                    )}
-                  </p>
-                </div>
-
-                <p className="text-sm font-semibold text-slate-600">
-                  {settings.usage.used.toLocaleString(
-                    "es-MX",
-                  )}{" "}
-                  utilizadas
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {settings.assistantName} interna y el chatbot del sitio web consumen primero los créditos mensuales y después los créditos extra.
                 </p>
               </div>
 
-              <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-blue-700 to-cyan-400 transition-all"
-                  style={{
-                    width:
-                      `${usagePercentage}%`,
-                  }}
-                />
-              </div>
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <article className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">
+                        Créditos mensuales
+                      </p>
 
-              <p className="mt-4 text-xs leading-5 text-slate-500">
-                {settings.assistantName} interna y el chatbot del sitio web consumen esta misma bolsa. La cuota se restablece cada mes.
-              </p>
+                      <p className="mt-3 text-3xl font-black text-slate-950">
+                        {settings.usage.monthly.remaining.toLocaleString(
+                          "es-MX",
+                        )}
+                      </p>
+
+                      <p className="mt-1 text-sm text-slate-600">
+                        disponibles de{" "}
+                        {settings.usage.monthly.limit.toLocaleString(
+                          "es-MX",
+                        )}
+                      </p>
+                    </div>
+
+                    <p className="text-sm font-semibold text-blue-700">
+                      {settings.usage.monthly.used.toLocaleString(
+                        "es-MX",
+                      )}{" "}
+                      utilizados
+                    </p>
+                  </div>
+
+                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-blue-100">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-700 to-cyan-400 transition-all"
+                      style={{
+                        width:
+                          `${monthlyUsagePercentage}%`,
+                      }}
+                    />
+                  </div>
+
+                  <p className="mt-4 text-xs leading-5 text-slate-500">
+                    Esta bolsa se restablece en cada periodo mensual y el saldo no utilizado no se acumula.
+                  </p>
+                </article>
+
+                <article className="rounded-2xl border border-violet-200 bg-violet-50/60 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
+                        Créditos extra
+                      </p>
+
+                      <p className="mt-3 text-3xl font-black text-slate-950">
+                        {settings.usage.extra.remaining.toLocaleString(
+                          "es-MX",
+                        )}
+                      </p>
+
+                      <p className="mt-1 text-sm text-slate-600">
+                        disponibles de{" "}
+                        {settings.usage.extra.original.toLocaleString(
+                          "es-MX",
+                        )}
+                      </p>
+                    </div>
+
+                    <p className="text-sm font-semibold text-violet-700">
+                      {settings.usage.extra.used.toLocaleString(
+                        "es-MX",
+                      )}{" "}
+                      utilizados
+                    </p>
+                  </div>
+
+                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-violet-100">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-violet-700 via-blue-600 to-cyan-400 transition-all"
+                      style={{
+                        width:
+                          `${extraUsagePercentage}%`,
+                      }}
+                    />
+                  </div>
+
+                  <p className="mt-4 text-xs leading-5 text-slate-500">
+                    {settings.usage.extra.nextExpiresAt
+                      ? `La siguiente bolsa vence el ${new Intl.DateTimeFormat(
+                          "es-MX",
+                          {
+                            dateStyle:
+                              "medium",
+                          },
+                        ).format(
+                          new Date(
+                            settings.usage.extra.nextExpiresAt,
+                          ),
+                        )}.`
+                      : "No tienes créditos extra disponibles."}
+                  </p>
+                </article>
+              </div>
             </section>
 
             <div className="mt-6 grid gap-6 md:grid-cols-2">

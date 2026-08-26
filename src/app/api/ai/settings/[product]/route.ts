@@ -20,6 +20,10 @@ import {
 } from "@/lib/administration/require-admin-context";
 
 import {
+  getAITopUpSummary,
+} from "@/lib/ai/credits";
+
+import {
   getTenantAIConfiguration,
   getTenantAIUsage,
 } from "@/lib/ai/entitlements";
@@ -95,6 +99,7 @@ async function getResponseData(
   const [
     configuration,
     used,
+    extraCredits,
   ] =
     await Promise.all([
       getTenantAIConfiguration(
@@ -103,6 +108,11 @@ async function getResponseData(
       ),
 
       getTenantAIUsage(
+        tenantId,
+        product,
+      ),
+
+      getAITopUpSummary(
         tenantId,
         product,
       ),
@@ -124,20 +134,39 @@ async function getResponseData(
         .publicChatbotEnabled,
 
     usage: {
-      used,
+      monthly: {
+        used,
 
-      limit:
-        configuration
-          .monthlyMessageLimit,
-
-      remaining:
-        Math.max(
-          0,
-
+        limit:
           configuration
-            .monthlyMessageLimit -
-            used,
-        ),
+            .monthlyMessageLimit,
+
+        remaining:
+          Math.max(
+            0,
+
+            configuration
+              .monthlyMessageLimit -
+              used,
+          ),
+      },
+
+      extra: {
+        original:
+          extraCredits.original,
+
+        used:
+          extraCredits.used,
+
+        remaining:
+          extraCredits.remaining,
+
+        nextExpiresAt:
+          extraCredits
+            .nextExpiresAt
+            ?.toISOString() ??
+          null,
+      },
     },
   };
 }

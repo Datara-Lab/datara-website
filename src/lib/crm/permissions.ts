@@ -1,6 +1,7 @@
 import {
   and,
   eq,
+  inArray,
 } from "drizzle-orm";
 
 import { db } from "@/db";
@@ -282,6 +283,307 @@ export async function getCRMModulePermissions(
       permission?.canManage ??
       false,
   };
+}
+
+export async function getCRMAllModulePermissions(
+  tenantId: string,
+  clerkUserId: string,
+): Promise<
+  Map<
+    string,
+    CRMModulePermissions
+  >
+> {
+  const crmModuleIds =
+    permissionModules
+      .filter(
+        (module) =>
+          module.product ===
+          "crm",
+      )
+      .map(
+        (module) =>
+          module.id,
+      );
+
+  const [member] =
+    await db
+      .select({
+        id:
+          tenantMembers.id,
+
+        globalRoleId:
+          tenantMembers.roleId,
+
+        globalRoleKey:
+          roles.key,
+
+        globalRoleProduct:
+          roles.product,
+      })
+      .from(
+        tenantMembers,
+      )
+      .leftJoin(
+        roles,
+        and(
+          eq(
+            tenantMembers.roleId,
+            roles.id,
+          ),
+          eq(
+            roles.tenantId,
+            tenantId,
+          ),
+        ),
+      )
+      .where(
+        and(
+          eq(
+            tenantMembers.tenantId,
+            tenantId,
+          ),
+          eq(
+            tenantMembers
+              .clerkUserId,
+            clerkUserId,
+          ),
+          eq(
+            tenantMembers.status,
+            "active",
+          ),
+        ),
+      )
+      .limit(1);
+
+  if (!member) {
+    throw new CRMPermissionError(
+      "Tu usuario no pertenece a la organización activa.",
+    );
+  }
+
+  const isGlobalOwner =
+    member.globalRoleProduct ===
+      null &&
+    member.globalRoleKey ===
+      "owner";
+
+  const isGlobalAdministrator =
+    member.globalRoleProduct ===
+      null &&
+    member.globalRoleKey ===
+      "admin";
+
+  if (
+    isGlobalOwner ||
+    isGlobalAdministrator
+  ) {
+    return new Map(
+      crmModuleIds.map(
+        (moduleId) => [
+          moduleId,
+
+          getAllowedPermissions(
+            member.id,
+            member.globalRoleId,
+          ),
+        ],
+      ),
+    );
+  }
+
+  const [productRole] =
+    await db
+      .select({
+        roleId:
+          memberProductRoles
+            .roleId,
+
+        enabled:
+          memberProductRoles
+            .enabled,
+      })
+      .from(
+        memberProductRoles,
+      )
+      .where(
+        and(
+          eq(
+            memberProductRoles
+              .tenantId,
+            tenantId,
+          ),
+          eq(
+            memberProductRoles
+              .memberId,
+            member.id,
+          ),
+          eq(
+            memberProductRoles
+              .product,
+            "crm",
+          ),
+        ),
+      )
+      .limit(1);
+
+  if (!productRole) {
+    throw new CRMPermissionError(
+      "No tienes acceso asignado a Datara CRM.",
+    );
+  }
+
+  if (!productRole.enabled) {
+    throw new CRMPermissionError(
+      "No tienes acceso activo a Datara CRM.",
+    );
+  }
+
+  const roleId =
+    productRole.roleId;
+
+  if (!roleId) {
+    return new Map(
+      crmModuleIds.map(
+        (moduleId) => [
+          moduleId,
+
+          {
+            memberId:
+              member.id,
+
+            roleId:
+              null,
+
+            isGlobalAdministrator:
+              false,
+
+            canView:
+              false,
+
+            canCreate:
+              false,
+
+            canEdit:
+              false,
+
+            canDelete:
+              false,
+
+            canManage:
+              false,
+          },
+        ],
+      ),
+    );
+  }
+
+  const permissionRows =
+    crmModuleIds.length > 0
+      ? await db
+          .select({
+            moduleId:
+              rolePermissions
+                .moduleId,
+
+            canView:
+              rolePermissions
+                .canView,
+
+            canCreate:
+              rolePermissions
+                .canCreate,
+
+            canEdit:
+              rolePermissions
+                .canEdit,
+
+            canDelete:
+              rolePermissions
+                .canDelete,
+
+            canManage:
+              rolePermissions
+                .canManage,
+          })
+          .from(
+            rolePermissions,
+          )
+          .where(
+            and(
+              eq(
+                rolePermissions
+                  .roleId,
+                roleId,
+              ),
+              inArray(
+                rolePermissions
+                  .moduleId,
+                crmModuleIds,
+              ),
+            ),
+          )
+      : [];
+
+  const permissionsByModule =
+    new Map(
+      permissionRows.map(
+        (permission) => [
+          permission.moduleId,
+          permission,
+        ],
+      ),
+    );
+
+  return new Map(
+    crmModuleIds.map(
+      (moduleId) => {
+        const permission =
+          permissionsByModule.get(
+            moduleId,
+          );
+
+        return [
+          moduleId,
+
+          {
+            memberId:
+              member.id,
+
+            roleId,
+
+            isGlobalAdministrator:
+              false,
+
+            canView:
+              permission
+                ?.canView ??
+              false,
+
+            canCreate:
+              permission
+                ?.canCreate ??
+              false,
+
+            canEdit:
+              permission
+                ?.canEdit ??
+              false,
+
+            canDelete:
+              permission
+                ?.canDelete ??
+              false,
+
+            canManage:
+              permission
+                ?.canManage ??
+              false,
+          },
+        ];
+      },
+    ),
+  );
 }
 
 export async function requireCRMModulePermission(

@@ -10,6 +10,14 @@ import {
     getCRMAssistantSystemInstruction,
 } from "@/lib/ai/crm-assistant";
 
+import {
+    CRMPermissionError,
+} from "@/lib/crm/permissions";
+
+import {
+    getCRMAssistantAccess,
+} from "@/lib/ai/crm-assistant-access";
+
 import type {
     AIMessage,
 } from "@/lib/ai";
@@ -17,12 +25,21 @@ import type {
 import {
     consumeTenantAIQuota,
     getTenantAIConfiguration,
+    getTenantAIUsage,
 } from "@/lib/ai/entitlements";
+
+import {
+    getAITopUpBalance,
+} from "@/lib/ai/credits";
 
 import {
     consumeAIRateLimit,
     getMinuteWindowStart,
 } from "@/lib/ai/rate-limit";
+
+import {
+    recordAIUsageEvent,
+} from "@/lib/ai/usage-telemetry";
 
 import {
     canAccessProductWithContext,
@@ -185,7 +202,9 @@ function createErrorResponse(
 ) {
     if (
         error instanceof
-        ApiError
+            ApiError ||
+        error instanceof
+            CRMPermissionError
     ) {
         return NextResponse.json(
             {
@@ -196,6 +215,27 @@ function createErrorResponse(
             {
                 status:
                     error.status,
+            },
+        );
+    }
+
+    if (
+        error instanceof Error &&
+        error.name ===
+            "AIProviderRateLimitError"
+    ) {
+        console.warn(
+            "Gemini rechazó temporalmente la solicitud por límite de capacidad.",
+        );
+
+        return NextResponse.json(
+            {
+                success: false,
+                error:
+                    "El asistente está temporalmente saturado. Espera un momento e inténtalo nuevamente; esta consulta no consumió créditos.",
+            },
+            {
+                status: 503,
             },
         );
     }
@@ -236,6 +276,23 @@ export async function POST(
         ) {
             throw new ApiError(
                 "No tienes acceso activo a Datara CRM.",
+                403,
+            );
+        }
+
+                const assistantAccess =
+            await getCRMAssistantAccess(
+                context.tenantId,
+                context.clerkUserId,
+            );
+
+        if (
+            !assistantAccess.enabled
+        ) {
+            throw new ApiError(
+                assistantAccess.isReadOnly
+                    ? "El asistente no está disponible para usuarios con acceso de solo lectura."
+                    : "Tu perfil no tiene acceso al asistente de Datara CRM.",
                 403,
             );
         }
@@ -301,23 +358,38 @@ export async function POST(
             );
         }
 
-        const tenantQuota =
-            await consumeTenantAIQuota(
+        const [
+            monthlyUsage,
+            topUpBalance,
+        ] = await Promise.all([
+            getTenantAIUsage(
                 context.tenantId,
                 "crm",
+            ),
 
-                aiConfiguration
-                    .monthlyMessageLimit,
-            );
+            getAITopUpBalance(
+                context.tenantId,
+                "crm",
+            ),
+        ]);
+
+        const monthlyLimit =
+            aiConfiguration
+                .monthlyMessageLimit;
+
+        const hasMonthlyCredit =
+            monthlyLimit > 0 &&
+            monthlyUsage <
+                monthlyLimit;
 
         if (
-            !tenantQuota.allowed
+            !hasMonthlyCredit &&
+            topUpBalance < 1
         ) {
             throw new ApiError(
-                tenantQuota.limit ===
-                    0
-                    ? "La suscripción de la empresa no incluye consultas de IA."
-                    : "La empresa alcanzó su límite mensual de consultas de IA.",
+                monthlyLimit === 0
+                    ? "La suscripción de la empresa no incluye consultas de IA y no tiene créditos adicionales."
+                    : "La empresa agotó sus consultas mensuales y sus créditos adicionales.",
                 429,
             );
         }
@@ -330,13 +402,61 @@ export async function POST(
                             messages.length -
                                 1
                         ].content,
+
+                        {
+                            allowedModuleIds:
+                                assistantAccess
+                                    .allowedModuleIds,
+
+                            isAdministrator:
+                                assistantAccess
+                                    .isAdministrator,
+                        },
                     ),
 
                 messages,
 
                 temperature: 0.2,
                 maxOutputTokens: 2_048,
+
+                onUsage:
+                    async (
+                        usage,
+                    ) => {
+                        await recordAIUsageEvent({
+                            tenantId:
+                                context.tenantId,
+
+                            product:
+                                "crm",
+
+                            channel:
+                                "internal_assistant",
+
+                            clerkUserId:
+                                context.clerkUserId,
+
+                            usage,
+                        });
+                    },
             });
+
+        const tenantQuota =
+            await consumeTenantAIQuota(
+                context.tenantId,
+                "crm",
+                monthlyLimit,
+            );
+
+        if (!tenantQuota.allowed) {
+            console.error(
+                "La respuesta de IA fue generada, pero no fue posible descontar el crédito.",
+                {
+                    tenantId:
+                        context.tenantId,
+                },
+            );
+        }
 
         return NextResponse.json({
             success: true,
@@ -346,11 +466,23 @@ export async function POST(
 
                 usage: {
                     limit:
-                        tenantQuota.limit,
+                        tenantQuota.allowed
+                            ? tenantQuota.limit
+                            : monthlyLimit,
 
                     remaining:
-                        tenantQuota
-                            .remaining,
+                        tenantQuota.allowed
+                            ? tenantQuota
+                                .remaining
+                            : Math.max(
+                                0,
+                                topUpBalance +
+                                    Math.max(
+                                        0,
+                                        monthlyLimit -
+                                            monthlyUsage,
+                                    ),
+                            ),
                 },
             },
         });

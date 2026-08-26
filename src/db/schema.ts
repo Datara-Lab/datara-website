@@ -7647,6 +7647,592 @@ export const aiRateLimitWindows =
     ],
   );
 
+export const aiCreditAccounts =
+  pgTable(
+    "ai_credit_accounts",
+    {
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      product: productAccessEnum(
+        "product",
+      ).notNull(),
+
+      autoRechargeEnabled: boolean(
+        "auto_recharge_enabled",
+      )
+        .notNull()
+        .default(false),
+
+      autoRechargeThresholdPercent:
+        integer(
+          "auto_recharge_threshold_percent",
+        )
+          .notNull()
+          .default(15),
+
+      autoRechargeCatalogItemId: uuid(
+        "auto_recharge_catalog_item_id",
+      ).references(
+        () => commercialCatalogItems.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      maxAutoRechargesPerMonth:
+        integer(
+          "max_auto_recharges_per_month",
+        )
+          .notNull()
+          .default(1),
+
+      maxAutoRechargeSpend: numeric(
+        "max_auto_recharge_spend",
+        {
+          precision: 12,
+          scale: 2,
+        },
+      )
+        .notNull()
+        .default("0"),
+
+      lastAutoRechargeAt: timestamp(
+        "last_auto_recharge_at",
+        {
+          withTimezone: true,
+        },
+      ),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      primaryKey({
+        columns: [
+          table.tenantId,
+          table.product,
+        ],
+      }),
+
+      check(
+        "ai_credit_accounts_threshold_check",
+        sql`
+          ${table.autoRechargeThresholdPercent}
+            BETWEEN 1 AND 100
+        `,
+      ),
+
+      check(
+        "ai_credit_accounts_recharges_check",
+        sql`
+          ${table.maxAutoRechargesPerMonth} >= 0
+        `,
+      ),
+
+      check(
+        "ai_credit_accounts_spend_check",
+        sql`
+          ${table.maxAutoRechargeSpend} >= 0
+        `,
+      ),
+    ],
+  );
+
+export const aiCreditLots =
+  pgTable(
+    "ai_credit_lots",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      product: productAccessEnum(
+        "product",
+      ).notNull(),
+
+      commercialPurchaseId: uuid(
+        "commercial_purchase_id",
+      ).references(
+        () => commercialPurchases.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      catalogItemId: uuid(
+        "catalog_item_id",
+      ).references(
+        () => commercialCatalogItems.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      originalCredits: integer(
+        "original_credits",
+      ).notNull(),
+
+      remainingCredits: integer(
+        "remaining_credits",
+      ).notNull(),
+
+      status: text("status")
+        .$type<
+          | "active"
+          | "depleted"
+          | "expired"
+          | "refunded"
+        >()
+        .notNull()
+        .default("active"),
+
+      purchasedAt: timestamp(
+        "purchased_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      expiresAt: timestamp(
+        "expires_at",
+        {
+          withTimezone: true,
+        },
+      ).notNull(),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+
+      updatedAt: timestamp(
+        "updated_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      index(
+        "ai_credit_lots_available_idx",
+      ).on(
+        table.tenantId,
+        table.product,
+        table.status,
+        table.expiresAt,
+      ),
+
+      index(
+        "ai_credit_lots_purchase_idx",
+      ).on(
+        table.commercialPurchaseId,
+      ),
+
+      check(
+        "ai_credit_lots_original_check",
+        sql`
+          ${table.originalCredits} > 0
+        `,
+      ),
+
+      check(
+        "ai_credit_lots_remaining_check",
+        sql`
+          ${table.remainingCredits} >= 0
+          AND
+          ${table.remainingCredits}
+            <= ${table.originalCredits}
+        `,
+      ),
+    ],
+  );
+
+export const aiCreditLedgerEntries =
+  pgTable(
+    "ai_credit_ledger_entries",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      product: productAccessEnum(
+        "product",
+      ).notNull(),
+
+      creditLotId: uuid(
+        "credit_lot_id",
+      ).references(
+        () => aiCreditLots.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      entryType: text("entry_type")
+        .$type<
+          | "top_up"
+          | "consumption"
+          | "refund"
+          | "adjustment"
+          | "expiration"
+        >()
+        .notNull(),
+
+      creditDelta: integer(
+        "credit_delta",
+      ).notNull(),
+
+      balanceAfter: integer(
+        "balance_after",
+      ).notNull(),
+
+      commercialPurchaseId: uuid(
+        "commercial_purchase_id",
+      ).references(
+        () => commercialPurchases.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      catalogItemId: uuid(
+        "catalog_item_id",
+      ).references(
+        () => commercialCatalogItems.id,
+        {
+          onDelete: "set null",
+        },
+      ),
+
+      stripeEventId: text(
+        "stripe_event_id",
+      ),
+
+      idempotencyKey: text(
+        "idempotency_key",
+      ).notNull(),
+
+      metadata: jsonb("metadata")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      uniqueIndex(
+        "ai_credit_ledger_idempotency_unique",
+      ).on(
+        table.idempotencyKey,
+      ),
+
+      index(
+        "ai_credit_ledger_tenant_idx",
+      ).on(
+        table.tenantId,
+        table.product,
+        table.createdAt,
+      ),
+
+      index(
+        "ai_credit_ledger_lot_idx",
+      ).on(
+        table.creditLotId,
+      ),
+
+      index(
+        "ai_credit_ledger_purchase_idx",
+      ).on(
+        table.commercialPurchaseId,
+      ),
+
+      check(
+        "ai_credit_ledger_delta_check",
+        sql`
+          ${table.creditDelta} <> 0
+        `,
+      ),
+
+      check(
+        "ai_credit_ledger_balance_check",
+        sql`
+          ${table.balanceAfter} >= 0
+        `,
+      ),
+    ],
+  );
+
+export const aiUsageEvents =
+  pgTable(
+    "ai_usage_events",
+    {
+      id: uuid("id")
+        .defaultRandom()
+        .primaryKey(),
+
+      tenantId: uuid("tenant_id")
+        .notNull()
+        .references(() => tenants.id, {
+          onDelete: "cascade",
+        }),
+
+      product: productAccessEnum(
+        "product",
+      ).notNull(),
+
+      provider: text("provider")
+        .notNull(),
+
+      model: text("model")
+        .notNull(),
+
+      channel: text("channel")
+        .$type<
+          | "internal_assistant"
+          | "public_chatbot"
+          | "automation"
+          | "other"
+        >()
+        .notNull(),
+
+      clerkUserId: text(
+        "clerk_user_id",
+      ),
+
+      status: text("status")
+        .$type<
+          | "success"
+          | "error"
+        >()
+        .notNull(),
+
+      inputTokenCount: integer(
+        "input_token_count",
+      )
+        .notNull()
+        .default(0),
+
+      outputTokenCount: integer(
+        "output_token_count",
+      )
+        .notNull()
+        .default(0),
+
+      thinkingTokenCount: integer(
+        "thinking_token_count",
+      )
+        .notNull()
+        .default(0),
+
+      cachedInputTokenCount: integer(
+        "cached_input_token_count",
+      )
+        .notNull()
+        .default(0),
+
+      totalTokenCount: integer(
+        "total_token_count",
+      )
+        .notNull()
+        .default(0),
+
+      requestDurationMs: integer(
+        "request_duration_ms",
+      )
+        .notNull()
+        .default(0),
+
+      attemptCount: integer(
+        "attempt_count",
+      )
+        .notNull()
+        .default(1),
+
+      estimatedInputCostUsd: numeric(
+        "estimated_input_cost_usd",
+        {
+          precision: 16,
+          scale: 8,
+        },
+      )
+        .notNull()
+        .default("0"),
+
+      estimatedOutputCostUsd: numeric(
+        "estimated_output_cost_usd",
+        {
+          precision: 16,
+          scale: 8,
+        },
+      )
+        .notNull()
+        .default("0"),
+
+      estimatedTotalCostUsd: numeric(
+        "estimated_total_cost_usd",
+        {
+          precision: 16,
+          scale: 8,
+        },
+      )
+        .notNull()
+        .default("0"),
+
+      errorCode: text(
+        "error_code",
+      ),
+
+      metadata: jsonb("metadata")
+        .$type<
+          Record<string, unknown>
+        >()
+        .notNull()
+        .default({}),
+
+      createdAt: timestamp(
+        "created_at",
+        {
+          withTimezone: true,
+        },
+      )
+        .notNull()
+        .defaultNow(),
+    },
+    (table) => [
+      index(
+        "ai_usage_events_tenant_idx",
+      ).on(
+        table.tenantId,
+        table.product,
+        table.createdAt,
+      ),
+
+      index(
+        "ai_usage_events_model_idx",
+      ).on(
+        table.provider,
+        table.model,
+        table.createdAt,
+      ),
+
+      index(
+        "ai_usage_events_status_idx",
+      ).on(
+        table.status,
+        table.createdAt,
+      ),
+
+      check(
+        "ai_usage_events_tokens_check",
+        sql`
+          ${table.inputTokenCount} >= 0
+          AND
+          ${table.outputTokenCount} >= 0
+          AND
+          ${table.thinkingTokenCount} >= 0
+          AND
+          ${table.cachedInputTokenCount} >= 0
+          AND
+          ${table.totalTokenCount} >= 0
+        `,
+      ),
+
+      check(
+        "ai_usage_events_duration_check",
+        sql`
+          ${table.requestDurationMs} >= 0
+          AND
+          ${table.attemptCount} > 0
+        `,
+      ),
+
+      check(
+        "ai_usage_events_cost_check",
+        sql`
+          ${table.estimatedInputCostUsd} >= 0
+          AND
+          ${table.estimatedOutputCostUsd} >= 0
+          AND
+          ${table.estimatedTotalCostUsd} >= 0
+        `,
+      ),
+    ],
+  );
+
+export type AIUsageEvent =
+  typeof aiUsageEvents.$inferSelect;
+
+export type NewAIUsageEvent =
+  typeof aiUsageEvents.$inferInsert;
+
+export type AICreditAccount =
+  typeof aiCreditAccounts.$inferSelect;
+
+export type NewAICreditAccount =
+  typeof aiCreditAccounts.$inferInsert;
+
+export type AICreditLot =
+  typeof aiCreditLots.$inferSelect;
+
+export type NewAICreditLot =
+  typeof aiCreditLots.$inferInsert;
+
+export type AICreditLedgerEntry =
+  typeof aiCreditLedgerEntries
+    .$inferSelect;
+
+export type NewAICreditLedgerEntry =
+  typeof aiCreditLedgerEntries
+    .$inferInsert;
+
 export type AIRateLimitWindow =
   typeof aiRateLimitWindows.$inferSelect;
 

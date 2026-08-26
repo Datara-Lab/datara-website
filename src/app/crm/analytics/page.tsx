@@ -72,9 +72,19 @@ type CRMAnalyticsData = {
 
   aiUsage: {
     assistantName: string;
-    used: number;
-    limit: number;
-    remaining: number;
+
+    monthly: {
+      used: number;
+      limit: number;
+      remaining: number;
+    };
+
+    extra: {
+      original: number;
+      used: number;
+      remaining: number;
+      nextExpiresAt: string | null;
+    };
   } | null;
 
   metrics: AnalyticsMetrics;
@@ -1329,35 +1339,66 @@ export default function CRMAnalyticsPage() {
 
       {!isLoading &&
         aiUsage && (
-          <section className="mt-5 overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm">
-            <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.14em] text-violet-700">
-                  Consumo de inteligencia artificial
-                </p>
+          <section className="mt-5 overflow-hidden rounded-3xl border border-violet-200 bg-white p-6 shadow-sm">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.14em] text-violet-700">
+                Consumo de inteligencia artificial
+              </p>
 
-                <h2 className="mt-2 text-2xl font-black text-slate-950">
-                  {aiUsage.assistantName}
-                </h2>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">
+                {aiUsage.assistantName}
+              </h2>
 
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Consumo mensual compartido entre el asistente interno y el chatbot público.
-                </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                El asistente interno y el chatbot público consumen primero la bolsa mensual y después los créditos extra.
+              </p>
+            </div>
 
-                <div className="mt-5 h-3 overflow-hidden rounded-full bg-violet-100">
+            <div className="mt-6 grid gap-5 xl:grid-cols-2">
+              <article className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">
+                      Créditos mensuales
+                    </p>
+
+                    <p className="mt-2 text-3xl font-black text-slate-950">
+                      {formatNumber(
+                        aiUsage.monthly.remaining,
+                      )}
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      disponibles
+                    </p>
+                  </div>
+
+                  <p className="text-sm font-semibold text-blue-700">
+                    {formatNumber(
+                      aiUsage.monthly.used,
+                    )}{" "}
+                    de{" "}
+                    {formatNumber(
+                      aiUsage.monthly.limit,
+                    )}{" "}
+                    utilizados
+                  </p>
+                </div>
+
+                <div className="mt-5 h-3 overflow-hidden rounded-full bg-blue-100">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-700 via-blue-600 to-cyan-400"
+                    className="h-full rounded-full bg-gradient-to-r from-blue-700 to-cyan-400"
                     style={{
                       width:
                         `${
-                          aiUsage.limit >
+                          aiUsage.monthly.limit >
                           0
                             ? Math.min(
                                 100,
 
                                 (
-                                  aiUsage.used /
-                                  aiUsage.limit
+                                  aiUsage.monthly.used /
+                                  aiUsage.monthly.limit
                                 ) *
                                   100,
                               )
@@ -1366,45 +1407,81 @@ export default function CRMAnalyticsPage() {
                     }}
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-2xl font-black text-slate-950">
+                <p className="mt-4 text-xs leading-5 text-slate-500">
+                  Se restablecen cada mes y no son acumulables.
+                </p>
+              </article>
+
+              <article className="rounded-2xl border border-violet-200 bg-violet-50/60 p-5">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
+                      Créditos extra
+                    </p>
+
+                    <p className="mt-2 text-3xl font-black text-slate-950">
+                      {formatNumber(
+                        aiUsage.extra.remaining,
+                      )}
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      disponibles
+                    </p>
+                  </div>
+
+                  <p className="text-sm font-semibold text-violet-700">
                     {formatNumber(
-                      aiUsage.used,
-                    )}
-                  </p>
-
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    Utilizadas
+                      aiUsage.extra.used,
+                    )}{" "}
+                    de{" "}
+                    {formatNumber(
+                      aiUsage.extra.original,
+                    )}{" "}
+                    utilizados
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-violet-50 px-4 py-3">
-                  <p className="text-2xl font-black text-violet-800">
-                    {formatNumber(
-                      aiUsage.remaining,
-                    )}
-                  </p>
+                <div className="mt-5 h-3 overflow-hidden rounded-full bg-violet-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-700 via-blue-600 to-cyan-400"
+                    style={{
+                      width:
+                        `${
+                          aiUsage.extra.original >
+                          0
+                            ? Math.min(
+                                100,
 
-                  <p className="mt-1 text-xs font-semibold text-violet-600">
-                    Disponibles
-                  </p>
+                                (
+                                  aiUsage.extra.used /
+                                  aiUsage.extra.original
+                                ) *
+                                  100,
+                              )
+                            : 0
+                        }%`,
+                    }}
+                  />
                 </div>
 
-                <div className="rounded-2xl bg-blue-50 px-4 py-3">
-                  <p className="text-2xl font-black text-blue-800">
-                    {formatNumber(
-                      aiUsage.limit,
-                    )}
-                  </p>
-
-                  <p className="mt-1 text-xs font-semibold text-blue-600">
-                    Incluidas
-                  </p>
-                </div>
-              </div>
+                <p className="mt-4 text-xs leading-5 text-slate-500">
+                  {aiUsage.extra.nextExpiresAt
+                    ? `La siguiente bolsa vence el ${new Intl.DateTimeFormat(
+                        "es-MX",
+                        {
+                          dateStyle:
+                            "medium",
+                        },
+                      ).format(
+                        new Date(
+                          aiUsage.extra.nextExpiresAt,
+                        ),
+                      )}.`
+                    : "No hay créditos extra disponibles."}
+                </p>
+              </article>
             </div>
           </section>
         )}
