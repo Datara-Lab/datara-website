@@ -1,125 +1,24 @@
 "use client";
 
-import { useState } from "react";
-
-import ImageUploader from "@/components/upload/ImageUploader";
-
-type UploadResponse = {
-  success: boolean;
-  error?: string;
-  data?: {
-    objectKey: string;
-    contentUrl: string;
-  };
-};
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function ConfiguracionPage() {
-  const [companyLogo, setCompanyLogo] =
-    useState<File | null>(null);
-
-  const [savedLogoUrl, setSavedLogoUrl] =
-    useState<string | null>(
-      "/api/settings/company-logo/content",
-    );
-
-  const [isSaving, setIsSaving] =
+  const [canManageImports, setCanManageImports] =
     useState(false);
 
-  const [message, setMessage] =
-    useState<string | null>(null);
-
-  async function handleSaveLogo() {
-    if (!companyLogo) {
-      setMessage(
-        "Selecciona una imagen antes de guardar.",
+  useEffect(() => {
+    void fetch(
+      "/api/crm/imports",
+      {
+        cache: "no-store",
+      },
+    ).then((response) => {
+      setCanManageImports(
+        response.ok,
       );
-      return;
-    }
-
-    setIsSaving(true);
-    setMessage(null);
-
-    try {
-      const formData = new FormData();
-      formData.set("file", companyLogo);
-
-      const response = await fetch(
-        "/api/settings/company-logo",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const result =
-        (await response.json()) as UploadResponse;
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.error ??
-            "No fue posible guardar el logo.",
-        );
-      }
-
-      setSavedLogoUrl(
-        `${
-          result.data?.contentUrl ??
-          "/api/settings/company-logo/content"
-        }?v=${Date.now()}`,
-      );
-
-      setCompanyLogo(null);
-      setMessage(
-        "El logo se guardó correctamente.",
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "No fue posible guardar el logo.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function handleDeleteLogo() {
-    setIsSaving(true);
-    setMessage(null);
-
-    try {
-      const response = await fetch(
-        "/api/settings/company-logo",
-        {
-          method: "DELETE",
-        },
-      );
-
-      const result =
-        (await response.json()) as UploadResponse;
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.error ??
-            "No fue posible eliminar el logo.",
-        );
-      }
-
-      setCompanyLogo(null);
-      setSavedLogoUrl(null);
-      setMessage(
-        "El logo se eliminó correctamente.",
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "No fue posible eliminar el logo.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    });
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:px-8">
@@ -140,7 +39,7 @@ export default function ConfiguracionPage() {
 
         <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 
-          <a
+          <Link
             href="/crm/configuracion/menu"
             className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
@@ -151,9 +50,9 @@ export default function ConfiguracionPage() {
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Define el orden en que los módulos aparecen en la navegación para los usuarios de tu empresa.
             </p>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/crm/configuracion/asistente"
             className="rounded-3xl border border-blue-200 bg-gradient-to-br from-white to-blue-50 p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
@@ -164,9 +63,22 @@ export default function ConfiguracionPage() {
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Controla el asistente interno, el chatbot público y el consumo mensual compartido de IA.
             </p>
-          </a>
+          </Link>
 
-          <a
+          <Link
+            href="/crm/configuracion/integraciones"
+            className="rounded-3xl border border-indigo-200 bg-gradient-to-br from-white via-blue-50 to-fuchsia-50 p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            <h2 className="text-xl font-black text-slate-950">
+              🌐 Facebook e Instagram
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Prepara las cuentas de Meta que se conectarán con Datara para captar prospectos y conversaciones.
+            </p>
+          </Link>
+
+          <Link
             href="/crm/configuracion/catalogo"
             className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
@@ -177,9 +89,9 @@ export default function ConfiguracionPage() {
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Administra las categorías disponibles para modelos, productos y servicios.
             </p>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/crm/configuracion/reservas"
             className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
@@ -190,7 +102,22 @@ export default function ConfiguracionPage() {
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Configura los plazos de vencimiento, extensiones y liberación automática del inventario reservado.
             </p>
-          </a>
+          </Link>
+
+          {canManageImports && (
+            <Link
+              href="/crm/configuracion/carga"
+              className="rounded-3xl border border-cyan-200 bg-gradient-to-br from-white to-cyan-50 p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <h2 className="text-xl font-black text-slate-950">
+                📥 Centro de carga
+              </h2>
+
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Importa prospectos, clientes y catálogo desde Excel o CSV con validación previa.
+              </p>
+            </Link>
+          )}
 
         </div>
 

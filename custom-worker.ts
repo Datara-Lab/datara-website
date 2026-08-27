@@ -73,7 +73,7 @@ export default {
 
         if (
             controller.cron ===
-            "*/5 * * * *"
+            "*/10 * * * *"
         ) {
             await callInternalEndpoint(
                 dataraEnvironment,

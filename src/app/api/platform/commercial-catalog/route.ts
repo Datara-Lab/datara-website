@@ -92,7 +92,9 @@ type CatalogItemPayload = {
     unknown;
     currency?: unknown;
     includedUsers?: unknown;
+    includedBranches?: unknown;
     includedStorageGb?: unknown;
+    includedEmailsPerMonth?: unknown;
     includedAiMessages?: unknown;
     moduleIds?: unknown;
     features?: unknown;
@@ -552,12 +554,24 @@ function getCatalogValues(
                 "Los usuarios incluidos",
             ),
 
+        includedBranches:
+            getNonNegativeInteger(
+                payload.includedBranches,
+                "Las sucursales incluidas",
+            ),
+
         includedStorageGb:
             getNonNegativeInteger(
                 payload.includedStorageGb,
                 "El almacenamiento incluido",
             )
                 .toFixed(2),
+
+        includedEmailsPerMonth:
+            getNonNegativeInteger(
+                payload.includedEmailsPerMonth,
+                "Los correos mensuales incluidos",
+            ),
 
         includedAiMessages:
             getNonNegativeInteger(

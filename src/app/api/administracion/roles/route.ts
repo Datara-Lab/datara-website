@@ -296,7 +296,52 @@ export async function GET() {
   try {
     const {
       tenantId,
+      clerkUserId,
     } = await requireAdminContext();
+
+    const [currentMember] =
+      await db
+        .select({
+          globalRoleKey:
+            roles.key,
+        })
+        .from(
+          tenantMembers,
+        )
+        .leftJoin(
+          roles,
+          and(
+            eq(
+              tenantMembers.roleId,
+              roles.id,
+            ),
+            eq(
+              roles.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(
+              tenantMembers.tenantId,
+              tenantId,
+            ),
+            eq(
+              tenantMembers.clerkUserId,
+              clerkUserId,
+            ),
+            eq(
+              tenantMembers.status,
+              "active",
+            ),
+          ),
+        )
+        .limit(1);
+
+    const canManageCloudAdministrators =
+      currentMember?.globalRoleKey ===
+      "owner";
 
     const availableRoles = await db
       .select({
@@ -376,7 +421,12 @@ export async function GET() {
     const globalRoles =
       rolesWithPermissions.filter(
         (role) =>
-          role.product === null,
+          role.product === null &&
+          (
+            role.key !==
+              "admin_cloud" ||
+            canManageCloudAdministrators
+          ),
       );
 
     const productRoles = {
@@ -589,7 +639,48 @@ export async function PATCH(
   try {
     const {
       tenantId,
+      clerkUserId,
     } = await requireAdminContext();
+
+    const [currentMember] =
+      await db
+        .select({
+          globalRoleKey:
+            roles.key,
+        })
+        .from(
+          tenantMembers,
+        )
+        .innerJoin(
+          roles,
+          and(
+            eq(
+              tenantMembers.roleId,
+              roles.id,
+            ),
+            eq(
+              roles.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(
+              tenantMembers.tenantId,
+              tenantId,
+            ),
+            eq(
+              tenantMembers.clerkUserId,
+              clerkUserId,
+            ),
+            eq(
+              tenantMembers.status,
+              "active",
+            ),
+          ),
+        )
+        .limit(1);
 
     const requestBody: unknown =
       await request.json();
@@ -643,10 +734,15 @@ export async function PATCH(
         )
         .limit(1);
 
-    if (!existingRole) {
+    if (
+      existingRole.key ===
+        "admin_cloud" &&
+      currentMember?.globalRoleKey !==
+        "owner"
+    ) {
       throw new ApiError(
-        "El rol no existe.",
-        404,
+        "Solo el propietario de Datara puede modificar el rol Admin Cloud.",
+        403,
       );
     }
 
@@ -783,7 +879,48 @@ export async function DELETE(
   try {
     const {
       tenantId,
+      clerkUserId,
     } = await requireAdminContext();
+
+    const [currentMember] =
+      await db
+        .select({
+          globalRoleKey:
+            roles.key,
+        })
+        .from(
+          tenantMembers,
+        )
+        .innerJoin(
+          roles,
+          and(
+            eq(
+              tenantMembers.roleId,
+              roles.id,
+            ),
+            eq(
+              roles.tenantId,
+              tenantId,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(
+              tenantMembers.tenantId,
+              tenantId,
+            ),
+            eq(
+              tenantMembers.clerkUserId,
+              clerkUserId,
+            ),
+            eq(
+              tenantMembers.status,
+              "active",
+            ),
+          ),
+        )
+        .limit(1);
 
     const requestBody: unknown =
       await request.json();
@@ -810,8 +947,15 @@ export async function DELETE(
     const [role] =
       await db
         .select({
-          id: roles.id,
-          name: roles.name,
+          id:
+            roles.id,
+
+          key:
+            roles.key,
+
+          name:
+            roles.name,
+
           isSystem:
             roles.isSystem,
         })
@@ -834,6 +978,18 @@ export async function DELETE(
       throw new ApiError(
         "El rol no existe.",
         404,
+      );
+    }
+
+    if (
+      role.key ===
+        "admin_cloud" &&
+      currentMember?.globalRoleKey !==
+        "owner"
+    ) {
+      throw new ApiError(
+        "Solo el propietario de Datara puede eliminar el rol Admin Cloud.",
+        403,
       );
     }
 

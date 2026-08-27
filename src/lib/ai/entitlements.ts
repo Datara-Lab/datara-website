@@ -9,7 +9,6 @@ import { db } from "@/db";
 
 import {
   aiRateLimitWindows,
-  commercialCatalogItems,
   subscriptions,
   tenantProducts,
 } from "@/db/schema";
@@ -22,6 +21,10 @@ import {
 import {
   consumeAITopUpCredit,
 } from "@/lib/ai/credits";
+
+import {
+  getTenantCommercialCapacity,
+} from "@/lib/commercial/tenant-capacity";
 
 import type {
   DataraProduct,
@@ -510,45 +513,15 @@ if (
   };
 }
 
-const catalogItemIds =
-    subscription
-      .catalogItemIds;
+  const commercialCapacity =
+    await getTenantCommercialCapacity(
+      tenantId,
+      product,
+    );
 
   let monthlyMessageLimit =
-    0;
-
-  if (
-    catalogItemIds.length >
-    0
-  ) {
-    const catalogItems =
-      await db
-        .select({
-          includedAiMessages:
-            commercialCatalogItems
-              .includedAiMessages,
-        })
-        .from(
-          commercialCatalogItems,
-        )
-        .where(
-          inArray(
-            commercialCatalogItems.id,
-            catalogItemIds,
-          ),
-        );
-
-    monthlyMessageLimit =
-      catalogItems.reduce(
-        (
-          total,
-          item,
-        ) =>
-          total +
-          item.includedAiMessages,
-        0,
-      );
-  }
+    commercialCapacity
+      .aiMessages;
 
   if (
     monthlyMessageLimit ===

@@ -81,6 +81,20 @@ export default async function AdministracionPage() {
             status:
               "Disponible",
           },
+
+          {
+            title:
+              "Inteligencia artificial",
+
+            description:
+              "Selecciona el proveedor de IA del ambiente, pausa el servicio y monitorea consultas, rendimiento y gasto estimado.",
+
+            href:
+              "/administracion/ia",
+
+            status:
+              "Disponible",
+          },
         ]
       : baseAdministrationModules;
 

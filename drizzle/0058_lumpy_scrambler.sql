@@ -1,0 +1,1 @@
+ALTER TABLE "commercial_catalog_items" ADD COLUMN "requires_quote" boolean DEFAULT false NOT NULL;

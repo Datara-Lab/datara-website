@@ -275,7 +275,12 @@ export async function PATCH(
     if (payload.globalRoleId) {
       const [globalRole] = await db
         .select({
-          id: roles.id,
+          id:
+            roles.id,
+          key:
+            roles.key,
+          product:
+            roles.product,
         })
         .from(roles)
         .where(
@@ -292,10 +297,25 @@ export async function PATCH(
         )
         .limit(1);
 
-      if (!globalRole) {
+      if (
+        !globalRole ||
+        globalRole.product !== null
+      ) {
         throw new ApiError(
           "El rol global seleccionado no es válido.",
           400,
+        );
+      }
+
+      if (
+        globalRole.key ===
+          "admin_cloud" &&
+        currentGlobalRole.key !==
+          "owner"
+      ) {
+        throw new ApiError(
+          "Solo el propietario de Datara puede asignar el rol Admin Cloud.",
+          403,
         );
       }
     }

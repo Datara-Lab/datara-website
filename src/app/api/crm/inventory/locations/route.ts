@@ -1,27 +1,12 @@
-import {
-  auth,
-  currentUser,
-} from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
-import {
-  and,
-  asc,
-  eq,
-  inArray,
-  sql,
-} from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
-import {
-  NextResponse,
-} from "next/server";
+import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 
-import {
-  inventoryLocations,
-  tenantBranches,
-  tenants,
-} from "@/db/schema";
+import { inventoryLocations, tenantBranches, tenants } from "@/db/schema";
 
 import {
   CRMBranchAccessError,
@@ -30,9 +15,7 @@ import {
   type CRMBranchAccessContext,
 } from "@/lib/crm/branch-access";
 
-import {
-  createInventoryAuditQuery,
-} from "@/lib/crm/inventory-audit";
+import { createInventoryAuditQuery } from "@/lib/crm/inventory-audit";
 
 import {
   CRMPermissionError,
@@ -40,8 +23,9 @@ import {
   type CRMModulePermissions,
 } from "@/lib/crm/permissions";
 
-export const dynamic =
-  "force-dynamic";
+import { syncBranchInventoryLocations } from "@/lib/crm/sync-branch-inventory-locations";
+
+export const dynamic = "force-dynamic";
 
 type LocationPayload = {
   id?: unknown;
@@ -66,130 +50,69 @@ type InventoryContext = {
   tenantId: string;
   userId: string;
 
-  branchAccess:
-    CRMBranchAccessContext;
+  branchAccess: CRMBranchAccessContext;
 
-  permissions:
-    CRMModulePermissions;
+  permissions: CRMModulePermissions;
 };
 
 class ApiError extends Error {
   status: number;
 
-  constructor(
-    message: string,
-    status: number,
-  ) {
+  constructor(message: string, status: number) {
     super(message);
     this.status = status;
   }
 }
 
-function isRecord(
-  value: unknown,
-): value is Record<
-  string,
-  unknown
-> {
-  return (
-    typeof value ===
-      "object" &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function getOptionalString(
-  value: unknown,
-): string | undefined {
-  if (
-    typeof value !==
-    "string"
-  ) {
+function getOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
     return undefined;
   }
 
-  const normalized =
-    value.trim();
+  const normalized = value.trim();
 
-  return normalized ||
-    undefined;
+  return normalized || undefined;
 }
 
-function getBoolean(
-  value: unknown,
-  fallback = false,
-): boolean {
-  return typeof value ===
-    "boolean"
-    ? value
-    : fallback;
+function getBoolean(value: unknown, fallback = false): boolean {
+  return typeof value === "boolean" ? value : fallback;
 }
 
-function normalizeCode(
-  value: unknown,
-): string | null {
-  return (
-    getOptionalString(value)
-      ?.toUpperCase() ??
-    null
-  );
+function normalizeCode(value: unknown): string | null {
+  return getOptionalString(value)?.toUpperCase() ?? null;
 }
 
 async function getInventoryContext(
-  requiredPermission:
-    | "view"
-    | "manage",
+  requiredPermission: "view" | "manage",
 ): Promise<InventoryContext> {
-  const {
-    userId,
-    orgId,
-  } = await auth();
+  const { userId, orgId } = await auth();
 
   if (!userId) {
-    throw new ApiError(
-      "No autenticado.",
-      401,
-    );
+    throw new ApiError("No autenticado.", 401);
   }
 
   if (!orgId) {
-    throw new ApiError(
-      "No hay una organización activa.",
-      400,
-    );
+    throw new ApiError("No hay una organización activa.", 400);
   }
 
-  const [tenant] =
-    await db
-      .select({
-        id: tenants.id,
-      })
-      .from(tenants)
-      .where(
-        eq(
-          tenants
-            .clerkOrganizationId,
-          orgId,
-        ),
-      )
-      .limit(1);
+  const [tenant] = await db
+    .select({
+      id: tenants.id,
+    })
+    .from(tenants)
+    .where(eq(tenants.clerkOrganizationId, orgId))
+    .limit(1);
 
   if (!tenant) {
-    throw new ApiError(
-      "La empresa aún no está sincronizada.",
-      404,
-    );
+    throw new ApiError("La empresa aún no está sincronizada.", 404);
   }
 
-  const [
-    branchAccess,
-    permissions,
-  ] = await Promise.all([
-    getCRMBranchAccess(
-      tenant.id,
-      userId,
-    ),
+  const [branchAccess, permissions] = await Promise.all([
+    getCRMBranchAccess(tenant.id, userId),
 
     requireCRMModulePermission(
       tenant.id,
@@ -207,16 +130,11 @@ async function getInventoryContext(
   };
 }
 
-function createErrorResponse(
-  error: unknown,
-) {
+function createErrorResponse(error: unknown) {
   if (
-    error instanceof
-      ApiError ||
-    error instanceof
-      CRMBranchAccessError ||
-    error instanceof
-      CRMPermissionError
+    error instanceof ApiError ||
+    error instanceof CRMBranchAccessError ||
+    error instanceof CRMPermissionError
   ) {
     return NextResponse.json(
       {
@@ -229,24 +147,20 @@ function createErrorResponse(
     );
   }
 
-  const databaseError =
-    error as {
-      cause?: {
-        code?: string;
-      };
+  const databaseError = error as {
+    cause?: {
       code?: string;
     };
+    code?: string;
+  };
 
-  const code =
-    databaseError.cause?.code ??
-    databaseError.code;
+  const code = databaseError.cause?.code ?? databaseError.code;
 
   if (code === "23505") {
     return NextResponse.json(
       {
         success: false,
-        error:
-          "Ya existe una ubicación con ese código.",
+        error: "Ya existe una ubicación con ese código.",
       },
       {
         status: 409,
@@ -254,16 +168,12 @@ function createErrorResponse(
     );
   }
 
-  console.error(
-    "No fue posible procesar la ubicación de inventario:",
-    error,
-  );
+  console.error("No fue posible procesar la ubicación de inventario:", error);
 
   return NextResponse.json(
     {
       success: false,
-      error:
-        "No fue posible procesar la ubicación de inventario.",
+      error: "No fue posible procesar la ubicación de inventario.",
     },
     {
       status: 500,
@@ -273,204 +183,120 @@ function createErrorResponse(
 
 export async function GET() {
   try {
-    const {
-      tenantId,
-      branchAccess,
-      permissions,
-    } =
-      await getInventoryContext(
-        "view",
-      );
+    const { tenantId, branchAccess, permissions } =
+      await getInventoryContext("view");
 
-    const locationAccessCondition =
-      branchAccess.allBranches
-        ? eq(
-            inventoryLocations
-              .tenantId,
-            tenantId,
-          )
-        : and(
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenantId,
-            ),
+    await syncBranchInventoryLocations(tenantId);
 
-            branchAccess
-              .branchIds.length >
-            0
-              ? inArray(
-                  inventoryLocations
-                    .branchId,
-                  branchAccess
-                    .branchIds,
-                )
-              : sql<boolean>`false`,
-          );
+    const locationAccessCondition = branchAccess.allBranches
+      ? eq(inventoryLocations.tenantId, tenantId)
+      : and(
+          eq(inventoryLocations.tenantId, tenantId),
 
-    const records =
-      await db
-        .select({
-          id:
-            inventoryLocations.id,
-
-          branchId:
-            inventoryLocations
-              .branchId,
-
-          branchName:
-            tenantBranches.name,
-
-          branchCode:
-            tenantBranches.code,
-
-          name:
-            inventoryLocations.name,
-
-          code:
-            inventoryLocations.code,
-
-          type:
-            inventoryLocations.type,
-
-          active:
-            inventoryLocations.active,
-
-          isDefault:
-            inventoryLocations
-              .isDefault,
-
-          addressLine:
-            inventoryLocations
-              .addressLine,
-
-          city:
-            inventoryLocations.city,
-
-          state:
-            inventoryLocations.state,
-
-          postalCode:
-            inventoryLocations
-              .postalCode,
-
-          country:
-            inventoryLocations
-              .country,
-
-          createdAt:
-            inventoryLocations
-              .createdAt,
-
-          updatedAt:
-            inventoryLocations
-              .updatedAt,
-        })
-        .from(
-          inventoryLocations,
-        )
-        .leftJoin(
-          tenantBranches,
-          and(
-            eq(
-              inventoryLocations
-                .branchId,
-              tenantBranches.id,
-            ),
-            eq(
-              tenantBranches.tenantId,
-              tenantId,
-            ),
-          ),
-        )
-        .where(
-          and(
-            locationAccessCondition,
-
-            permissions.canManage
-              ? sql<boolean>`true`
-              : eq(
-                  inventoryLocations
-                    .active,
-                  true,
-                ),
-          ),
-        )
-        .orderBy(
-          asc(
-            inventoryLocations.name,
-          ),
+          branchAccess.branchIds.length > 0
+            ? inArray(inventoryLocations.branchId, branchAccess.branchIds)
+            : sql<boolean>`false`,
         );
+
+    const records = await db
+      .select({
+        id: inventoryLocations.id,
+
+        branchId: inventoryLocations.branchId,
+
+        branchName: tenantBranches.name,
+
+        branchCode: tenantBranches.code,
+
+        name: inventoryLocations.name,
+
+        code: inventoryLocations.code,
+
+        type: inventoryLocations.type,
+
+        source: inventoryLocations.source,
+
+        active: inventoryLocations.active,
+
+        isDefault: inventoryLocations.isDefault,
+
+        addressLine: inventoryLocations.addressLine,
+
+        city: inventoryLocations.city,
+
+        state: inventoryLocations.state,
+
+        postalCode: inventoryLocations.postalCode,
+
+        country: inventoryLocations.country,
+
+        createdAt: inventoryLocations.createdAt,
+
+        updatedAt: inventoryLocations.updatedAt,
+      })
+      .from(inventoryLocations)
+      .leftJoin(
+        tenantBranches,
+        and(
+          eq(inventoryLocations.branchId, tenantBranches.id),
+          eq(tenantBranches.tenantId, tenantId),
+        ),
+      )
+      .where(
+        and(
+          locationAccessCondition,
+
+          permissions.canManage
+            ? sql<boolean>`true`
+            : eq(inventoryLocations.active, true),
+        ),
+      )
+      .orderBy(asc(inventoryLocations.name));
 
     return NextResponse.json({
       success: true,
 
-      data: records.map(
-        (record) => ({
-          ...record,
+      data: records.map((record) => ({
+        ...record,
 
-          value: record.id,
+        value: record.id,
 
-          branchLabel:
-            record.branchName
-              ? record.branchCode
-                ? `${record.branchName} (${record.branchCode})`
-                : record.branchName
-              : null,
+        branchLabel: record.branchName
+          ? record.branchCode
+            ? `${record.branchName} (${record.branchCode})`
+            : record.branchName
+          : null,
 
-          label: record.code
-            ? `${record.name} (${record.code})`
-            : record.name,
+        label: record.code ? `${record.name} (${record.code})` : record.name,
 
-          createdAt:
-            record.createdAt
-              .toISOString(),
+        createdAt: record.createdAt.toISOString(),
 
-          updatedAt:
-            record.updatedAt
-              .toISOString(),
-        }),
-      ),
+        updatedAt: record.updatedAt.toISOString(),
+      })),
 
       permissions: {
-        canView:
-          permissions.canView,
+        canView: permissions.canView,
 
-        canCreate:
-          permissions.canCreate,
+        canCreate: permissions.canCreate,
 
-        canEdit:
-          permissions.canEdit,
+        canEdit: permissions.canEdit,
 
-        canManage:
-          permissions.canManage,
+        canManage: permissions.canManage,
 
-        canViewCost:
-          permissions.canManage,
+        canViewCost: permissions.canManage,
       },
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function POST(
-  request: Request,
-) {
+export async function POST(request: Request) {
   try {
-    const {
-      tenantId,
-      userId,
-      branchAccess,
-    } =
-      await getInventoryContext(
-        "manage",
-      );
+    const { tenantId, userId, branchAccess } =
+      await getInventoryContext("manage");
 
-    const body: unknown =
-      await request.json();
+    const body: unknown = await request.json();
 
     if (!isRecord(body)) {
       throw new ApiError(
@@ -479,239 +305,129 @@ export async function POST(
       );
     }
 
-    const values =
-      body as LocationPayload;
+    const values = body as LocationPayload;
 
-    const name =
-      getOptionalString(
-        values.name,
-      );
+    const name = getOptionalString(values.name);
 
     if (!name) {
-      throw new ApiError(
-        "El nombre de la ubicación es obligatorio.",
-        400,
-      );
+      throw new ApiError("El nombre de la ubicación es obligatorio.", 400);
     }
 
-    const requestedBranchId =
-      getOptionalString(
-        values.branchId,
-      );
+    const requestedBranchId = getOptionalString(values.branchId);
 
-    const branchId =
-      requestedBranchId
-        ? await validateCRMBranchId(
-            tenantId,
-            branchAccess,
-            requestedBranchId,
-          )
-        : null;
+    const branchId = requestedBranchId
+      ? await validateCRMBranchId(tenantId, branchAccess, requestedBranchId)
+      : null;
 
-    const isDefault =
-      getBoolean(
-        values.isDefault,
-      );
+    const isDefault = getBoolean(values.isDefault);
 
-    if (
-      isDefault &&
-      !branchId
-    ) {
+    if (isDefault && !branchId) {
       throw new ApiError(
         "Una ubicación predeterminada debe pertenecer a una sucursal.",
         400,
       );
     }
 
-    if (
-      branchId &&
-      isDefault
-    ) {
+    if (branchId && isDefault) {
       await db
-        .update(
-          inventoryLocations,
-        )
+        .update(inventoryLocations)
         .set({
           isDefault: false,
-          updatedAt:
-            new Date(),
+          updatedAt: new Date(),
         })
         .where(
           and(
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenantId,
-            ),
-            eq(
-              inventoryLocations
-                .branchId,
-              branchId,
-            ),
+            eq(inventoryLocations.tenantId, tenantId),
+            eq(inventoryLocations.branchId, branchId),
           ),
         );
     }
 
-    const [location] =
-      await db
-        .insert(
-          inventoryLocations,
-        )
-        .values({
-          tenantId,
-          branchId,
+    const [location] = await db
+      .insert(inventoryLocations)
+      .values({
+        tenantId,
+        branchId,
 
-          name,
+        name,
 
-          code:
-            normalizeCode(
-              values.code,
-            ),
+        code: normalizeCode(values.code),
 
-          type:
-            getOptionalString(
-              values.type,
-            ) ?? "Bodega",
+        type: getOptionalString(values.type) ?? "Bodega",
 
-          active:
-            getBoolean(
-              values.active,
-              true,
-            ),
+        active: getBoolean(values.active, true),
 
-          isDefault,
+        isDefault,
 
-          addressLine:
-            getOptionalString(
-              values.addressLine,
-            ) ?? null,
+        addressLine: getOptionalString(values.addressLine) ?? null,
 
-          city:
-            getOptionalString(
-              values.city,
-            ) ?? null,
+        city: getOptionalString(values.city) ?? null,
 
-          state:
-            getOptionalString(
-              values.state,
-            ) ?? null,
+        state: getOptionalString(values.state) ?? null,
 
-          postalCode:
-            getOptionalString(
-              values.postalCode,
-            ) ?? null,
+        postalCode: getOptionalString(values.postalCode) ?? null,
 
-          country:
-            getOptionalString(
-              values.country,
-            )?.toUpperCase() ??
-            "MX",
+        country: getOptionalString(values.country)?.toUpperCase() ?? "MX",
 
-          createdAt:
-            new Date(),
+        createdAt: new Date(),
 
-          updatedAt:
-            new Date(),
-        })
-        .returning({
-          id:
-            inventoryLocations.id,
+        updatedAt: new Date(),
+      })
+      .returning({
+        id: inventoryLocations.id,
 
-          name:
-            inventoryLocations.name,
-        });
+        name: inventoryLocations.name,
+      });
 
-    const user =
-      await currentUser();
+    const user = await currentUser();
 
     const actorName =
-      [
-        user?.firstName,
-        user?.lastName,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      user?.emailAddresses[0]
-        ?.emailAddress ||
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+      user?.emailAddresses[0]?.emailAddress ||
       "Usuario";
 
     await createInventoryAuditQuery({
       tenantId,
       branchId,
 
-      locationId:
-        location.id,
+      locationId: location.id,
 
-      productId:
-        null,
+      productId: null,
 
-      entityType:
-        "Ubicación de inventario",
+      entityType: "Ubicación de inventario",
 
-      entityId:
-        location.id,
+      entityId: location.id,
 
-      action:
-        "Crear",
+      action: "Crear",
 
-      summary:
-        `Se creó la ubicación "${location.name}".`,
+      summary: `Se creó la ubicación "${location.name}".`,
 
-      actorClerkUserId:
-        userId,
+      actorClerkUserId: userId,
 
       actorName,
 
-      before:
-        null,
+      before: null,
 
       after: {
         name,
 
-        code:
-          normalizeCode(
-            values.code,
-          ),
+        code: normalizeCode(values.code),
 
-        type:
-          getOptionalString(
-            values.type,
-          ) ?? "Bodega",
+        type: getOptionalString(values.type) ?? "Bodega",
 
-        active:
-          getBoolean(
-            values.active,
-            true,
-          ),
+        active: getBoolean(values.active, true),
 
         isDefault,
 
-        addressLine:
-          getOptionalString(
-            values.addressLine,
-          ) ?? null,
+        addressLine: getOptionalString(values.addressLine) ?? null,
 
-        city:
-          getOptionalString(
-            values.city,
-          ) ?? null,
+        city: getOptionalString(values.city) ?? null,
 
-        state:
-          getOptionalString(
-            values.state,
-          ) ?? null,
+        state: getOptionalString(values.state) ?? null,
 
-        postalCode:
-          getOptionalString(
-            values.postalCode,
-          ) ?? null,
+        postalCode: getOptionalString(values.postalCode) ?? null,
 
-        country:
-          getOptionalString(
-            values.country,
-          )?.toUpperCase() ??
-          "MX",
+        country: getOptionalString(values.country)?.toUpperCase() ?? "MX",
       },
     });
 
@@ -719,8 +435,7 @@ export async function POST(
       {
         success: true,
 
-        message:
-          "La ubicación fue creada correctamente.",
+        message: "La ubicación fue creada correctamente.",
 
         data: location,
       },
@@ -729,27 +444,16 @@ export async function POST(
       },
     );
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function PATCH(
-  request: Request,
-) {
+export async function PATCH(request: Request) {
   try {
-    const {
-      tenantId,
-      userId,
-      branchAccess,
-    } =
-      await getInventoryContext(
-        "manage",
-      );
+    const { tenantId, userId, branchAccess } =
+      await getInventoryContext("manage");
 
-    const body: unknown =
-      await request.json();
+    const body: unknown = await request.json();
 
     if (!isRecord(body)) {
       throw new ApiError(
@@ -758,333 +462,203 @@ export async function PATCH(
       );
     }
 
-    const values =
-      body as LocationPayload;
+    const values = body as LocationPayload;
 
-    const locationId =
-      getOptionalString(
-        values.id,
-      );
+    const locationId = getOptionalString(values.id);
 
     if (!locationId) {
-      throw new ApiError(
-        "No fue posible identificar la ubicación.",
-        400,
-      );
+      throw new ApiError("No fue posible identificar la ubicación.", 400);
     }
 
-    const [existingLocation] =
-      await db
-        .select({
-          id:
-            inventoryLocations.id,
+    const [existingLocation] = await db
+      .select({
+        id: inventoryLocations.id,
 
-          branchId:
-            inventoryLocations
-              .branchId,
+        branchId: inventoryLocations.branchId,
 
-          name:
-            inventoryLocations.name,
+        name: inventoryLocations.name,
 
-          code:
-            inventoryLocations.code,
+        code: inventoryLocations.code,
 
-          type:
-            inventoryLocations.type,
+        type: inventoryLocations.type,
 
-          active:
-            inventoryLocations.active,
+        source: inventoryLocations.source,
+        active: inventoryLocations.active,
 
-          isDefault:
-            inventoryLocations
-              .isDefault,
+        isDefault: inventoryLocations.isDefault,
 
-          addressLine:
-            inventoryLocations
-              .addressLine,
+        addressLine: inventoryLocations.addressLine,
 
-          city:
-            inventoryLocations.city,
+        city: inventoryLocations.city,
 
-          state:
-            inventoryLocations.state,
+        state: inventoryLocations.state,
 
-          postalCode:
-            inventoryLocations
-              .postalCode,
+        postalCode: inventoryLocations.postalCode,
 
-          country:
-            inventoryLocations
-              .country,
-        })
-        .from(
-          inventoryLocations,
-        )
-        .where(
-          and(
-            eq(
-              inventoryLocations.id,
-              locationId,
-            ),
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenantId,
-            ),
-          ),
-        )
-        .limit(1);
+        country: inventoryLocations.country,
+      })
+      .from(inventoryLocations)
+      .where(
+        and(
+          eq(inventoryLocations.id, locationId),
+          eq(inventoryLocations.tenantId, tenantId),
+        ),
+      )
+      .limit(1);
 
     if (!existingLocation) {
+      throw new ApiError("La ubicación no existe.", 404);
+    }
+
+    if (existingLocation.source === "branch") {
       throw new ApiError(
-        "La ubicación no existe.",
-        404,
+        "Esta ubicación se administra desde la configuración de sucursales.",
+        409,
       );
     }
 
-    const requestedBranchId =
-      getOptionalString(
-        values.branchId,
-      );
+    const requestedBranchId = getOptionalString(values.branchId);
 
-    const branchId =
-      requestedBranchId
-        ? await validateCRMBranchId(
-            tenantId,
-            branchAccess,
-            requestedBranchId,
-          )
-        : null;
+    const branchId = requestedBranchId
+      ? await validateCRMBranchId(tenantId, branchAccess, requestedBranchId)
+      : null;
 
-    const name =
-      getOptionalString(
-        values.name,
-      ) ??
-      existingLocation.name;
+    const name = getOptionalString(values.name) ?? existingLocation.name;
 
     const isDefault =
-      typeof values.isDefault ===
-      "boolean"
+      typeof values.isDefault === "boolean"
         ? values.isDefault
-        : existingLocation
-            .isDefault;
+        : existingLocation.isDefault;
 
-    if (
-      isDefault &&
-      !branchId
-    ) {
+    if (isDefault && !branchId) {
       throw new ApiError(
         "Una ubicación predeterminada debe pertenecer a una sucursal.",
         400,
       );
     }
 
-    if (
-      branchId &&
-      isDefault
-    ) {
+    if (branchId && isDefault) {
       await db
-        .update(
-          inventoryLocations,
-        )
+        .update(inventoryLocations)
         .set({
           isDefault: false,
-          updatedAt:
-            new Date(),
+          updatedAt: new Date(),
         })
         .where(
           and(
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenantId,
-            ),
-            eq(
-              inventoryLocations
-                .branchId,
-              branchId,
-            ),
+            eq(inventoryLocations.tenantId, tenantId),
+            eq(inventoryLocations.branchId, branchId),
           ),
         );
     }
 
-    const [location] =
-      await db
-        .update(
-          inventoryLocations,
-        )
-        .set({
-          branchId,
-          name,
+    const [location] = await db
+      .update(inventoryLocations)
+      .set({
+        branchId,
+        name,
 
-          code:
-            values.code ===
-            undefined
-              ? existingLocation
-                  .code
-              : normalizeCode(
-                  values.code,
-                ),
+        code:
+          values.code === undefined
+            ? existingLocation.code
+            : normalizeCode(values.code),
 
-          type:
-            getOptionalString(
-              values.type,
-            ) ??
-            existingLocation.type,
+        type: getOptionalString(values.type) ?? existingLocation.type,
 
-          active:
-            typeof values.active ===
-            "boolean"
-              ? values.active
-              : existingLocation
-                  .active,
+        active:
+          typeof values.active === "boolean"
+            ? values.active
+            : existingLocation.active,
 
-          isDefault,
+        isDefault,
 
-          addressLine:
-            values.addressLine ===
-            undefined
-              ? existingLocation
-                  .addressLine
-              : getOptionalString(
-                  values.addressLine,
-                ) ?? null,
+        addressLine:
+          values.addressLine === undefined
+            ? existingLocation.addressLine
+            : (getOptionalString(values.addressLine) ?? null),
 
-          city:
-            values.city ===
-            undefined
-              ? existingLocation
-                  .city
-              : getOptionalString(
-                  values.city,
-                ) ?? null,
+        city:
+          values.city === undefined
+            ? existingLocation.city
+            : (getOptionalString(values.city) ?? null),
 
-          state:
-            values.state ===
-            undefined
-              ? existingLocation
-                  .state
-              : getOptionalString(
-                  values.state,
-                ) ?? null,
+        state:
+          values.state === undefined
+            ? existingLocation.state
+            : (getOptionalString(values.state) ?? null),
 
-          postalCode:
-            values.postalCode ===
-            undefined
-              ? existingLocation
-                  .postalCode
-              : getOptionalString(
-                  values.postalCode,
-                ) ?? null,
+        postalCode:
+          values.postalCode === undefined
+            ? existingLocation.postalCode
+            : (getOptionalString(values.postalCode) ?? null),
 
-          country:
-            getOptionalString(
-              values.country,
-            )?.toUpperCase() ??
-            existingLocation.country,
+        country:
+          getOptionalString(values.country)?.toUpperCase() ??
+          existingLocation.country,
 
-          updatedAt:
-            new Date(),
-        })
-        .where(
-          and(
-            eq(
-              inventoryLocations.id,
-              locationId,
-            ),
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenantId,
-            ),
-          ),
-        )
-        .returning({
-          id:
-            inventoryLocations.id,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(inventoryLocations.id, locationId),
+          eq(inventoryLocations.tenantId, tenantId),
+        ),
+      )
+      .returning({
+        id: inventoryLocations.id,
 
-          name:
-            inventoryLocations.name,
-        });
+        name: inventoryLocations.name,
+      });
 
-    const user =
-      await currentUser();
+    const user = await currentUser();
 
     const actorName =
-      [
-        user?.firstName,
-        user?.lastName,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      user?.emailAddresses[0]
-        ?.emailAddress ||
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+      user?.emailAddresses[0]?.emailAddress ||
       "Usuario";
 
     await createInventoryAuditQuery({
       tenantId,
       branchId,
 
-      locationId:
-        location.id,
+      locationId: location.id,
 
-      productId:
-        null,
+      productId: null,
 
-      entityType:
-        "Ubicación de inventario",
+      entityType: "Ubicación de inventario",
 
-      entityId:
-        location.id,
+      entityId: location.id,
 
-      action:
-        "Actualizar",
+      action: "Actualizar",
 
-      summary:
-        `Se actualizó la ubicación "${location.name}".`,
+      summary: `Se actualizó la ubicación "${location.name}".`,
 
-      actorClerkUserId:
-        userId,
+      actorClerkUserId: userId,
 
       actorName,
 
       before: {
-        branchId:
-          existingLocation.branchId,
+        branchId: existingLocation.branchId,
 
-        name:
-          existingLocation.name,
+        name: existingLocation.name,
 
-        code:
-          existingLocation.code,
+        code: existingLocation.code,
 
-        type:
-          existingLocation.type,
+        type: existingLocation.type,
 
-        active:
-          existingLocation.active,
+        active: existingLocation.active,
 
-        isDefault:
-          existingLocation
-            .isDefault,
+        isDefault: existingLocation.isDefault,
 
-        addressLine:
-          existingLocation
-            .addressLine,
+        addressLine: existingLocation.addressLine,
 
-        city:
-          existingLocation.city,
+        city: existingLocation.city,
 
-        state:
-          existingLocation.state,
+        state: existingLocation.state,
 
-        postalCode:
-          existingLocation
-            .postalCode,
+        postalCode: existingLocation.postalCode,
 
-        country:
-          existingLocation.country,
+        country: existingLocation.country,
       },
 
       after: {
@@ -1092,67 +666,41 @@ export async function PATCH(
         name,
 
         code:
-          values.code ===
-          undefined
-            ? existingLocation
-                .code
-            : normalizeCode(
-                values.code,
-              ),
+          values.code === undefined
+            ? existingLocation.code
+            : normalizeCode(values.code),
 
-        type:
-          getOptionalString(
-            values.type,
-          ) ??
-          existingLocation.type,
+        type: getOptionalString(values.type) ?? existingLocation.type,
 
         active:
-          typeof values.active ===
-          "boolean"
+          typeof values.active === "boolean"
             ? values.active
-            : existingLocation
-                .active,
+            : existingLocation.active,
 
         isDefault,
 
         addressLine:
-          values.addressLine ===
-          undefined
-            ? existingLocation
-                .addressLine
-            : getOptionalString(
-                values.addressLine,
-              ) ?? null,
+          values.addressLine === undefined
+            ? existingLocation.addressLine
+            : (getOptionalString(values.addressLine) ?? null),
 
         city:
-          values.city ===
-          undefined
+          values.city === undefined
             ? existingLocation.city
-            : getOptionalString(
-                values.city,
-              ) ?? null,
+            : (getOptionalString(values.city) ?? null),
 
         state:
-          values.state ===
-          undefined
+          values.state === undefined
             ? existingLocation.state
-            : getOptionalString(
-                values.state,
-              ) ?? null,
+            : (getOptionalString(values.state) ?? null),
 
         postalCode:
-          values.postalCode ===
-          undefined
-            ? existingLocation
-                .postalCode
-            : getOptionalString(
-                values.postalCode,
-              ) ?? null,
+          values.postalCode === undefined
+            ? existingLocation.postalCode
+            : (getOptionalString(values.postalCode) ?? null),
 
         country:
-          getOptionalString(
-            values.country,
-          )?.toUpperCase() ??
+          getOptionalString(values.country)?.toUpperCase() ??
           existingLocation.country,
       },
     });
@@ -1160,14 +708,11 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
 
-      message:
-        "La ubicación fue actualizada correctamente.",
+      message: "La ubicación fue actualizada correctamente.",
 
       data: location,
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }

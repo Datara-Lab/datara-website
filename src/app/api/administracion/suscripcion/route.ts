@@ -1,239 +1,159 @@
-import {
-    desc,
-    eq,
-} from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+
+import { NextResponse } from "next/server";
+
+import { db } from "@/db";
+
+import { commercialPurchases, subscriptions } from "@/db/schema";
 
 import {
-    NextResponse,
-} from "next/server";
-
-import {
-    db,
-} from "@/db";
-
-import {
-    commercialPurchases,
-    subscriptions,
-} from "@/db/schema";
-
-import {
-    AdministrationAuthError,
-    requireAdminContext,
+  AdministrationAuthError,
+  requireAdminContext,
 } from "@/lib/administration/require-admin-context";
 
-export const dynamic =
-    "force-dynamic";
+import { getTenantCommercialEmailUsage } from "@/lib/commercial/email-usage";
+import { getTenantCommercialStorageUsage } from "@/lib/commercial/storage-usage";
 
-function createErrorResponse(
-    error: unknown,
-) {
-    if (
-        error instanceof
-        AdministrationAuthError
-    ) {
-        return NextResponse.json(
-            {
-                success: false,
-                error: error.message,
-            },
-            {
-                status: error.status,
-            },
-        );
-    }
+export const dynamic = "force-dynamic";
 
-    console.error(
-        "No fue posible consultar la suscripción:",
-        error,
-    );
-
+function createErrorResponse(error: unknown) {
+  if (error instanceof AdministrationAuthError) {
     return NextResponse.json(
-        {
-            success: false,
-            error:
-                "No fue posible consultar la suscripción.",
-        },
-        {
-            status: 500,
-        },
+      {
+        success: false,
+        error: error.message,
+      },
+      {
+        status: error.status,
+      },
     );
+  }
+
+  console.error("No fue posible consultar la suscripción:", error);
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: "No fue posible consultar la suscripción.",
+    },
+    {
+      status: 500,
+    },
+  );
 }
 
 export async function GET() {
-    try {
-        const {
-            tenantId,
-        } = await requireAdminContext();
+  try {
+    const { tenantId } = await requireAdminContext();
 
-        const [subscription] =
-            await db
-                .select({
-                    id:
-                        subscriptions.id,
+    const [emailUsage, storageUsage] = await Promise.all([
+      getTenantCommercialEmailUsage(tenantId),
+      getTenantCommercialStorageUsage(tenantId),
+    ]);
 
-                    provider:
-                        subscriptions.provider,
+    const [subscription] = await db
+      .select({
+        id: subscriptions.id,
 
-                    providerSubscriptionId:
-                        subscriptions
-                            .providerSubscriptionId,
+        provider: subscriptions.provider,
 
-                    providerScheduleId:
-                        subscriptions
-                            .providerScheduleId,
+        providerSubscriptionId: subscriptions.providerSubscriptionId,
 
-                    productKey:
-                        subscriptions.productKey,
+        providerScheduleId: subscriptions.providerScheduleId,
 
-                    planKey:
-                        subscriptions.planKey,
+        productKey: subscriptions.productKey,
 
-                    billingPeriod:
-                        subscriptions
-                            .billingPeriod,
+        planKey: subscriptions.planKey,
 
-                    catalogItemIds:
-                        subscriptions
-                            .catalogItemIds,
+        billingPeriod: subscriptions.billingPeriod,
 
-                    pendingBillingPeriod:
-                        subscriptions
-                            .pendingBillingPeriod,
+        catalogItemIds: subscriptions.catalogItemIds,
 
-                    pendingCatalogItemIds:
-                        subscriptions
-                            .pendingCatalogItemIds,
+        pendingBillingPeriod: subscriptions.pendingBillingPeriod,
 
-                    pendingChangeAt:
-                        subscriptions
-                            .pendingChangeAt,
+        pendingCatalogItemIds: subscriptions.pendingCatalogItemIds,
 
-                    status:
-                        subscriptions.status,
+        pendingChangeAt: subscriptions.pendingChangeAt,
 
-                    seats:
-                        subscriptions.seats,
+        status: subscriptions.status,
 
-                    currency:
-                        subscriptions.currency,
+        seats: subscriptions.seats,
 
-                    currentPeriodStart:
-                        subscriptions
-                            .currentPeriodStart,
+        currency: subscriptions.currency,
 
-                    currentPeriodEnd:
-                        subscriptions
-                            .currentPeriodEnd,
+        currentPeriodStart: subscriptions.currentPeriodStart,
 
-                    cancelAtPeriodEnd:
-                        subscriptions
-                            .cancelAtPeriodEnd,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
 
-                    createdAt:
-                        subscriptions.createdAt,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
 
-                    updatedAt:
-                        subscriptions.updatedAt,
-                })
-                .from(
-                    subscriptions,
-                )
-                .where(
-                    eq(
-                        subscriptions.tenantId,
-                        tenantId,
-                    ),
-                )
-                .orderBy(
-                    desc(
-                        subscriptions.createdAt,
-                    ),
-                )
-                .limit(1);
+        createdAt: subscriptions.createdAt,
 
-        if (!subscription) {
-            return NextResponse.json({
-                success: true,
+        updatedAt: subscriptions.updatedAt,
+      })
+      .from(subscriptions)
+      .where(eq(subscriptions.tenantId, tenantId))
+      .orderBy(desc(subscriptions.createdAt))
+      .limit(1);
 
-                data: {
-                    subscription:
-                        null,
+    if (!subscription) {
+      return NextResponse.json({
+        success: true,
 
-                    purchase:
-                        null,
-                },
-            });
-        }
+        data: {
+          subscription: null,
 
-        const [purchase] =
-            subscription
-                .providerSubscriptionId
-                ? await db
-                    .select({
-                        id:
-                            commercialPurchases.id,
+          purchase: null,
 
-                        productKey:
-                            commercialPurchases
-                                .productKey,
-
-                        industry:
-                            commercialPurchases
-                                .industry,
-
-                        billingPeriod:
-                            commercialPurchases
-                                .billingPeriod,
-
-                        lineItems:
-                            commercialPurchases
-                                .lineItems,
-
-                        currency:
-                            commercialPurchases
-                                .currency,
-
-                        totalAmount:
-                            commercialPurchases
-                                .totalAmount,
-
-                        paidAt:
-                            commercialPurchases
-                                .paidAt,
-                    })
-                    .from(
-                        commercialPurchases,
-                    )
-                    .where(
-                        eq(
-                            commercialPurchases
-                                .stripeSubscriptionId,
-                            subscription
-                                .providerSubscriptionId,
-                        ),
-                    )
-                    .orderBy(
-                        desc(
-                            commercialPurchases
-                                .updatedAt,
-                        ),
-                    )
-                    .limit(1)
-                : [];
-
-        return NextResponse.json({
-            success: true,
-
-            data: {
-                subscription,
-
-                purchase:
-                    purchase ?? null,
-            },
-        });
-    } catch (error) {
-        return createErrorResponse(
-            error,
-        );
+          emailUsage,
+          storageUsage,
+        },
+      });
     }
+
+    const [purchase] = subscription.providerSubscriptionId
+      ? await db
+          .select({
+            id: commercialPurchases.id,
+
+            productKey: commercialPurchases.productKey,
+
+            industry: commercialPurchases.industry,
+
+            billingPeriod: commercialPurchases.billingPeriod,
+
+            lineItems: commercialPurchases.lineItems,
+
+            currency: commercialPurchases.currency,
+
+            totalAmount: commercialPurchases.totalAmount,
+
+            paidAt: commercialPurchases.paidAt,
+          })
+          .from(commercialPurchases)
+          .where(
+            eq(
+              commercialPurchases.stripeSubscriptionId,
+              subscription.providerSubscriptionId,
+            ),
+          )
+          .orderBy(desc(commercialPurchases.updatedAt))
+          .limit(1)
+      : [];
+
+    return NextResponse.json({
+      success: true,
+
+      data: {
+        subscription,
+
+        purchase: purchase ?? null,
+
+        emailUsage,
+        storageUsage,
+      },
+    });
+  } catch (error) {
+    return createErrorResponse(error);
+  }
 }

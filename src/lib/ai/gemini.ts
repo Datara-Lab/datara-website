@@ -44,11 +44,14 @@ export async function generateGeminiText({
     temperature = 0.2,
     maxOutputTokens = 2048,
     onUsage,
-}: GenerateAITextOptions): Promise<string> {
+}: GenerateAITextOptions,
+modelOverride?: string,
+): Promise<string> {
     const apiKey =
         process.env.GEMINI_API_KEY?.trim();
 
     const model =
+        modelOverride?.trim() ||
         process.env.AI_MODEL?.trim();
 
     if (!apiKey) {

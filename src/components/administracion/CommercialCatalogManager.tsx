@@ -51,7 +51,9 @@ type CatalogItem = {
 
   currency: string;
   includedUsers: number;
+  includedBranches: number;
   includedStorageGb: string;
+  includedEmailsPerMonth: number;
   includedAiMessages: number;
   moduleIds: string[];
   features: string[];
@@ -100,7 +102,9 @@ type CatalogDraft = {
 
   currency: string;
   includedUsers: string;
+  includedBranches: string;
   includedStorageGb: string;
+  includedEmailsPerMonth: string;
   includedAiMessages: string;
   moduleIds: string;
   features: string;
@@ -133,7 +137,9 @@ const EMPTY_DRAFT:
 
   currency: "mxn",
   includedUsers: "0",
+  includedBranches: "0",
   includedStorageGb: "0.00",
+  includedEmailsPerMonth: "0",
   includedAiMessages: "0",
   moduleIds: "",
   features: "",
@@ -536,8 +542,20 @@ export default function CommercialCatalogManager() {
         String(
           item.includedUsers,
         ),
+
+      includedBranches:
+        String(
+          item.includedBranches,
+        ),
+
       includedStorageGb:
         item.includedStorageGb,
+
+      includedEmailsPerMonth:
+        String(
+          item.includedEmailsPerMonth,
+        ),
+
       includedAiMessages:
         String(
           item.includedAiMessages,
@@ -611,10 +629,19 @@ export default function CommercialCatalogManager() {
 
         currency:
           draft.currency,
+
         includedUsers:
           draft.includedUsers,
+
+        includedBranches:
+          draft.includedBranches,
+
         includedStorageGb:
           draft.includedStorageGb,
+
+        includedEmailsPerMonth:
+          draft.includedEmailsPerMonth,
+
         includedAiMessages:
           draft.includedAiMessages,
         moduleIds:
@@ -1469,6 +1496,48 @@ export default function CommercialCatalogManager() {
               </label>
 
               <label className="text-sm font-bold text-slate-800">
+                Sucursales incluidas
+
+                <span className="mt-1 block text-xs font-semibold text-slate-500">
+                  Usa 0 para conservar capacidad sin límite.
+                </span>
+
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  onFocus={(
+                    event,
+                  ) =>
+                    event.currentTarget
+                      .select()
+                  }
+                  value={
+                    draft.includedBranches
+                  }
+                  disabled={
+                    isSaving
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDraft(
+                      (
+                        currentDraft,
+                      ) => ({
+                        ...currentDraft,
+                        includedBranches:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                  className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="text-sm font-bold text-slate-800">
                 Almacenamiento incluido (GB)
 
                 <input
@@ -1497,6 +1566,48 @@ export default function CommercialCatalogManager() {
                       ) => ({
                         ...currentDraft,
                         includedStorageGb:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                  className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="text-sm font-bold text-slate-800">
+                Correos incluidos por mes
+
+                <span className="mt-1 block text-xs font-semibold text-slate-500">
+                  Usa 0 para conservar capacidad sin límite.
+                </span>
+
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  onFocus={(
+                    event,
+                  ) =>
+                    event.currentTarget
+                      .select()
+                  }
+                  value={
+                    draft.includedEmailsPerMonth
+                  }
+                  disabled={
+                    isSaving
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDraft(
+                      (
+                        currentDraft,
+                      ) => ({
+                        ...currentDraft,
+                        includedEmailsPerMonth:
                           event.target
                             .value,
                       }),

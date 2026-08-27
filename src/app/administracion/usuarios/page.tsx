@@ -78,6 +78,14 @@ type UsersResponse = {
         }>;
 
         users: OrganizationUser[];
+
+        usage: {
+            activeUsers: number;
+            pendingInvitations: number;
+            userLimit: number;
+            reservedSlots: number;
+            availableSlots: number | null;
+        };
     };
 };
 
@@ -148,6 +156,7 @@ export default function UsuariosPage() {
         }
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         void loadUsers();
     }, []);
 
@@ -250,10 +259,23 @@ export default function UsuariosPage() {
                                     {data.organization.name}
                                 </h2>
 
-                                <p className="text-sm font-semibold text-slate-600">
-                                    {data.users.length} usuario
-                                    {data.users.length === 1 ? "" : "s"}
-                                </p>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-slate-900">
+                                        {data.usage.userLimit > 0
+                                            ? `${data.usage.activeUsers} de ${data.usage.userLimit} usuarios activos`
+                                            : `${data.usage.activeUsers} usuario${data.usage.activeUsers === 1 ? "" : "s"} activo${data.usage.activeUsers === 1 ? "" : "s"}`}
+                                    </p>
+
+                                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                                        {data.usage.pendingInvitations}{" "}
+                                        {data.usage.pendingInvitations === 1
+                                            ? "invitación pendiente"
+                                            : "invitaciones pendientes"}
+                                        {data.usage.availableSlots !== null
+                                            ? ` · ${data.usage.availableSlots} espacio${data.usage.availableSlots === 1 ? "" : "s"} disponible${data.usage.availableSlots === 1 ? "" : "s"}`
+                                            : ""}
+                                    </p>
+                                </div>
                             </div>
                         </section>
 

@@ -1,47 +1,32 @@
-import {
-  getCloudflareContext,
-} from "@opennextjs/cloudflare";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-import {
-  auth,
-} from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
-import {
-  and,
-  eq,
-} from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-import {
-  Buffer,
-} from "node:buffer";
+import { Buffer } from "node:buffer";
 
-import {
-  GET as getQuotes,
-} from "@/app/api/crm/quotes/route";
+import { GET as getQuotes } from "@/app/api/crm/quotes/route";
 
-import {
-  GET as getQuotePdf,
-} from "@/app/api/crm/quotes/[quoteId]/pdf/route";
+import { GET as getQuotePdf } from "@/app/api/crm/quotes/[quoteId]/pdf/route";
 
 import { db } from "@/db";
 
 import {
-  crmQuotes,
-  tenants,
-} from "@/db/schema";
+  CommercialEmailLimitError,
+  sendMeteredCommercialEmail,
+} from "@/lib/commercial/email-usage";
+
+import { crmQuotes, tenants } from "@/db/schema";
 
 import {
   CRMPermissionError,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
 
-import type {
-  CRMQuoteApiResponse,
-  CRMQuoteRecord,
-} from "@/types/crm-quotes";
+import type { CRMQuoteApiResponse, CRMQuoteRecord } from "@/types/crm-quotes";
 
-export const dynamic =
-  "force-dynamic";
+export const dynamic = "force-dynamic";
 
 type RouteContext = {
   params: Promise<{
@@ -66,260 +51,141 @@ type EmailEnv = {
 class ApiError extends Error {
   status: number;
 
-  constructor(
-    message: string,
-    status: number,
-  ) {
+  constructor(message: string, status: number) {
     super(message);
     this.status = status;
   }
 }
 
-function escapeHtml(
-  value: string,
-): string {
+function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll(
-      "'",
-      "&#039;",
-    );
+    .replaceAll("'", "&#039;");
 }
 
-function getEmail(
-  value: unknown,
-): string | undefined {
-  if (
-    typeof value !== "string"
-  ) {
+function getEmail(value: unknown): string | undefined {
+  if (typeof value !== "string") {
     return undefined;
   }
 
-  const email =
-    value
-      .trim()
-      .toLowerCase();
+  const email = value.trim().toLowerCase();
 
   if (!email) {
     return undefined;
   }
 
-  const emailPattern =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (
-    !emailPattern.test(email)
-  ) {
-    throw new ApiError(
-      "El correo del destinatario no es válido.",
-      400,
-    );
+  if (!emailPattern.test(email)) {
+    throw new ApiError("El correo del destinatario no es válido.", 400);
   }
 
   return email;
 }
 
-function safeFileName(
-  value: string,
-): string {
+function safeFileName(value: string): string {
   return value
     .normalize("NFD")
-    .replace(
-      /[\u0300-\u036f]/g,
-      "",
-    )
-    .replace(
-      /[^a-zA-Z0-9_-]+/g,
-      "-",
-    )
-    .replace(
-      /^-+|-+$/g,
-      "",
-    )
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 }
 
-function formatMoney(
-  value: number,
-  currency: string,
-): string {
-  return new Intl.NumberFormat(
-    "es-MX",
-    {
-      style: "currency",
+function formatMoney(value: number, currency: string): string {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
 
-      currency:
-        currency.toUpperCase(),
+    currency: currency.toUpperCase(),
 
-      maximumFractionDigits: 2,
-    },
-  ).format(value);
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
-function formatDate(
-  value:
-    | string
-    | null
-    | undefined,
-): string {
+function formatDate(value: string | null | undefined): string {
   if (!value) {
     return "Sin fecha";
   }
 
-  const datePart =
-    value.slice(0, 10);
+  const datePart = value.slice(0, 10);
 
-  const [
-    year,
-    month,
-    day,
-  ] = datePart
-    .split("-")
-    .map(Number);
+  const [year, month, day] = datePart.split("-").map(Number);
 
-  if (
-    !year ||
-    !month ||
-    !day
-  ) {
+  if (!year || !month || !day) {
     return value;
   }
 
-  const date =
-    new Date(
-      Date.UTC(
-        year,
-        month - 1,
-        day,
-        12,
-      ),
-    );
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
 
-  return date.toLocaleDateString(
-    "es-MX",
-    {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    },
-  );
+  return date.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-) {
+export async function POST(request: Request, context: RouteContext) {
   try {
-    const {
-      userId,
-      orgId,
-    } = await auth();
+    const { userId, orgId } = await auth();
 
     if (!userId) {
-      throw new ApiError(
-        "No autenticado.",
-        401,
-      );
+      throw new ApiError("No autenticado.", 401);
     }
 
     if (!orgId) {
-      throw new ApiError(
-        "No hay una organización activa.",
-        400,
-      );
+      throw new ApiError("No hay una organización activa.", 400);
     }
 
-    const {
-      quoteId,
-    } = await context.params;
+    const { quoteId } = await context.params;
 
-    const [tenant] =
-      await db
-        .select({
-          id: tenants.id,
-          name: tenants.name,
-          legalName:
-            tenants.legalName,
-        })
-        .from(tenants)
-        .where(
-          eq(
-            tenants
-              .clerkOrganizationId,
-            orgId,
-          ),
-        )
-        .limit(1);
+    const [tenant] = await db
+      .select({
+        id: tenants.id,
+        name: tenants.name,
+        legalName: tenants.legalName,
+      })
+      .from(tenants)
+      .where(eq(tenants.clerkOrganizationId, orgId))
+      .limit(1);
 
     if (!tenant) {
-      throw new ApiError(
-        "La empresa aún no está sincronizada.",
-        404,
-      );
+      throw new ApiError("La empresa aún no está sincronizada.", 404);
     }
 
-    await requireCRMModulePermission(
-      tenant.id,
-      userId,
-      "quotes",
-      "edit",
-    );
+    await requireCRMModulePermission(tenant.id, userId, "quotes", "edit");
 
-    let payload: SendPayload =
-      {};
+    let payload: SendPayload = {};
 
     try {
-      payload =
-        (await request.json()) as
-          SendPayload;
+      payload = (await request.json()) as SendPayload;
     } catch {
       payload = {};
     }
 
-    const quotesResponse =
-      await getQuotes();
+    const quotesResponse = await getQuotes();
 
-    const quotesResult =
-      (await quotesResponse.json()) as
-        CRMQuoteApiResponse<
-          CRMQuoteRecord[]
-        >;
+    const quotesResult = (await quotesResponse.json()) as CRMQuoteApiResponse<
+      CRMQuoteRecord[]
+    >;
 
-    if (
-      !quotesResponse.ok ||
-      !quotesResult.success
-    ) {
+    if (!quotesResponse.ok || !quotesResult.success) {
       throw new ApiError(
-        quotesResult.error ??
-          "No fue posible consultar la cotización.",
+        quotesResult.error ?? "No fue posible consultar la cotización.",
         quotesResponse.status,
       );
     }
 
-    const quote =
-      quotesResult.data?.find(
-        (record) =>
-          record.id === quoteId,
-      );
+    const quote = quotesResult.data?.find((record) => record.id === quoteId);
 
     if (!quote) {
-      throw new ApiError(
-        "La cotización no existe.",
-        404,
-      );
+      throw new ApiError("La cotización no existe.", 404);
     }
 
-    const recipient =
-      getEmail(
-        payload.email,
-      ) ??
-      getEmail(
-        quote.relatedEmail,
-      );
+    const recipient = getEmail(payload.email) ?? getEmail(quote.relatedEmail);
 
     if (!recipient) {
       throw new ApiError(
@@ -328,130 +194,78 @@ export async function POST(
       );
     }
 
-    const pdfResponse =
-      await getQuotePdf(
-        request,
+    const pdfResponse = await getQuotePdf(
+      request,
 
-        {
-          params:
-            Promise.resolve({
-              quoteId,
-            }),
-        },
-      );
+      {
+        params: Promise.resolve({
+          quoteId,
+        }),
+      },
+    );
 
     if (!pdfResponse.ok) {
-      const pdfError =
-        (await pdfResponse.json()) as
-          {
-            error?: string;
-          };
+      const pdfError = (await pdfResponse.json()) as {
+        error?: string;
+      };
 
       throw new ApiError(
-        pdfError.error ??
-          "No fue posible generar el PDF de la cotización.",
+        pdfError.error ?? "No fue posible generar el PDF de la cotización.",
         pdfResponse.status,
       );
     }
 
-    const pdfBuffer =
-      await pdfResponse
-        .arrayBuffer();
+    const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    const pdfBase64 =
-      Buffer.from(
-        pdfBuffer,
-      ).toString("base64");
+    const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
 
-    const {
-      env,
-    } =
-      getCloudflareContext();
+    const { env } = getCloudflareContext();
 
-    const emailEnv =
-      env as EmailEnv;
+    const emailEnv = env as EmailEnv;
 
-    const resendApiKey =
-      emailEnv
-        .RESEND_API_KEY ??
-      process.env
-        .RESEND_API_KEY;
+    const resendApiKey = emailEnv.RESEND_API_KEY ?? process.env.RESEND_API_KEY;
 
     if (!resendApiKey) {
-      throw new ApiError(
-        "El servicio de correo no está configurado.",
-        500,
-      );
+      throw new ApiError("El servicio de correo no está configurado.", 500);
     }
 
-    const companyName =
-      tenant.legalName ??
-      tenant.name;
+    const companyName = tenant.legalName ?? tenant.name;
 
-    const safeCompanyName =
-      escapeHtml(
-        companyName,
-      );
+    const safeCompanyName = escapeHtml(companyName);
 
-    const safeCustomerName =
-      escapeHtml(
-        quote.relatedName ??
-          "cliente",
-      );
+    const safeCustomerName = escapeHtml(quote.relatedName ?? "cliente");
 
-    const safeQuoteNumber =
-      escapeHtml(
-        quote.quoteNumber,
-      );
+    const safeQuoteNumber = escapeHtml(quote.quoteNumber);
 
-    const safeSubject =
-      escapeHtml(
-        quote.subject,
-      );
+    const safeSubject = escapeHtml(quote.subject);
 
-    const safeTotal =
-      escapeHtml(
-        formatMoney(
-          quote.totalAmount,
-          quote.currency,
-        ),
-      );
+    const safeTotal = escapeHtml(
+      formatMoney(quote.totalAmount, quote.currency),
+    );
 
-    const safeValidity =
-      escapeHtml(
-        formatDate(
-          quote.validUntil,
-        ),
-      );
+    const safeValidity = escapeHtml(formatDate(quote.validUntil));
 
-    const resendRequest =
-      await fetch(
-        "https://api.resend.com/emails",
-        {
+    const resendRequest = await sendMeteredCommercialEmail({
+      tenantId: tenant.id,
+
+      send: () =>
+        fetch("https://api.resend.com/emails", {
           method: "POST",
 
           headers: {
-            Authorization:
-              `Bearer ${resendApiKey}`,
+            Authorization: `Bearer ${resendApiKey}`,
 
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
 
           body: JSON.stringify({
-            from:
-              `${tenant.name} <web@mail.datara-lab.com>`,
+            from: `${tenant.name} <web@mail.datara-lab.com>`,
 
-            to: [
-              recipient,
-            ],
+            to: [recipient],
 
-            reply_to:
-              quote.owner.email ??
-              undefined,
+            reply_to: quote.owner.email ?? undefined,
 
-            subject:
-              `Cotización ${quote.quoteNumber}: ${quote.subject}`,
+            subject: `Cotización ${quote.quoteNumber}: ${quote.subject}`,
 
             html: `
               <div style="background:#f1f5f9;padding:32px 16px;font-family:Arial,sans-serif;color:#0f172a;">
@@ -507,31 +321,25 @@ export async function POST(
 
             attachments: [
               {
-                filename:
-                  `${safeFileName(`cotizacion-${quote.quoteNumber}`)}.pdf`,
+                filename: `${safeFileName(`cotizacion-${quote.quoteNumber}`)}.pdf`,
 
-                content:
-                  pdfBase64,
+                content: pdfBase64,
               },
             ],
           }),
-        },
-      );
+        }),
+    });
 
-    const resendResult =
-      (await resendRequest.json()) as
-        ResendResponse;
+    const resendResult = (await resendRequest.json()) as ResendResponse;
 
     if (!resendRequest.ok) {
       throw new ApiError(
-        resendResult.message ??
-          "El proveedor de correo rechazó el envío.",
+        resendResult.message ?? "El proveedor de correo rechazó el envío.",
         502,
       );
     }
 
-    const sentAt =
-      new Date();
+    const sentAt = new Date();
 
     await db
       .update(crmQuotes)
@@ -542,15 +350,9 @@ export async function POST(
       })
       .where(
         and(
-          eq(
-            crmQuotes.id,
-            quoteId,
-          ),
+          eq(crmQuotes.id, quoteId),
 
-          eq(
-            crmQuotes.tenantId,
-            tenant.id,
-          ),
+          eq(crmQuotes.tenantId, tenant.id),
         ),
       );
 
@@ -558,34 +360,26 @@ export async function POST(
       success: true,
 
       data: {
-        emailId:
-          resendResult.id ??
-          null,
+        emailId: resendResult.id ?? null,
 
         recipient,
 
-        status:
-          "Enviada",
+        status: "Enviada",
 
-        sentAt:
-          sentAt.toISOString(),
+        sentAt: sentAt.toISOString(),
       },
 
-      message:
-        `Cotización enviada a ${recipient}.`,
+      message: `Cotización enviada a ${recipient}.`,
     });
   } catch (error) {
     const status =
       error instanceof ApiError ||
-      error instanceof
-        CRMPermissionError
+      error instanceof CRMPermissionError ||
+      error instanceof CommercialEmailLimitError
         ? error.status
         : 500;
 
-    console.error(
-      "Error al enviar cotización:",
-      error,
-    );
+    console.error("Error al enviar cotización:", error);
 
     return Response.json(
       {

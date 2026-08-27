@@ -19,6 +19,7 @@ import {
   tenantProducts,
   tenants,
   trialRedemptions,
+  workspaceInvitations,
 } from "@/db/schema";
 
 import {
@@ -574,6 +575,48 @@ export async function POST(
       );
     }
 
+    const normalizedMemberEmail =
+      primaryEmail.emailAddress
+        .trim()
+        .toLowerCase();
+
+    await db
+      .update(
+        workspaceInvitations,
+      )
+      .set({
+        status:
+          "accepted",
+
+        acceptedByMemberId:
+          member.id,
+
+        acceptedAt:
+          now,
+
+        updatedAt:
+          now,
+      })
+      .where(
+        and(
+          eq(
+            workspaceInvitations
+              .tenantId,
+            tenant.id,
+          ),
+          eq(
+            workspaceInvitations
+              .email,
+            normalizedMemberEmail,
+          ),
+          eq(
+            workspaceInvitations
+              .status,
+            "pending",
+          ),
+        ),
+      );
+
     if (
       localRoleKey === "owner" &&
       assignedRole &&
@@ -663,9 +706,6 @@ export async function POST(
           },
         });
     }
-
-    let provisionedModuleIds:
-      string[] = [];
 
     if (
       organizationProducts.includes(
@@ -771,8 +811,7 @@ export async function POST(
       }
 
       if (!ignoreStaleTrialMetadata) {
-        provisionedModuleIds =
-          await provisionCRMModuleEntitlements({
+        await provisionCRMModuleEntitlements({
             tenantId: tenant.id,
 
             industry:

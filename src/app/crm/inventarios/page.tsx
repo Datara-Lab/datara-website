@@ -18,14 +18,9 @@ import Button from "@/components/ui/Button";
 
 import { useCRMConfig } from "@/hooks/useCRMConfig";
 
-type MovementType =
-  | "Entrada"
-  | "Salida"
-  | "Ajuste";
+type MovementType = "Entrada" | "Salida" | "Ajuste";
 
-type SortDirection =
-  | "asc"
-  | "desc";
+type SortDirection = "asc" | "desc";
 
 type StockSortField =
   | "productName"
@@ -49,11 +44,7 @@ type MovementSortField =
   | "reference"
   | "performedByName";
 
-type InventoryStatus =
-  | "Disponible"
-  | "Bajo"
-  | "Agotado"
-  | "Sin inicializar";
+type InventoryStatus = "Disponible" | "Bajo" | "Agotado" | "Sin inicializar";
 
 type BranchOption = {
   value: string;
@@ -64,39 +55,26 @@ type LocationOption = {
   value: string;
   label: string;
 
-  branchId:
-  | string
-  | null;
+  branchId: string | null;
 
-  branchLabel:
-  | string
-  | null;
+  branchLabel: string | null;
 
   name: string;
 
-  code:
-  | string
-  | null;
+  code: string | null;
 
   type: string;
   active: boolean;
+  source: "manual" | "branch";
   isDefault: boolean;
 
-  addressLine:
-  | string
-  | null;
+  addressLine: string | null;
 
-  city:
-  | string
-  | null;
+  city: string | null;
 
-  state:
-  | string
-  | null;
+  state: string | null;
 
-  postalCode:
-  | string
-  | null;
+  postalCode: string | null;
 
   country: string;
 };
@@ -115,9 +93,7 @@ type StockRecord = {
 
   initialized: boolean;
 
-  branchId:
-  | string
-  | null;
+  branchId: string | null;
 
   branchName: string;
 
@@ -125,68 +101,45 @@ type StockRecord = {
   locationName: string;
   locationLabel: string;
   locationType: string;
-  isDefaultLocation:
-  boolean;
+  isDefaultLocation: boolean;
 
   productId: string;
   productName: string;
 
-  productCode:
-  | string
-  | null;
+  productCode: string | null;
 
   productTypeId: string;
   productTypeName: string;
 
-  category:
-  | string
-  | null;
+  category: string | null;
 
   quantity: number;
 
-  reservedQuantity:
-  number;
+  reservedQuantity: number;
 
-  availableQuantity:
-  number;
+  availableQuantity: number;
 
-  minimumQuantity:
-  number;
+  minimumQuantity: number;
 
-  maximumQuantity:
-  | number
-  | null;
+  maximumQuantity: number | null;
 
-  reorderPoint:
-  | number
-  | null;
+  reorderPoint: number | null;
 
-  binLocation:
-  | string
-  | null;
+  binLocation: string | null;
 
-  averageUnitCost:
-  | number
-  | null;
+  averageUnitCost: number | null;
 
-  lastUnitCost:
-  | number
-  | null;
+  lastUnitCost: number | null;
 
-  inventoryValue:
-  | number
-  | null;
+  inventoryValue: number | null;
 
   unitPrice: number;
   commercialValue: number;
   currency: string;
 
-  status:
-  InventoryStatus;
+  status: InventoryStatus;
 
-  updatedAt:
-  | string
-  | null;
+  updatedAt: string | null;
 };
 
 type ConsolidatedStockRecord = {
@@ -195,58 +148,42 @@ type ConsolidatedStockRecord = {
   productId: string;
   productName: string;
 
-  productCode:
-  | string
-  | null;
+  productCode: string | null;
 
   productTypeId: string;
   productTypeName: string;
 
-  category:
-  | string
-  | null;
+  category: string | null;
 
   quantity: number;
 
-  reservedQuantity:
-  number;
+  reservedQuantity: number;
 
-  availableQuantity:
-  number;
+  availableQuantity: number;
 
   locationCount: number;
 
-  inventoryValue:
-  | number
-  | null;
+  inventoryValue: number | null;
 
-  commercialValue:
-  number;
+  commercialValue: number;
 
   currency: string;
 
-  status:
-  InventoryStatus;
+  status: InventoryStatus;
 
-  locations:
-  StockRecord[];
+  locations: StockRecord[];
 };
 
 type StockSummary = {
   totalUnits: number;
 
-  availableUnits:
-  number;
+  availableUnits: number;
 
-  reservedUnits:
-  number;
+  reservedUnits: number;
 
-  inventoryValue:
-  | number
-  | null;
+  inventoryValue: number | null;
 
-  commercialValue:
-  number;
+  commercialValue: number;
 
   lowStock: number;
   outOfStock: number;
@@ -258,21 +195,15 @@ type StocksResponse = {
 
   data?: StockRecord[];
 
-  summary?:
-  StockSummary;
+  summary?: StockSummary;
 
-  branches?:
-  BranchOption[];
+  branches?: BranchOption[];
 
-  locations?:
-  LocationOption[];
+  locations?: LocationOption[];
 
-  primaryBranchId?:
-  | string
-  | null;
+  primaryBranchId?: string | null;
 
-  permissions?:
-  InventoryPermissions;
+  permissions?: InventoryPermissions;
 
   error?: string;
 };
@@ -292,8 +223,7 @@ type LocationFormState = {
   country: string;
 };
 
-const emptyLocationForm:
-  LocationFormState = {
+const emptyLocationForm: LocationFormState = {
   id: "",
   branchId: "",
   name: "",
@@ -326,32 +256,21 @@ type MovementRecord = {
 
   quantity: number;
 
-  previousQuantity:
-  number;
+  previousQuantity: number;
 
-  resultingQuantity:
-  number;
+  resultingQuantity: number;
 
-  reason:
-  | string
-  | null;
+  reason: string | null;
 
-  reference:
-  | string
-  | null;
+  reference: string | null;
 
-  performedByName:
-  | string
-  | null;
+  performedByName: string | null;
 
-  performedByClerkUserId:
-  string;
+  performedByClerkUserId: string;
 
   createdAt: string;
 
-  branchId:
-  | string
-  | null;
+  branchId: string | null;
 
   branchName: string;
 
@@ -361,9 +280,7 @@ type MovementRecord = {
   productId: string;
   productName: string;
 
-  productCode:
-  | string
-  | null;
+  productCode: string | null;
 };
 
 type MovementsResponse = {
@@ -379,62 +296,38 @@ type MovementWriteResponse = {
 };
 
 type ReservationStatus =
-  | "Activa"
-  | "Liberada"
-  | "Cancelada"
-  | "Consumida"
-  | "Vencida";
+  "Activa" | "Liberada" | "Cancelada" | "Consumida" | "Vencida";
 
 type ReservationRecord = {
   id: string;
 
   sourceType: string;
 
-  sourceId:
-  | string
-  | null;
+  sourceId: string | null;
 
-  sourceReference:
-  | string
-  | null;
+  sourceReference: string | null;
 
   quantity: number;
   status: ReservationStatus;
 
-  customerName:
-  | string
-  | null;
+  customerName: string | null;
 
-  notes:
-  | string
-  | null;
+  notes: string | null;
 
-  expiresAt:
-  | string
-  | null;
+  expiresAt: string | null;
 
-  createdByName:
-  | string
-  | null;
+  createdByName: string | null;
 
-  releasedByName:
-  | string
-  | null;
+  releasedByName: string | null;
 
-  releasedAt:
-  | string
-  | null;
+  releasedAt: string | null;
 
-  releaseReason:
-  | string
-  | null;
+  releaseReason: string | null;
 
   createdAt: string;
   updatedAt: string;
 
-  branchId:
-  | string
-  | null;
+  branchId: string | null;
 
   branchLabel: string;
 
@@ -446,19 +339,15 @@ type ReservationRecord = {
   productId: string;
   productName: string;
 
-  productCode:
-  | string
-  | null;
+  productCode: string | null;
 
   stockId: string;
 
   stockQuantity: number;
 
-  stockReservedQuantity:
-  number;
+  stockReservedQuantity: number;
 
-  availableQuantity:
-  number;
+  availableQuantity: number;
 };
 
 type ReservationsResponse = {
@@ -476,9 +365,7 @@ type ReservationWriteResponse = {
 type DealOption = {
   id: string;
 
-  branchId:
-  | string
-  | null;
+  branchId: string | null;
 
   branchName: string;
 
@@ -486,16 +373,12 @@ type DealOption = {
   stage: string;
   status: string;
 
-  customerName:
-  | string
-  | null;
+  customerName: string | null;
 
   items: Array<{
     id: string;
 
-    productId:
-    | string
-    | null;
+    productId: string | null;
 
     name: string;
     quantity: number;
@@ -512,8 +395,7 @@ type ReservationDraftItem = {
   productId: string;
   productName: string;
 
-  requestedQuantity:
-  number;
+  requestedQuantity: number;
 
   quantity: string;
   locationId: string;
@@ -542,8 +424,7 @@ type ReservationSettingsResponse = {
   success: boolean;
 
   data?: {
-    settings:
-    ReservationSettings;
+    settings: ReservationSettings;
 
     canManage: boolean;
   };
@@ -558,31 +439,21 @@ type ReplenishmentRequestItem = {
   productId: string;
   productName: string;
 
-  productCode:
-  | string
-  | null;
+  productCode: string | null;
 
   locationId: string;
   locationName: string;
-  locationCode:
-  | string
-  | null;
+  locationCode: string | null;
 
   locationLabel: string;
   requestedQuantity: number;
   receivedQuantity: number;
 
-  unitCost:
-  | number
-  | null;
+  unitCost: number | null;
 
-  totalCost:
-  | number
-  | null;
+  totalCost: number | null;
 
-  notes:
-  | string
-  | null;
+  notes: string | null;
 };
 
 type ReplenishmentRequest = {
@@ -590,69 +461,45 @@ type ReplenishmentRequest = {
   reference: string;
   status: string;
 
-  branchId:
-  | string
-  | null;
+  branchId: string | null;
 
-  branchName:
-  | string
-  | null;
+  branchName: string | null;
 
-  branchCode:
-  | string
-  | null;
+  branchCode: string | null;
 
   branchLabel: string;
 
-  supplierName:
-  | string
-  | null;
+  supplierName: string | null;
 
-  supplierReference:
-  | string
-  | null;
+  supplierReference: string | null;
 
   currency: string;
 
-  notes:
-  | string
-  | null;
+  notes: string | null;
 
-  externalSystem:
-  | string
-  | null;
+  externalSystem: string | null;
 
-  externalId:
-  | string
-  | null;
+  externalId: string | null;
 
-  externalReference:
-  | string
-  | null;
+  externalReference: string | null;
 
   syncStatus: string;
 
-  syncError:
-  | string
-  | null;
+  syncError: string | null;
 
-  requestedByName:
-  | string
-  | null;
+  requestedByName: string | null;
 
   requestedAt: string;
   createdAt: string;
   updatedAt: string;
 
-  items:
-  ReplenishmentRequestItem[];
+  items: ReplenishmentRequestItem[];
 };
 
 type ReplenishmentResponse = {
   success: boolean;
 
-  data?:
-  ReplenishmentRequest[];
+  data?: ReplenishmentRequest[];
 
   message?: string;
   error?: string;
@@ -662,15 +509,12 @@ type ProductOption = {
   id: string;
   name: string;
 
-  code:
-  | string
-  | null;
+  code: string | null;
 
   label: string;
 };
 
-const emptySummary:
-  StockSummary = {
+const emptySummary: StockSummary = {
   totalUnits: 0,
   availableUnits: 0,
   reservedUnits: 0,
@@ -681,8 +525,7 @@ const emptySummary:
   uninitialized: 0,
 };
 
-const defaultReservationSettings:
-  ReservationSettings = {
+const defaultReservationSettings: ReservationSettings = {
   manualHours: 24,
   qualifiedHours: 24,
   proposalHours: 48,
@@ -693,114 +536,61 @@ const defaultReservationSettings:
   autoReleaseExpired: true,
 };
 
-function formatMoney(
-  value: number,
-  currency = "mxn",
-): string {
-  return new Intl.NumberFormat(
-    "es-MX",
-    {
-      style: "currency",
-      currency:
-        currency.toUpperCase(),
-      maximumFractionDigits: 2,
-    },
-  ).format(value);
+function formatMoney(value: number, currency = "mxn"): string {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
-function formatDate(
-  value: string | null,
-): string {
+function formatDate(value: string | null): string {
   if (!value) {
     return "Sin movimientos";
   }
 
   const date = new Date(value);
 
-  if (
-    Number.isNaN(
-      date.getTime(),
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return date.toLocaleString(
-    "es-MX",
-    {
-      dateStyle: "medium",
-      timeStyle: "short",
-    },
+  return date.toLocaleString("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function getReservationExpirationValue(hours: number): string {
+  const date = new Date(Date.now() + hours * 60 * 60 * 1000);
+
+  const localDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60 * 1000,
   );
+
+  return localDate.toISOString().slice(0, 16);
 }
 
-function getReservationExpirationValue(
-  hours: number,
-): string {
-  const date =
-    new Date(
-      Date.now() +
-      hours *
-      60 *
-      60 *
-      1000,
-    );
-
-  const localDate =
-    new Date(
-      date.getTime() -
-      date.getTimezoneOffset() *
-      60 *
-      1000,
-    );
-
-  return localDate
-    .toISOString()
-    .slice(0, 16);
-}
-
-
-function compareSortValues(
-  first: unknown,
-  second: unknown,
-): number {
-  if (
-    typeof first === "number" &&
-    typeof second === "number"
-  ) {
+function compareSortValues(first: unknown, second: unknown): number {
+  if (typeof first === "number" && typeof second === "number") {
     return first - second;
   }
 
-  if (
-    first === null ||
-    first === undefined
-  ) {
-    return second === null ||
-      second === undefined
-      ? 0
-      : 1;
+  if (first === null || first === undefined) {
+    return second === null || second === undefined ? 0 : 1;
   }
 
-  if (
-    second === null ||
-    second === undefined
-  ) {
+  if (second === null || second === undefined) {
     return -1;
   }
 
-  return String(first).localeCompare(
-    String(second),
-    "es-MX",
-    {
-      numeric: true,
-      sensitivity: "base",
-    },
-  );
+  return String(first).localeCompare(String(second), "es-MX", {
+    numeric: true,
+    sensitivity: "base",
+  });
 }
 
-function getStatusClassName(
-  status: InventoryStatus,
-): string {
+function getStatusClassName(status: InventoryStatus): string {
   if (status === "Disponible") {
     return "bg-emerald-50 text-emerald-700 ring-emerald-600/20";
   }
@@ -816,9 +606,7 @@ function getStatusClassName(
   return "bg-slate-100 text-slate-600 ring-slate-500/20";
 }
 
-function getMovementClassName(
-  type: MovementType,
-): string {
+function getMovementClassName(type: MovementType): string {
   if (type === "Entrada") {
     return "bg-emerald-50 text-emerald-700";
   }
@@ -831,88 +619,39 @@ function getMovementClassName(
 }
 
 export default function InventariosPage() {
-  const {
-    tenantConfig,
-  } = useCRMConfig();
+  const { tenantConfig } = useCRMConfig();
 
   const productSingularLabel =
-    tenantConfig
-      ?.terminology
-      ?.modules.products
-      ?.singular ??
-    "Producto";
+    tenantConfig?.terminology?.modules.products?.singular ?? "Producto";
 
   const productPluralLabel =
-    tenantConfig
-      ?.terminology
-      ?.modules.products
-      ?.plural ??
-    "Productos";
+    tenantConfig?.terminology?.modules.products?.plural ?? "Productos";
 
-  const [
-    stocks,
-    setStocks,
-  ] = useState<StockRecord[]>([]);
+  const [stocks, setStocks] = useState<StockRecord[]>([]);
 
-  const [
-    movements,
-    setMovements,
-  ] = useState<MovementRecord[]>([]);
+  const [movements, setMovements] = useState<MovementRecord[]>([]);
 
-  const [
-    reservations,
-    setReservations,
-  ] = useState<
-    ReservationRecord[]
-  >([]);
+  const [reservations, setReservations] = useState<ReservationRecord[]>([]);
 
-  const [
-    deals,
-    setDeals,
-  ] = useState<DealOption[]>([]);
+  const [deals, setDeals] = useState<DealOption[]>([]);
 
-  const [
-    reservationSettings,
-    setReservationSettings,
-  ] = useState<
-    ReservationSettings
-  >({
-    ...defaultReservationSettings,
-  });
+  const [reservationSettings, setReservationSettings] =
+    useState<ReservationSettings>({
+      ...defaultReservationSettings,
+    });
 
-  const [
-    summary,
-    setSummary,
-  ] = useState<StockSummary>(
-    emptySummary,
+  const [summary, setSummary] = useState<StockSummary>(emptySummary);
+
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+
+  const [locations, setLocations] = useState<LocationOption[]>([]);
+
+  const activeLocations = useMemo<LocationOption[]>(
+    () => locations.filter((inventoryLocation) => inventoryLocation.active),
+    [locations],
   );
 
-  const [
-    branches,
-    setBranches,
-  ] = useState<BranchOption[]>([]);
-
-  const [
-    locations,
-    setLocations,
-  ] = useState<LocationOption[]>([]);
-
-  const activeLocations =
-    useMemo<
-      LocationOption[]
-    >(
-      () =>
-        locations.filter(
-          (inventoryLocation) =>
-            inventoryLocation.active,
-        ),
-      [locations],
-    );
-
-  const [
-    permissions,
-    setPermissions,
-  ] = useState<InventoryPermissions>({
+  const [permissions, setPermissions] = useState<InventoryPermissions>({
     canView: false,
     canCreate: false,
     canEdit: false,
@@ -920,42 +659,23 @@ export default function InventariosPage() {
     canViewCost: false,
   });
 
-    const [
-    replenishmentRequests,
-    setReplenishmentRequests,
-  ] = useState<
+  const [replenishmentRequests, setReplenishmentRequests] = useState<
     ReplenishmentRequest[]
   >([]);
 
-  const [
-    requestingStockIds,
-    setRequestingStockIds,
-  ] = useState<string[]>([]);
+  const [requestingStockIds, setRequestingStockIds] = useState<string[]>([]);
 
-  const [
-    replenishmentError,
-    setReplenishmentError,
-  ] = useState<string | null>(
+  const [replenishmentError, setReplenishmentError] = useState<string | null>(
     null,
   );
 
+  const [replenishmentMessage, setReplenishmentMessage] = useState<
+    string | null
+  >(null);
 
-  const [
-    replenishmentMessage,
-    setReplenishmentMessage,
-  ] = useState<string | null>(
-    null,
-  );
+  const [primaryBranchId, setPrimaryBranchId] = useState<string | null>(null);
 
-  const [
-    primaryBranchId,
-    setPrimaryBranchId,
-  ] = useState<string | null>(null);
-
-  const [
-    activeView,
-    setActiveView,
-  ] = useState<
+  const [activeView, setActiveView] = useState<
     | "stocks"
     | "movements"
     | "reservations"
@@ -964,651 +684,340 @@ export default function InventariosPage() {
     | "audit"
   >("stocks");
 
-  const [
-    linkedDealReservationId,
-    setLinkedDealReservationId,
-  ] = useState<string | null>(
+  const [linkedDealReservationId, setLinkedDealReservationId] = useState<
+    string | null
+  >(null);
+
+  const [expandedProductIds, setExpandedProductIds] = useState<string[]>([]);
+
+  const [expandedReservationGroupIds, setExpandedReservationGroupIds] =
+    useState<string[]>([]);
+
+  const [search, setSearch] = useState("");
+
+  const [branchFilter, setBranchFilter] = useState("");
+
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const [productTypeFilter, setProductTypeFilter] = useState("");
+
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+  const [reservationStatusFilter, setReservationStatusFilter] = useState("");
+
+  const [stockSortField, setStockSortField] =
+    useState<StockSortField>("productName");
+
+  const [stockSortDirection, setStockSortDirection] =
+    useState<SortDirection>("asc");
+
+  const [movementTypeFilter, setMovementTypeFilter] = useState("");
+
+  const [movementSortField, setMovementSortField] =
+    useState<MovementSortField>("createdAt");
+
+  const [movementSortDirection, setMovementSortDirection] =
+    useState<SortDirection>("desc");
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [pageError, setPageError] = useState<string | null>(null);
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [configurationStock, setConfigurationStock] =
+    useState<StockRecord | null>(null);
+
+  const [configurationMinimum, setConfigurationMinimum] = useState("");
+
+  const [configurationMaximum, setConfigurationMaximum] = useState("");
+
+  const [configurationReorderPoint, setConfigurationReorderPoint] =
+    useState("");
+
+  const [configurationBinLocation, setConfigurationBinLocation] = useState("");
+
+  const [configurationError, setConfigurationError] = useState<string | null>(
     null,
   );
 
-  const [
-    expandedProductIds,
-    setExpandedProductIds,
-  ] = useState<string[]>(
-    [],
-  );
+  const [isConfigurationSubmitting, setIsConfigurationSubmitting] =
+    useState(false);
 
-  const [
-    expandedReservationGroupIds,
-    setExpandedReservationGroupIds,
-  ] = useState<string[]>(
-    [],
-  );
+  const [isTransferDrawerOpen, setIsTransferDrawerOpen] = useState(false);
 
-  const [
-    search,
-    setSearch,
-  ] = useState("");
+  const [transferSourceLocationId, setTransferSourceLocationId] = useState("");
 
-  const [
-    branchFilter,
-    setBranchFilter,
-  ] = useState("");
+  const [transferDestinationLocationId, setTransferDestinationLocationId] =
+    useState("");
 
-  const [
-    statusFilter,
-    setStatusFilter,
-  ] = useState("");
+  const [transferProductId, setTransferProductId] = useState("");
 
-  const [
-    productTypeFilter,
-    setProductTypeFilter,
-  ] = useState("");
+  const [transferQuantity, setTransferQuantity] = useState("");
 
-  const [
-    categoryFilter,
-    setCategoryFilter,
-  ] = useState("");
-
-  const [
-    reservationStatusFilter,
-    setReservationStatusFilter,
-  ] = useState("");
-
-  const [
-    stockSortField,
-    setStockSortField,
-  ] = useState<StockSortField>(
-    "productName",
-  );
-
-  const [
-    stockSortDirection,
-    setStockSortDirection,
-  ] = useState<SortDirection>(
-    "asc",
-  );
-
-  const [
-    movementTypeFilter,
-    setMovementTypeFilter,
-  ] = useState("");
-
-  const [
-    movementSortField,
-    setMovementSortField,
-  ] = useState<MovementSortField>(
-    "createdAt",
-  );
-
-  const [
-    movementSortDirection,
-    setMovementSortDirection,
-  ] = useState<SortDirection>(
-    "desc",
-  );
-
-  const [
-    isLoading,
-    setIsLoading,
-  ] = useState(true);
-
-  const [
-    pageError,
-    setPageError,
-  ] = useState<string | null>(null);
-
-  const [
-    successMessage,
-    setSuccessMessage,
-  ] = useState<string | null>(null);
-
-  const [
-    isDrawerOpen,
-    setIsDrawerOpen,
-  ] = useState(false);
-
-  const [
-    configurationStock,
-    setConfigurationStock,
-  ] = useState<StockRecord | null>(
-    null,
-  );
-
-  const [
-    configurationMinimum,
-    setConfigurationMinimum,
-  ] = useState("");
-
-  const [
-    configurationMaximum,
-    setConfigurationMaximum,
-  ] = useState("");
-
-  const [
-    configurationReorderPoint,
-    setConfigurationReorderPoint,
-  ] = useState("");
-
-  const [
-    configurationBinLocation,
-    setConfigurationBinLocation,
-  ] = useState("");
-
-  const [
-    configurationError,
-    setConfigurationError,
-  ] = useState<string | null>(
-    null,
-  );
-
-  const [
-    isConfigurationSubmitting,
-    setIsConfigurationSubmitting,
-  ] = useState(false);
-
-  const [
-    isTransferDrawerOpen,
-    setIsTransferDrawerOpen,
-  ] = useState(false);
-
-  const [
-    transferSourceLocationId,
-    setTransferSourceLocationId,
-  ] = useState("");
-
-  const [
-    transferDestinationLocationId,
-    setTransferDestinationLocationId,
-  ] = useState("");
-
-  const [
-    transferProductId,
-    setTransferProductId,
-  ] = useState("");
-
-  const [
-    transferQuantity,
-    setTransferQuantity,
-  ] = useState("");
-
-  const [
-    transferReason,
-    setTransferReason,
-  ] = useState(
+  const [transferReason, setTransferReason] = useState(
     "Transferencia entre ubicaciones",
   );
 
-  const [
-    transferReference,
-    setTransferReference,
-  ] = useState("");
+  const [transferReference, setTransferReference] = useState("");
 
-  const [
-    transferError,
-    setTransferError,
-  ] = useState<string | null>(
-    null,
-  );
+  const [transferError, setTransferError] = useState<string | null>(null);
 
-  const [
-    isTransferSubmitting,
-    setIsTransferSubmitting,
-  ] = useState(false);
+  const [isTransferSubmitting, setIsTransferSubmitting] = useState(false);
 
-  const [
-    isLocationsDrawerOpen,
-    setIsLocationsDrawerOpen,
-  ] = useState(false);
+  const [isLocationsDrawerOpen, setIsLocationsDrawerOpen] = useState(false);
 
-  const [
-    isLocationFormOpen,
-    setIsLocationFormOpen,
-  ] = useState(false);
+  const [isLocationFormOpen, setIsLocationFormOpen] = useState(false);
 
-  const [
-    locationForm,
-    setLocationForm,
-  ] = useState<LocationFormState>({
+  const [locationForm, setLocationForm] = useState<LocationFormState>({
     ...emptyLocationForm,
   });
 
-  const [
-    isLocationSubmitting,
-    setIsLocationSubmitting,
-  ] = useState(false);
+  const [isLocationSubmitting, setIsLocationSubmitting] = useState(false);
 
-  const [
-    locationFormError,
-    setLocationFormError,
-  ] = useState<string | null>(
+  const [locationFormError, setLocationFormError] = useState<string | null>(
     null,
   );
 
-  const [
-    isSubmitting,
-    setIsSubmitting,
-  ] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [
-    formError,
-    setFormError,
-  ] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const [
-    movementType,
-    setMovementType,
-  ] = useState<MovementType>(
-    "Entrada",
-  );
+  const [movementType, setMovementType] = useState<MovementType>("Entrada");
 
-  const [
-    movementBranchId,
-    setMovementBranchId,
-  ] = useState("");
+  const [movementBranchId, setMovementBranchId] = useState("");
 
-  const [
-    movementLocationId,
-    setMovementLocationId,
-  ] = useState("");
+  const [movementLocationId, setMovementLocationId] = useState("");
 
-  const [
-    movementProductId,
-    setMovementProductId,
-  ] = useState("");
+  const [movementProductId, setMovementProductId] = useState("");
 
-  const [
-    movementQuantity,
-    setMovementQuantity,
-  ] = useState("");
+  const [movementQuantity, setMovementQuantity] = useState("");
 
-  const [
-    movementUnitCost,
-    setMovementUnitCost,
-  ] = useState("");
+  const [movementUnitCost, setMovementUnitCost] = useState("");
 
-  const [
-    movementReason,
-    setMovementReason,
-  ] = useState("");
+  const [movementReason, setMovementReason] = useState("");
 
-  const [
-    movementReference,
-    setMovementReference,
-  ] = useState("");
+  const [movementReference, setMovementReference] = useState("");
 
-  const [
-    isReservationDrawerOpen,
-    setIsReservationDrawerOpen,
-  ] = useState(false);
+  const [isReservationDrawerOpen, setIsReservationDrawerOpen] = useState(false);
 
-  const [
-    reservationDealId,
-    setReservationDealId,
-  ] = useState("");
+  const [reservationDealId, setReservationDealId] = useState("");
 
-  const [
-    reservationDraftItems,
-    setReservationDraftItems,
-  ] = useState<
+  const [reservationDraftItems, setReservationDraftItems] = useState<
     ReservationDraftItem[]
   >([]);
 
-  const [
-    reservationLocationId,
-    setReservationLocationId,
-  ] = useState("");
+  const [reservationLocationId, setReservationLocationId] = useState("");
 
-  const [
-    reservationProductId,
-    setReservationProductId,
-  ] = useState("");
+  const [reservationProductId, setReservationProductId] = useState("");
 
-  const [
-    reservationQuantity,
-    setReservationQuantity,
-  ] = useState("");
+  const [reservationQuantity, setReservationQuantity] = useState("");
 
-  const [
-    reservationReference,
-    setReservationReference,
-  ] = useState("");
+  const [reservationReference, setReservationReference] = useState("");
 
-  const [
-    reservationCustomerName,
-    setReservationCustomerName,
-  ] = useState("");
+  const [reservationCustomerName, setReservationCustomerName] = useState("");
 
-  const [
-    reservationExpiresAt,
-    setReservationExpiresAt,
-  ] = useState("");
+  const [reservationExpiresAt, setReservationExpiresAt] = useState("");
 
-  const [
-    reservationNotes,
-    setReservationNotes,
-  ] = useState("");
+  const [reservationNotes, setReservationNotes] = useState("");
 
-  const [
-    reservationError,
-    setReservationError,
-  ] = useState<string | null>(
-    null,
-  );
+  const [reservationError, setReservationError] = useState<string | null>(null);
 
-  const [
-    isReservationSubmitting,
-    setIsReservationSubmitting,
-  ] = useState(false);
+  const [isReservationSubmitting, setIsReservationSubmitting] = useState(false);
 
-  const [
-    reservationBeingUpdated,
-    setReservationBeingUpdated,
-  ] = useState<string | null>(
-    null,
-  );
-
-  const [
-    isReactivatingReservations,
-    setIsReactivatingReservations,
-  ] = useState(false);
-
-  const [
-    reservationGroupBeingUpdated,
-    setReservationGroupBeingUpdated,
-  ] = useState<string | null>(
-    null,
-  );
-
-  const [
-    extensionReservation,
-    setExtensionReservation,
-  ] = useState<
-    ReservationRecord | null
+  const [reservationBeingUpdated, setReservationBeingUpdated] = useState<
+    string | null
   >(null);
 
-  const [
-    extensionReservationGroupId,
-    setExtensionReservationGroupId,
-  ] = useState<string | null>(
-    null,
-  );
+  const [isReactivatingReservations, setIsReactivatingReservations] =
+    useState(false);
 
-  const [
-    extensionExpiresAt,
-    setExtensionExpiresAt,
-  ] = useState("");
+  const [reservationGroupBeingUpdated, setReservationGroupBeingUpdated] =
+    useState<string | null>(null);
 
-  const [
-    extensionReason,
-    setExtensionReason,
-  ] = useState(
+  const [extensionReservation, setExtensionReservation] =
+    useState<ReservationRecord | null>(null);
+
+  const [extensionReservationGroupId, setExtensionReservationGroupId] =
+    useState<string | null>(null);
+
+  const [extensionExpiresAt, setExtensionExpiresAt] = useState("");
+
+  const [extensionReason, setExtensionReason] = useState(
     "Seguimiento comercial activo",
   );
 
-  const [
-    extensionError,
-    setExtensionError,
-  ] = useState<string | null>(
-    null,
-  );
+  const [extensionError, setExtensionError] = useState<string | null>(null);
 
-  const loadInventory =
-    useCallback(async () => {
-      try {
-        setIsLoading(true);
-        setPageError(null);
+  const loadInventory = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setPageError(null);
 
-        const reservationsResponse =
-          await fetch(
-            "/api/crm/inventory/reservations",
-            {
-              cache: "no-store",
-            },
-          );
+      const reservationsResponse = await fetch(
+        "/api/crm/inventory/reservations",
+        {
+          cache: "no-store",
+        },
+      );
 
-        const [
-          stocksResponse,
-          movementsResponse,
-          locationsResponse,
-          dealsResponse,
-          reservationSettingsResponse,
-          replenishmentResponse,
-        ] = await Promise.all([
-          fetch(
-            "/api/crm/inventory/stocks",
-            {
-              cache: "no-store",
-            },
-          ),
+      const [
+        stocksResponse,
+        movementsResponse,
+        locationsResponse,
+        dealsResponse,
+        reservationSettingsResponse,
+        replenishmentResponse,
+      ] = await Promise.all([
+        fetch("/api/crm/inventory/stocks", {
+          cache: "no-store",
+        }),
 
-          fetch(
-            "/api/crm/inventory/movements",
-            {
-              cache: "no-store",
-            },
-          ),
+        fetch("/api/crm/inventory/movements", {
+          cache: "no-store",
+        }),
 
-          fetch(
-            "/api/crm/inventory/locations?includeInactive=true",
-            {
-              cache: "no-store",
-            },
-          ),
+        fetch("/api/crm/inventory/locations?includeInactive=true", {
+          cache: "no-store",
+        }),
 
-          fetch(
-            "/api/crm/deals",
-            {
-              cache: "no-store",
-            },
-          ),
+        fetch("/api/crm/deals", {
+          cache: "no-store",
+        }),
 
-          fetch(
-            "/api/crm/settings/inventory-reservations",
-            {
-              cache: "no-store",
-            },
-          ),
+        fetch("/api/crm/settings/inventory-reservations", {
+          cache: "no-store",
+        }),
 
-          fetch(
-            "/api/crm/inventory/replenishment",
-            {
-              cache: "no-store",
-            },
-          ),
-        ]);
+        fetch("/api/crm/inventory/replenishment", {
+          cache: "no-store",
+        }),
+      ]);
 
-        const stocksPayload =
-          (await stocksResponse.json()) as
-          StocksResponse;
+      const stocksPayload = (await stocksResponse.json()) as StocksResponse;
 
-        const movementsPayload =
-          (await movementsResponse.json()) as
-          MovementsResponse;
+      const movementsPayload =
+        (await movementsResponse.json()) as MovementsResponse;
 
-        const locationsPayload =
-          (await locationsResponse.json()) as
-          LocationsResponse;
+      const locationsPayload =
+        (await locationsResponse.json()) as LocationsResponse;
 
-        const reservationsPayload =
-          (await reservationsResponse.json()) as
-          ReservationsResponse;
+      const reservationsPayload =
+        (await reservationsResponse.json()) as ReservationsResponse;
 
-        const dealsPayload =
-          (await dealsResponse.json()) as
-          DealsResponse;
+      const dealsPayload = (await dealsResponse.json()) as DealsResponse;
 
-        const reservationSettingsPayload =
-          (await reservationSettingsResponse.json()) as
-          ReservationSettingsResponse;
+      const reservationSettingsPayload =
+        (await reservationSettingsResponse.json()) as ReservationSettingsResponse;
 
-        const replenishmentPayload =
-          (await replenishmentResponse.json()) as
-          ReplenishmentResponse;
+      const replenishmentPayload =
+        (await replenishmentResponse.json()) as ReplenishmentResponse;
 
-        if (
-          !stocksResponse.ok ||
-          !stocksPayload.success
-        ) {
-          throw new Error(
-            stocksPayload.error ??
-            "No fue posible cargar las existencias.",
-          );
-        }
-
-        if (
-          !movementsResponse.ok ||
-          !movementsPayload.success
-        ) {
-          throw new Error(
-            movementsPayload.error ??
-            "No fue posible cargar el historial de movimientos.",
-          );
-        }
-
-        if (
-          !locationsResponse.ok ||
-          !locationsPayload.success
-        ) {
-          throw new Error(
-            locationsPayload.error ??
-            "No fue posible cargar las ubicaciones de inventario.",
-          );
-        }
-
-        if (
-          !reservationsResponse.ok ||
-          !reservationsPayload.success
-        ) {
-          throw new Error(
-            reservationsPayload.error ??
-            "No fue posible cargar las reservas de inventario.",
-          );
-        }
-
-                if (
-          !replenishmentResponse.ok ||
-          !replenishmentPayload.success
-        ) {
-          throw new Error(
-            replenishmentPayload.error ??
-            "No fue posible cargar las solicitudes de reposición.",
-          );
-        }
-
-        setReplenishmentRequests(
-          replenishmentPayload.data ??
-          [],
+      if (!stocksResponse.ok || !stocksPayload.success) {
+        throw new Error(
+          stocksPayload.error ?? "No fue posible cargar las existencias.",
         );
-
-        setStocks(
-          stocksPayload.data ?? [],
-        );
-
-        setSummary(
-          stocksPayload.summary ??
-          emptySummary,
-        );
-
-        setBranches(
-          stocksPayload.branches ??
-          [],
-        );
-
-        setLocations(
-          locationsPayload.data ??
-          [],
-        );
-
-        setPermissions(
-          stocksPayload.permissions ??
-          {
-            canView: false,
-            canCreate: false,
-            canEdit: false,
-            canManage: false,
-            canViewCost: false,
-          },
-        );
-
-        setPrimaryBranchId(
-          stocksPayload.primaryBranchId ??
-          null,
-        );
-
-        setMovements(
-          movementsPayload.data ?? [],
-        );
-
-        setReservations(
-          reservationsPayload.data ??
-          [],
-        );
-
-        if (
-          !dealsResponse.ok ||
-          !dealsPayload.success
-        ) {
-          throw new Error(
-            dealsPayload.error ??
-            "No fue posible cargar las oportunidades.",
-          );
-        }
-
-        if (
-          !reservationSettingsResponse.ok ||
-          !reservationSettingsPayload.success ||
-          !reservationSettingsPayload.data
-        ) {
-          throw new Error(
-            reservationSettingsPayload.error ??
-            "No fue posible cargar la política de reservas.",
-          );
-        }
-
-        setDeals(
-          dealsPayload.data ?? [],
-        );
-
-        setReservationSettings(
-          reservationSettingsPayload
-            .data.settings,
-        );
-      } catch (error) {
-        setPageError(
-          error instanceof Error
-            ? error.message
-            : "No fue posible cargar el inventario.",
-        );
-      } finally {
-        setIsLoading(false);
       }
-    }, []);
+
+      if (!movementsResponse.ok || !movementsPayload.success) {
+        throw new Error(
+          movementsPayload.error ??
+            "No fue posible cargar el historial de movimientos.",
+        );
+      }
+
+      if (!locationsResponse.ok || !locationsPayload.success) {
+        throw new Error(
+          locationsPayload.error ??
+            "No fue posible cargar las ubicaciones de inventario.",
+        );
+      }
+
+      if (!reservationsResponse.ok || !reservationsPayload.success) {
+        throw new Error(
+          reservationsPayload.error ??
+            "No fue posible cargar las reservas de inventario.",
+        );
+      }
+
+      if (!replenishmentResponse.ok || !replenishmentPayload.success) {
+        throw new Error(
+          replenishmentPayload.error ??
+            "No fue posible cargar las solicitudes de reposición.",
+        );
+      }
+
+      setReplenishmentRequests(replenishmentPayload.data ?? []);
+
+      setStocks(stocksPayload.data ?? []);
+
+      setSummary(stocksPayload.summary ?? emptySummary);
+
+      setBranches(stocksPayload.branches ?? []);
+
+      setLocations(locationsPayload.data ?? []);
+
+      setPermissions(
+        stocksPayload.permissions ?? {
+          canView: false,
+          canCreate: false,
+          canEdit: false,
+          canManage: false,
+          canViewCost: false,
+        },
+      );
+
+      setPrimaryBranchId(stocksPayload.primaryBranchId ?? null);
+
+      setMovements(movementsPayload.data ?? []);
+
+      setReservations(reservationsPayload.data ?? []);
+
+      if (!dealsResponse.ok || !dealsPayload.success) {
+        throw new Error(
+          dealsPayload.error ?? "No fue posible cargar las oportunidades.",
+        );
+      }
+
+      if (
+        !reservationSettingsResponse.ok ||
+        !reservationSettingsPayload.success ||
+        !reservationSettingsPayload.data
+      ) {
+        throw new Error(
+          reservationSettingsPayload.error ??
+            "No fue posible cargar la política de reservas.",
+        );
+      }
+
+      setDeals(dealsPayload.data ?? []);
+
+      setReservationSettings(reservationSettingsPayload.data.settings);
+    } catch (error) {
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "No fue posible cargar el inventario.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void loadInventory();
   }, [loadInventory]);
 
   useEffect(() => {
-    const searchParams =
-      new URLSearchParams(
-        window.location.search,
-      );
+    const searchParams = new URLSearchParams(window.location.search);
 
-    if (
-      searchParams.get("view") ===
-      "reservations"
-    ) {
-      setActiveView(
-        "reservations",
-      );
+    if (searchParams.get("view") === "reservations") {
+      setActiveView("reservations");
     }
 
-    setLinkedDealReservationId(
-      searchParams.get(
-        "dealId",
-      ),
-    );
+    setLinkedDealReservationId(searchParams.get("dealId"));
   }, []);
 
   useEffect(() => {
@@ -1616,696 +1025,434 @@ export default function InventariosPage() {
       return;
     }
 
-    const timeout =
-      window.setTimeout(() => {
-        setSuccessMessage(null);
-      }, 4000);
+    const timeout = window.setTimeout(() => {
+      setSuccessMessage(null);
+    }, 4000);
 
     return () => {
-      window.clearTimeout(
-        timeout,
-      );
+      window.clearTimeout(timeout);
     };
   }, [successMessage]);
 
-  const products =
-    useMemo<ProductOption[]>(() => {
-      const productsById =
-        new Map<
-          string,
-          ProductOption
-        >();
+  const products = useMemo<ProductOption[]>(() => {
+    const productsById = new Map<string, ProductOption>();
 
-      for (const stock of stocks) {
-        if (
-          productsById.has(
-            stock.productId,
-          )
-        ) {
-          continue;
-        }
-
-        productsById.set(
-          stock.productId,
-          {
-            id: stock.productId,
-            name: stock.productName,
-            code:
-              stock.productCode,
-            label:
-              stock.productCode
-                ? `${stock.productName} (${stock.productCode})`
-                : stock.productName,
-          },
-        );
+    for (const stock of stocks) {
+      if (productsById.has(stock.productId)) {
+        continue;
       }
 
-      return Array.from(
-        productsById.values(),
-      ).sort((a, b) =>
-        a.label.localeCompare(
-          b.label,
-          "es",
-        ),
-      );
-    }, [stocks]);
+      productsById.set(stock.productId, {
+        id: stock.productId,
+        name: stock.productName,
+        code: stock.productCode,
+        label: stock.productCode
+          ? `${stock.productName} (${stock.productCode})`
+          : stock.productName,
+      });
+    }
 
-  const selectedStock =
-    useMemo(
-      () =>
-        stocks.find(
-          (stock) =>
-            stock.locationId ===
-            movementLocationId &&
-            stock.productId ===
-            movementProductId,
-        ),
-      [
-        stocks,
-        movementLocationId,
-        movementProductId,
-      ],
+    return Array.from(productsById.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, "es"),
     );
+  }, [stocks]);
 
-  const transferSourceStock =
-    useMemo(
-      () =>
-        stocks.find(
-          (stock) =>
-            stock.initialized &&
-            stock.locationId ===
-            transferSourceLocationId &&
-            stock.productId ===
-            transferProductId,
-        ) ?? null,
-      [
-        stocks,
-        transferSourceLocationId,
-        transferProductId,
-      ],
-    );
+  const selectedStock = useMemo(
+    () =>
+      stocks.find(
+        (stock) =>
+          stock.locationId === movementLocationId &&
+          stock.productId === movementProductId,
+      ),
+    [stocks, movementLocationId, movementProductId],
+  );
 
-  const transferDestinationLocations =
-    useMemo(
-      () =>
-        activeLocations.filter(
-          (inventoryLocation) =>
-            inventoryLocation.value !==
-            transferSourceLocationId,
-        ),
-      [
-        activeLocations,
-        transferSourceLocationId,
-      ],
-    );
+  const transferSourceStock = useMemo(
+    () =>
+      stocks.find(
+        (stock) =>
+          stock.initialized &&
+          stock.locationId === transferSourceLocationId &&
+          stock.productId === transferProductId,
+      ) ?? null,
+    [stocks, transferSourceLocationId, transferProductId],
+  );
 
-  const inventoryProductTypes =
-    useMemo(
-      () =>
-        Array.from(
-          new Map(
-            stocks.map(
-              (stock) => [
-                stock.productTypeId,
-                {
-                  id:
-                    stock.productTypeId,
-                  name:
-                    stock.productTypeName,
-                },
-              ],
-            ),
-          ).values(),
-        ).sort(
-          (first, second) =>
-            first.name.localeCompare(
-              second.name,
-              "es-MX",
-              {
-                sensitivity:
-                  "base",
-              },
-            ),
-        ),
-      [stocks],
-    );
+  const transferDestinationLocations = useMemo(
+    () =>
+      activeLocations.filter(
+        (inventoryLocation) =>
+          inventoryLocation.value !== transferSourceLocationId,
+      ),
+    [activeLocations, transferSourceLocationId],
+  );
 
-  const inventoryCategories =
-    useMemo(
-      () =>
-        Array.from(
-          new Set(
-            stocks
-              .filter(
-                (stock) =>
-                  !productTypeFilter ||
-                  stock.productTypeId ===
-                    productTypeFilter,
-              )
-              .map(
-                (stock) =>
-                  stock.category,
-              )
-              .filter(
-                (
-                  category,
-                ): category is string =>
-                  Boolean(category),
-              ),
-          ),
-        ).sort(
-          (first, second) =>
-            first.localeCompare(
-              second,
-              "es-MX",
-              {
-                sensitivity:
-                  "base",
-              },
-            ),
-        ),
-      [
-        stocks,
-        productTypeFilter,
-      ],
-    );
-
-  const visibleStocks =
-    useMemo<
-      ConsolidatedStockRecord[]
-    >(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
-
-      const filteredLocationStocks =
-        stocks.filter(
-          (stock) => {
-            if (!stock.initialized) {
-              return false;
-            }
-
-            if (
-              branchFilter &&
-              stock.branchId !==
-              branchFilter
-            ) {
-              return false;
-            }
-
-            if (
-              productTypeFilter &&
-              stock.productTypeId !==
-                productTypeFilter
-            ) {
-              return false;
-            }
-
-            if (
-              categoryFilter &&
-              stock.category !==
-                categoryFilter
-            ) {
-              return false;
-            }
-
-            if (!normalizedSearch) {
-              return true;
-            }
-
-            return [
-              stock.productName,
-              stock.productCode,
-              stock.category,
-              stock.locationLabel,
-              stock.locationType,
-              stock.branchName,
-              stock.binLocation,
-            ]
-              .filter(Boolean)
-              .some((value) =>
-                String(value)
-                  .toLowerCase()
-                  .includes(
-                    normalizedSearch,
-                  ),
-              );
-          },
-        );
-
-      const recordsByProduct =
-        new Map<
-          string,
-          ConsolidatedStockRecord
-        >();
-
-      for (
-        const stock of
-        filteredLocationStocks
-      ) {
-        const existing =
-          recordsByProduct.get(
-            stock.productId,
-          );
-
-        if (!existing) {
-          recordsByProduct.set(
-            stock.productId,
+  const inventoryProductTypes = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          stocks.map((stock) => [
+            stock.productTypeId,
             {
-              id:
-                stock.productId,
-
-              productId:
-                stock.productId,
-
-              productName:
-                stock.productName,
-
-              productCode:
-                stock.productCode,
-
-              productTypeId:
-                stock.productTypeId,
-
-              productTypeName:
-                stock.productTypeName,
-
-              category:
-                stock.category,
-
-              quantity:
-                stock.quantity,
-
-              reservedQuantity:
-                stock.reservedQuantity,
-
-              availableQuantity:
-                stock.availableQuantity,
-
-              locationCount:
-                stock.quantity > 0
-                  ? 1
-                  : 0,
-
-              inventoryValue:
-                stock.inventoryValue,
-
-              commercialValue:
-                stock.commercialValue,
-
-              currency:
-                stock.currency,
-
-              status:
-                stock.status,
-
-              locations: [
-                stock,
-              ],
+              id: stock.productTypeId,
+              name: stock.productTypeName,
             },
-          );
+          ]),
+        ).values(),
+      ).sort((first, second) =>
+        first.name.localeCompare(second.name, "es-MX", {
+          sensitivity: "base",
+        }),
+      ),
+    [stocks],
+  );
 
-          continue;
-        }
+  const inventoryCategories = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          stocks
+            .filter(
+              (stock) =>
+                !productTypeFilter || stock.productTypeId === productTypeFilter,
+            )
+            .map((stock) => stock.category)
+            .filter((category): category is string => Boolean(category)),
+        ),
+      ).sort((first, second) =>
+        first.localeCompare(second, "es-MX", {
+          sensitivity: "base",
+        }),
+      ),
+    [stocks, productTypeFilter],
+  );
 
-        existing.quantity +=
-          stock.quantity;
+  const visibleStocks = useMemo<ConsolidatedStockRecord[]>(() => {
+    const normalizedSearch = search.trim().toLowerCase();
 
-        existing.reservedQuantity +=
-          stock.reservedQuantity;
-
-        existing.availableQuantity +=
-          stock.availableQuantity;
-
-        if (stock.quantity > 0) {
-          existing.locationCount +=
-            1;
-        }
-
-        existing.commercialValue +=
-          stock.commercialValue;
-
-        if (
-          existing.inventoryValue ===
-          null ||
-          stock.inventoryValue ===
-          null
-        ) {
-          existing.inventoryValue =
-            null;
-        } else {
-          existing.inventoryValue +=
-            stock.inventoryValue;
-        }
-
-        existing.locations.push(
-          stock,
-        );
+    const filteredLocationStocks = stocks.filter((stock) => {
+      if (!stock.initialized) {
+        return false;
       }
 
-      const consolidatedRecords =
-        Array.from(
-          recordsByProduct.values(),
-        ).map((record) => {
-          const hasLowLocation =
-            record.locations.some(
-              (stock) =>
-                stock.status ===
-                "Bajo",
-            );
+      if (branchFilter && stock.branchId !== branchFilter) {
+        return false;
+      }
 
-          const consolidatedStatus:
-            InventoryStatus =
-            record.availableQuantity <=
-              0
-              ? "Agotado"
-              : hasLowLocation
-                ? "Bajo"
-                : "Disponible";
+      if (productTypeFilter && stock.productTypeId !== productTypeFilter) {
+        return false;
+      }
 
-          return {
-            ...record,
+      if (categoryFilter && stock.category !== categoryFilter) {
+        return false;
+      }
 
-            status:
-              consolidatedStatus,
-          };
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return [
+        stock.productName,
+        stock.productCode,
+        stock.category,
+        stock.locationLabel,
+        stock.locationType,
+        stock.branchName,
+        stock.binLocation,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          String(value).toLowerCase().includes(normalizedSearch),
+        );
+    });
+
+    const recordsByProduct = new Map<string, ConsolidatedStockRecord>();
+
+    for (const stock of filteredLocationStocks) {
+      const existing = recordsByProduct.get(stock.productId);
+
+      if (!existing) {
+        recordsByProduct.set(stock.productId, {
+          id: stock.productId,
+
+          productId: stock.productId,
+
+          productName: stock.productName,
+
+          productCode: stock.productCode,
+
+          productTypeId: stock.productTypeId,
+
+          productTypeName: stock.productTypeName,
+
+          category: stock.category,
+
+          quantity: stock.quantity,
+
+          reservedQuantity: stock.reservedQuantity,
+
+          availableQuantity: stock.availableQuantity,
+
+          locationCount: stock.quantity > 0 ? 1 : 0,
+
+          inventoryValue: stock.inventoryValue,
+
+          commercialValue: stock.commercialValue,
+
+          currency: stock.currency,
+
+          status: stock.status,
+
+          locations: [stock],
         });
 
-      const statusFilteredRecords =
-        statusFilter
-          ? consolidatedRecords.filter(
-            (record) =>
-              record.status ===
-              statusFilter,
-          )
-          : consolidatedRecords;
+        continue;
+      }
 
-      return [
-        ...statusFilteredRecords,
-      ].sort((first, second) => {
-        const result =
-          compareSortValues(
-            first[stockSortField],
-            second[stockSortField],
-          );
+      existing.quantity += stock.quantity;
 
-        return stockSortDirection ===
-          "asc"
-          ? result
-          : -result;
-      });
-    }, [
-      stocks,
-      search,
-      branchFilter,
-      productTypeFilter,
-      categoryFilter,
-      statusFilter,
-      stockSortField,
-      stockSortDirection,
-    ]);
+      existing.reservedQuantity += stock.reservedQuantity;
 
-    const replenishmentSuggestions =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
+      existing.availableQuantity += stock.availableQuantity;
 
-      return stocks
-        .filter((stock) => {
-          if (!stock.initialized) {
-            return false;
-          }
+      if (stock.quantity > 0) {
+        existing.locationCount += 1;
+      }
 
-          if (
-            branchFilter &&
-            stock.branchId !==
-              branchFilter
-          ) {
-            return false;
-          }
+      existing.commercialValue += stock.commercialValue;
 
-          const triggerQuantity =
-            stock.reorderPoint ??
-            stock.minimumQuantity;
+      if (existing.inventoryValue === null || stock.inventoryValue === null) {
+        existing.inventoryValue = null;
+      } else {
+        existing.inventoryValue += stock.inventoryValue;
+      }
 
-          if (
-            stock.availableQuantity >
-            triggerQuantity
-          ) {
-            return false;
-          }
+      existing.locations.push(stock);
+    }
 
-          if (!normalizedSearch) {
-            return true;
-          }
-
-          return [
-            stock.productName,
-            stock.productCode,
-            stock.locationLabel,
-            stock.branchName,
-          ]
-            .filter(Boolean)
-            .some((value) =>
-              String(value)
-                .toLowerCase()
-                .includes(
-                  normalizedSearch,
-                ),
-            );
-        })
-        .map((stock) => {
-          const triggerQuantity =
-            stock.reorderPoint ??
-            stock.minimumQuantity;
-
-          const targetQuantity =
-            stock.maximumQuantity ??
-            stock.minimumQuantity;
-
-          return {
-            ...stock,
-
-            triggerQuantity,
-
-            targetQuantity,
-
-            suggestedQuantity:
-              Math.max(
-                0,
-                targetQuantity -
-                  stock.availableQuantity,
-              ),
-
-            requiresMaximum:
-              stock.maximumQuantity ===
-              null,
-          };
-        })
-        .sort(
-          (first, second) =>
-            first.availableQuantity -
-            second.availableQuantity,
-        );
-    }, [
-      stocks,
-      search,
-      branchFilter,
-    ]);
-
-  const visibleMovements =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
-
-      const filteredMovements =
-        movements.filter(
-          (movement) => {
-            if (
-              branchFilter &&
-              movement.branchId !==
-              branchFilter
-            ) {
-              return false;
-            }
-
-            if (
-              movementTypeFilter &&
-              movement.type !==
-              movementTypeFilter
-            ) {
-              return false;
-            }
-
-            if (
-              normalizedSearch &&
-              ![
-                movement.productName,
-                movement.productCode,
-                movement.locationName,
-                movement.branchName,
-                movement.reason,
-                movement.reference,
-                movement.performedByName,
-              ]
-                .filter(Boolean)
-                .some((value) =>
-                  String(value)
-                    .toLowerCase()
-                    .includes(
-                      normalizedSearch,
-                    ),
-                )
-            ) {
-              return false;
-            }
-
-            return true;
-          },
+    const consolidatedRecords = Array.from(recordsByProduct.values()).map(
+      (record) => {
+        const hasLowLocation = record.locations.some(
+          (stock) => stock.status === "Bajo",
         );
 
-      return [
-        ...filteredMovements,
-      ].sort((first, second) => {
-        const result =
-          compareSortValues(
-            first[
-            movementSortField
-            ],
-            second[
-            movementSortField
-            ],
-          );
+        const consolidatedStatus: InventoryStatus =
+          record.availableQuantity <= 0
+            ? "Agotado"
+            : hasLowLocation
+              ? "Bajo"
+              : "Disponible";
 
-        return movementSortDirection ===
-          "asc"
-          ? result
-          : -result;
-      });
-    }, [
-      movements,
-      search,
-      branchFilter,
-      movementTypeFilter,
-      movementSortField,
-      movementSortDirection,
-    ]);
+        return {
+          ...record,
 
-  const visibleReservations =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
+          status: consolidatedStatus,
+        };
+      },
+    );
 
-      return reservations
-        .filter(
-          (reservation) => {
-            if (
-              branchFilter &&
-              reservation.branchId !==
-              branchFilter
-            ) {
-              return false;
-            }
+    const statusFilteredRecords = statusFilter
+      ? consolidatedRecords.filter((record) => record.status === statusFilter)
+      : consolidatedRecords;
 
-            if (
-              linkedDealReservationId &&
-              reservation.sourceId !==
-              linkedDealReservationId
-            ) {
-              return false;
-            }
-
-            if (
-              reservationStatusFilter &&
-              reservation.status !==
-              reservationStatusFilter
-            ) {
-              return false;
-            }
-
-            if (!normalizedSearch) {
-              return true;
-            }
-
-            return [
-              reservation.productName,
-              reservation.productCode,
-              reservation.locationLabel,
-              reservation.branchLabel,
-              reservation.sourceType,
-              reservation.sourceReference,
-              reservation.customerName,
-              reservation.notes,
-              reservation.createdByName,
-              reservation.status,
-            ]
-              .filter(Boolean)
-              .some((value) =>
-                String(value)
-                  .toLowerCase()
-                  .includes(
-                    normalizedSearch,
-                  ),
-              );
-          },
-        )
-        .sort(
-          (first, second) => {
-            if (
-              first.status ===
-              "Activa" &&
-              second.status !==
-              "Activa"
-            ) {
-              return -1;
-            }
-
-            if (
-              first.status !==
-              "Activa" &&
-              second.status ===
-              "Activa"
-            ) {
-              return 1;
-            }
-
-            return (
-              new Date(
-                second.createdAt,
-              ).getTime() -
-              new Date(
-                first.createdAt,
-              ).getTime()
-            );
-          },
-        );
-    }, [
-      reservations,
-      search,
-      branchFilter,
-      linkedDealReservationId,
-      reservationStatusFilter,
-    ]);
-
-  function handleStockSort(
-    field: StockSortField,
-  ) {
-    if (
-      stockSortField === field
-    ) {
-      setStockSortDirection(
-        (current) =>
-          current === "asc"
-            ? "desc"
-            : "asc",
+    return [...statusFilteredRecords].sort((first, second) => {
+      const result = compareSortValues(
+        first[stockSortField],
+        second[stockSortField],
       );
+
+      return stockSortDirection === "asc" ? result : -result;
+    });
+  }, [
+    stocks,
+    search,
+    branchFilter,
+    productTypeFilter,
+    categoryFilter,
+    statusFilter,
+    stockSortField,
+    stockSortDirection,
+  ]);
+
+  const replenishmentSuggestions = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return stocks
+      .filter((stock) => {
+        if (!stock.initialized) {
+          return false;
+        }
+
+        if (branchFilter && stock.branchId !== branchFilter) {
+          return false;
+        }
+
+        const triggerQuantity = stock.reorderPoint ?? stock.minimumQuantity;
+
+        if (stock.availableQuantity > triggerQuantity) {
+          return false;
+        }
+
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        return [
+          stock.productName,
+          stock.productCode,
+          stock.locationLabel,
+          stock.branchName,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value).toLowerCase().includes(normalizedSearch),
+          );
+      })
+      .map((stock) => {
+        const triggerQuantity = stock.reorderPoint ?? stock.minimumQuantity;
+
+        const targetQuantity = stock.maximumQuantity ?? stock.minimumQuantity;
+
+        return {
+          ...stock,
+
+          triggerQuantity,
+
+          targetQuantity,
+
+          suggestedQuantity: Math.max(
+            0,
+            targetQuantity - stock.availableQuantity,
+          ),
+
+          requiresMaximum: stock.maximumQuantity === null,
+        };
+      })
+      .sort(
+        (first, second) => first.availableQuantity - second.availableQuantity,
+      );
+  }, [stocks, search, branchFilter]);
+
+  const visibleMovements = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    const filteredMovements = movements.filter((movement) => {
+      if (branchFilter && movement.branchId !== branchFilter) {
+        return false;
+      }
+
+      if (movementTypeFilter && movement.type !== movementTypeFilter) {
+        return false;
+      }
+
+      if (
+        normalizedSearch &&
+        ![
+          movement.productName,
+          movement.productCode,
+          movement.locationName,
+          movement.branchName,
+          movement.reason,
+          movement.reference,
+          movement.performedByName,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value).toLowerCase().includes(normalizedSearch),
+          )
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return [...filteredMovements].sort((first, second) => {
+      const result = compareSortValues(
+        first[movementSortField],
+        second[movementSortField],
+      );
+
+      return movementSortDirection === "asc" ? result : -result;
+    });
+  }, [
+    movements,
+    search,
+    branchFilter,
+    movementTypeFilter,
+    movementSortField,
+    movementSortDirection,
+  ]);
+
+  const visibleReservations = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return reservations
+      .filter((reservation) => {
+        if (branchFilter && reservation.branchId !== branchFilter) {
+          return false;
+        }
+
+        if (
+          linkedDealReservationId &&
+          reservation.sourceId !== linkedDealReservationId
+        ) {
+          return false;
+        }
+
+        if (
+          reservationStatusFilter &&
+          reservation.status !== reservationStatusFilter
+        ) {
+          return false;
+        }
+
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        return [
+          reservation.productName,
+          reservation.productCode,
+          reservation.locationLabel,
+          reservation.branchLabel,
+          reservation.sourceType,
+          reservation.sourceReference,
+          reservation.customerName,
+          reservation.notes,
+          reservation.createdByName,
+          reservation.status,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value).toLowerCase().includes(normalizedSearch),
+          );
+      })
+      .sort((first, second) => {
+        if (first.status === "Activa" && second.status !== "Activa") {
+          return -1;
+        }
+
+        if (first.status !== "Activa" && second.status === "Activa") {
+          return 1;
+        }
+
+        return (
+          new Date(second.createdAt).getTime() -
+          new Date(first.createdAt).getTime()
+        );
+      });
+  }, [
+    reservations,
+    search,
+    branchFilter,
+    linkedDealReservationId,
+    reservationStatusFilter,
+  ]);
+
+  function handleStockSort(field: StockSortField) {
+    if (stockSortField === field) {
+      setStockSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
     }
 
@@ -2313,185 +1460,106 @@ export default function InventariosPage() {
     setStockSortDirection("asc");
   }
 
-  function handleMovementSort(
-    field: MovementSortField,
-  ) {
-    if (
-      movementSortField === field
-    ) {
-      setMovementSortDirection(
-        (current) =>
-          current === "asc"
-            ? "desc"
-            : "asc",
+  function handleMovementSort(field: MovementSortField) {
+    if (movementSortField === field) {
+      setMovementSortDirection((current) =>
+        current === "asc" ? "desc" : "asc",
       );
       return;
     }
 
     setMovementSortField(field);
-    setMovementSortDirection(
-      field === "createdAt"
-        ? "desc"
-        : "asc",
-    );
+    setMovementSortDirection(field === "createdAt" ? "desc" : "asc");
   }
 
   function openNewLocationForm() {
     setLocationForm({
       ...emptyLocationForm,
-      branchId:
-        primaryBranchId ?? "",
+      branchId: primaryBranchId ?? "",
     });
 
     setLocationFormError(null);
     setIsLocationFormOpen(true);
   }
 
-  function openEditLocationForm(
-    inventoryLocation:
-      LocationOption,
-  ) {
+  function openEditLocationForm(inventoryLocation: LocationOption) {
     setLocationForm({
-      id:
-        inventoryLocation.value,
-      branchId:
-        inventoryLocation.branchId ??
-        "",
-      name:
-        inventoryLocation.name,
-      code:
-        inventoryLocation.code ??
-        "",
-      type:
-        inventoryLocation.type,
-      active:
-        inventoryLocation.active,
-      isDefault:
-        inventoryLocation.isDefault,
-      addressLine:
-        inventoryLocation.addressLine ??
-        "",
-      city:
-        inventoryLocation.city ??
-        "",
-      state:
-        inventoryLocation.state ??
-        "",
-      postalCode:
-        inventoryLocation.postalCode ??
-        "",
-      country:
-        inventoryLocation.country ||
-        "MX",
+      id: inventoryLocation.value,
+      branchId: inventoryLocation.branchId ?? "",
+      name: inventoryLocation.name,
+      code: inventoryLocation.code ?? "",
+      type: inventoryLocation.type,
+      active: inventoryLocation.active,
+      isDefault: inventoryLocation.isDefault,
+      addressLine: inventoryLocation.addressLine ?? "",
+      city: inventoryLocation.city ?? "",
+      state: inventoryLocation.state ?? "",
+      postalCode: inventoryLocation.postalCode ?? "",
+      country: inventoryLocation.country || "MX",
     });
 
     setLocationFormError(null);
     setIsLocationFormOpen(true);
   }
 
-  async function handleLocationSubmit(
-    event:
-      FormEvent<HTMLFormElement>,
-  ) {
+  async function handleLocationSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocationFormError(null);
 
-    if (
-      !locationForm.name.trim()
-    ) {
-      setLocationFormError(
-        "Captura el nombre de la ubicación.",
-      );
+    if (!locationForm.name.trim()) {
+      setLocationFormError("Captura el nombre de la ubicación.");
       return;
     }
 
     try {
-      setIsLocationSubmitting(
-        true,
-      );
+      setIsLocationSubmitting(true);
 
-      const isEditing =
-        Boolean(locationForm.id);
+      const isEditing = Boolean(locationForm.id);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/locations",
-          {
-            method: isEditing
-              ? "PATCH"
-              : "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              ...(isEditing
-                ? {
-                  id:
-                    locationForm.id,
-                }
-                : {}),
+      const response = await fetch("/api/crm/inventory/locations", {
+        method: isEditing ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...(isEditing
+            ? {
+                id: locationForm.id,
+              }
+            : {}),
 
-              branchId:
-                locationForm.branchId ||
-                undefined,
+          branchId: locationForm.branchId || undefined,
 
-              name:
-                locationForm.name.trim(),
+          name: locationForm.name.trim(),
 
-              code:
-                locationForm.code.trim() ||
-                undefined,
+          code: locationForm.code.trim() || undefined,
 
-              type:
-                locationForm.type,
+          type: locationForm.type,
 
-              active:
-                locationForm.active,
+          active: locationForm.active,
 
-              isDefault:
-                locationForm.isDefault,
+          isDefault: locationForm.isDefault,
 
-              addressLine:
-                locationForm.addressLine.trim() ||
-                undefined,
+          addressLine: locationForm.addressLine.trim() || undefined,
 
-              city:
-                locationForm.city.trim() ||
-                undefined,
+          city: locationForm.city.trim() || undefined,
 
-              state:
-                locationForm.state.trim() ||
-                undefined,
+          state: locationForm.state.trim() || undefined,
 
-              postalCode:
-                locationForm.postalCode.trim() ||
-                undefined,
+          postalCode: locationForm.postalCode.trim() || undefined,
 
-              country:
-                locationForm.country.trim() ||
-                "MX",
-            }),
-          },
-        );
+          country: locationForm.country.trim() || "MX",
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        LocationWriteResponse;
+      const result = (await response.json()) as LocationWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.error ??
-          "No fue posible guardar la ubicación.",
-        );
+      if (!response.ok || !result.success) {
+        throw new Error(result.error ?? "No fue posible guardar la ubicación.");
       }
 
       setSuccessMessage(
-        result.message ??
-        "La ubicación fue guardada correctamente.",
+        result.message ?? "La ubicación fue guardada correctamente.",
       );
 
       setIsLocationFormOpen(false);
@@ -2507,29 +1575,22 @@ export default function InventariosPage() {
           : "No fue posible guardar la ubicación.",
       );
     } finally {
-      setIsLocationSubmitting(
-        false,
-      );
+      setIsLocationSubmitting(false);
     }
   }
 
-  async function handleToggleLocationActive(
-    inventoryLocation:
-      LocationOption,
-  ) {
+  async function handleToggleLocationActive(inventoryLocation: LocationOption) {
     if (!permissions.canManage) {
       return;
     }
 
-    const nextActive =
-      !inventoryLocation.active;
+    const nextActive = !inventoryLocation.active;
 
-    const confirmed =
-      window.confirm(
-        nextActive
-          ? `¿Deseas reactivar "${inventoryLocation.name}"?`
-          : `¿Deseas desactivar "${inventoryLocation.name}"? Su historial y existencias se conservarán.`,
-      );
+    const confirmed = window.confirm(
+      nextActive
+        ? `¿Deseas reactivar "${inventoryLocation.name}"?`
+        : `¿Deseas desactivar "${inventoryLocation.name}"? Su historial y existencias se conservarán.`,
+    );
 
     if (!confirmed) {
       return;
@@ -2538,64 +1599,32 @@ export default function InventariosPage() {
     try {
       setPageError(null);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/locations",
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              id:
-                inventoryLocation.value,
-              branchId:
-                inventoryLocation.branchId ||
-                undefined,
-              name:
-                inventoryLocation.name,
-              code:
-                inventoryLocation.code ||
-                undefined,
-              type:
-                inventoryLocation.type,
-              active:
-                nextActive,
-              isDefault:
-                nextActive
-                  ? inventoryLocation.isDefault
-                  : false,
-              addressLine:
-                inventoryLocation.addressLine ||
-                undefined,
-              city:
-                inventoryLocation.city ||
-                undefined,
-              state:
-                inventoryLocation.state ||
-                undefined,
-              postalCode:
-                inventoryLocation.postalCode ||
-                undefined,
-              country:
-                inventoryLocation.country ||
-                "MX",
-            }),
-          },
-        );
+      const response = await fetch("/api/crm/inventory/locations", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: inventoryLocation.value,
+          branchId: inventoryLocation.branchId || undefined,
+          name: inventoryLocation.name,
+          code: inventoryLocation.code || undefined,
+          type: inventoryLocation.type,
+          active: nextActive,
+          isDefault: nextActive ? inventoryLocation.isDefault : false,
+          addressLine: inventoryLocation.addressLine || undefined,
+          city: inventoryLocation.city || undefined,
+          state: inventoryLocation.state || undefined,
+          postalCode: inventoryLocation.postalCode || undefined,
+          country: inventoryLocation.country || "MX",
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        LocationWriteResponse;
+      const result = (await response.json()) as LocationWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible actualizar la ubicación.",
+          result.error ?? "No fue posible actualizar la ubicación.",
         );
       }
 
@@ -2615,50 +1644,24 @@ export default function InventariosPage() {
     }
   }
 
-  function toggleProductLocations(
-    productId: string,
-  ) {
-    setExpandedProductIds(
-      (currentIds) =>
-        currentIds.includes(
-          productId,
-        )
-          ? currentIds.filter(
-            (id) =>
-              id !== productId,
-          )
-          : [
-            ...currentIds,
-            productId,
-          ],
+  function toggleProductLocations(productId: string) {
+    setExpandedProductIds((currentIds) =>
+      currentIds.includes(productId)
+        ? currentIds.filter((id) => id !== productId)
+        : [...currentIds, productId],
     );
   }
 
-  function toggleReservationGroup(
-    groupId: string,
-  ) {
-    setExpandedReservationGroupIds(
-      (currentIds) =>
-        currentIds.includes(
-          groupId,
-        )
-          ? currentIds.filter(
-            (id) =>
-              id !== groupId,
-          )
-          : [
-            ...currentIds,
-            groupId,
-          ],
+  function toggleReservationGroup(groupId: string) {
+    setExpandedReservationGroupIds((currentIds) =>
+      currentIds.includes(groupId)
+        ? currentIds.filter((id) => id !== groupId)
+        : [...currentIds, groupId],
     );
   }
 
-  function openReservationDrawer(
-    stock?: StockRecord,
-  ) {
-    if (
-      !permissions.canCreate
-    ) {
+  function openReservationDrawer(stock?: StockRecord) {
+    if (!permissions.canCreate) {
       return;
     }
 
@@ -2667,120 +1670,74 @@ export default function InventariosPage() {
       stocks.find(
         (item) =>
           item.initialized &&
-          item.availableQuantity >
-          0 &&
+          item.availableQuantity > 0 &&
           activeLocations.some(
-            (inventoryLocation) =>
-              inventoryLocation.value ===
-              item.locationId,
+            (inventoryLocation) => inventoryLocation.value === item.locationId,
           ),
       );
 
     setReservationDealId("");
 
-    setReservationDraftItems(
-      [],
-    );
+    setReservationDraftItems([]);
 
-    setReservationLocationId(
-      reservableStock
-        ?.locationId ?? "",
-    );
+    setReservationLocationId(reservableStock?.locationId ?? "");
 
-    setReservationProductId(
-      reservableStock
-        ?.productId ?? "",
-    );
+    setReservationProductId(reservableStock?.productId ?? "");
 
     setReservationQuantity("");
     setReservationReference("");
     setReservationCustomerName("");
     setReservationExpiresAt(
-      getReservationExpirationValue(
-        reservationSettings
-          .manualHours,
-      ),
+      getReservationExpirationValue(reservationSettings.manualHours),
     );
     setReservationNotes("");
     setReservationError(null);
 
-    setIsReservationDrawerOpen(
-      true,
-    );
+    setIsReservationDrawerOpen(true);
   }
 
   function closeReservationDrawer() {
-    if (
-      isReservationSubmitting
-    ) {
+    if (isReservationSubmitting) {
       return;
     }
 
-    setIsReservationDrawerOpen(
-      false,
-    );
+    setIsReservationDrawerOpen(false);
 
     setReservationError(null);
   }
 
-  function handleReservationDealChange(
-    dealId: string,
-  ) {
-    setReservationDealId(
-      dealId,
-    );
+  function handleReservationDealChange(dealId: string) {
+    setReservationDealId(dealId);
 
-    setReservationDraftItems(
-      [],
-    );
+    setReservationDraftItems([]);
 
     if (!dealId) {
-      setReservationCustomerName(
-        "",
-      );
+      setReservationCustomerName("");
 
-      setReservationReference(
-        "",
-      );
+      setReservationReference("");
 
-      setReservationNotes(
-        "",
-      );
+      setReservationNotes("");
 
       return;
     }
 
-    const deal =
-      deals.find(
-        (item) =>
-          item.id === dealId,
-      );
+    const deal = deals.find((item) => item.id === dealId);
 
     if (!deal) {
       return;
     }
 
-    const normalizedStage =
-      deal.stage
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(
-          /[\u0300-\u036f]/g,
-          "",
-        );
+    const normalizedStage = deal.stage
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
     if (
-      normalizedStage.includes(
-        "prospecto",
-      ) ||
-      normalizedStage.includes(
-        "contactado",
-      )
+      normalizedStage.includes("prospecto") ||
+      normalizedStage.includes("contactado")
     ) {
-      setReservationDealId(
-        "",
-      );
+      setReservationDealId("");
 
       setReservationError(
         "Las oportunidades en etapa Prospecto o Contactado todavía no pueden reservar inventario.",
@@ -2789,220 +1746,131 @@ export default function InventariosPage() {
       return;
     }
 
-    const expirationHours =
-      normalizedStage.includes(
-        "anticipo",
-      )
-        ? reservationSettings
-          .depositHours
-        : normalizedStage.includes(
-          "negoci",
-        )
-          ? reservationSettings
-            .negotiationHours
-          : normalizedStage.includes(
-            "propuesta",
-          ) ||
-            normalizedStage.includes(
-              "cotiza",
-            )
-            ? reservationSettings
-              .proposalHours
-            : reservationSettings
-              .qualifiedHours;
+    const expirationHours = normalizedStage.includes("anticipo")
+      ? reservationSettings.depositHours
+      : normalizedStage.includes("negoci")
+        ? reservationSettings.negotiationHours
+        : normalizedStage.includes("propuesta") ||
+            normalizedStage.includes("cotiza")
+          ? reservationSettings.proposalHours
+          : reservationSettings.qualifiedHours;
 
-    setReservationExpiresAt(
-      getReservationExpirationValue(
-        expirationHours,
-      ),
-    );
+    setReservationExpiresAt(getReservationExpirationValue(expirationHours));
 
     setReservationError(null);
 
-    setReservationCustomerName(
-      deal.customerName ?? "",
-    );
+    setReservationCustomerName(deal.customerName ?? "");
 
-    setReservationReference(
-      deal.name,
-    );
+    setReservationReference(deal.name);
 
-    const groupedItems =
-      new Map<
-        string,
-        {
-          dealItemId: string;
-          productId: string;
-          productName: string;
-          requestedQuantity:
-          number;
-        }
-      >();
+    const groupedItems = new Map<
+      string,
+      {
+        dealItemId: string;
+        productId: string;
+        productName: string;
+        requestedQuantity: number;
+      }
+    >();
 
-    for (
-      const dealItem of
-      deal.items
-    ) {
+    for (const dealItem of deal.items) {
       if (!dealItem.productId) {
         continue;
       }
 
-      const requestedQuantity =
-        Number(
-          dealItem.quantity,
-        );
+      const requestedQuantity = Number(dealItem.quantity);
 
-      if (
-        !Number.isInteger(
-          requestedQuantity,
-        ) ||
-        requestedQuantity <= 0
-      ) {
+      if (!Number.isInteger(requestedQuantity) || requestedQuantity <= 0) {
         continue;
       }
 
-      const current =
-        groupedItems.get(
-          dealItem.productId,
-        );
+      const current = groupedItems.get(dealItem.productId);
 
       if (current) {
-        current.requestedQuantity +=
-          requestedQuantity;
+        current.requestedQuantity += requestedQuantity;
 
         continue;
       }
 
-      groupedItems.set(
-        dealItem.productId,
-        {
-          dealItemId:
-            dealItem.id,
+      groupedItems.set(dealItem.productId, {
+        dealItemId: dealItem.id,
 
-          productId:
-            dealItem.productId,
+        productId: dealItem.productId,
 
-          productName:
-            dealItem.name,
+        productName: dealItem.name,
 
-          requestedQuantity,
-        },
-      );
+        requestedQuantity,
+      });
     }
 
-    const nextDraftItems =
-      Array.from(
-        groupedItems.values(),
-      ).map((dealItem) => {
-        const matchingStock =
-          stocks.find(
-            (stock) =>
-              stock.initialized &&
-              stock.productId ===
-              dealItem.productId &&
-              stock.availableQuantity >=
-              dealItem.requestedQuantity &&
-              stock.branchId ===
-              deal.branchId &&
-              activeLocations.some(
-                (
-                  inventoryLocation,
-                ) =>
-                  inventoryLocation.value ===
-                  stock.locationId,
-              ),
-          ) ??
-          stocks.find(
-            (stock) =>
-              stock.initialized &&
-              stock.productId ===
-              dealItem.productId &&
-              stock.availableQuantity >=
-              dealItem.requestedQuantity &&
-              activeLocations.some(
-                (
-                  inventoryLocation,
-                ) =>
-                  inventoryLocation.value ===
-                  stock.locationId,
-              ),
-          ) ??
-          stocks.find(
-            (stock) =>
-              stock.initialized &&
-              stock.productId ===
-              dealItem.productId &&
-              stock.availableQuantity >
-              0 &&
-              activeLocations.some(
-                (
-                  inventoryLocation,
-                ) =>
-                  inventoryLocation.value ===
-                  stock.locationId,
-              ),
-          );
-
-        return {
-          key:
-            crypto.randomUUID(),
-
-          dealItemId:
-            dealItem.dealItemId,
-
-          productId:
-            dealItem.productId,
-
-          productName:
-            dealItem.productName,
-
-          requestedQuantity:
-            dealItem
-              .requestedQuantity,
-
-          quantity:
-            String(
-              dealItem
-                .requestedQuantity,
+    const nextDraftItems = Array.from(groupedItems.values()).map((dealItem) => {
+      const matchingStock =
+        stocks.find(
+          (stock) =>
+            stock.initialized &&
+            stock.productId === dealItem.productId &&
+            stock.availableQuantity >= dealItem.requestedQuantity &&
+            stock.branchId === deal.branchId &&
+            activeLocations.some(
+              (inventoryLocation) =>
+                inventoryLocation.value === stock.locationId,
             ),
+        ) ??
+        stocks.find(
+          (stock) =>
+            stock.initialized &&
+            stock.productId === dealItem.productId &&
+            stock.availableQuantity >= dealItem.requestedQuantity &&
+            activeLocations.some(
+              (inventoryLocation) =>
+                inventoryLocation.value === stock.locationId,
+            ),
+        ) ??
+        stocks.find(
+          (stock) =>
+            stock.initialized &&
+            stock.productId === dealItem.productId &&
+            stock.availableQuantity > 0 &&
+            activeLocations.some(
+              (inventoryLocation) =>
+                inventoryLocation.value === stock.locationId,
+            ),
+        );
 
-          locationId:
-            matchingStock
-              ?.locationId ?? "",
+      return {
+        key: crypto.randomUUID(),
 
-          selected: true,
-        };
-      });
+        dealItemId: dealItem.dealItemId,
 
-    setReservationDraftItems(
-      nextDraftItems,
-    );
+        productId: dealItem.productId,
 
-    const firstDraftItem =
-      nextDraftItems[0];
+        productName: dealItem.productName,
 
-    setReservationLocationId(
-      firstDraftItem
-        ?.locationId ?? "",
-    );
+        requestedQuantity: dealItem.requestedQuantity,
 
-    setReservationProductId(
-      firstDraftItem
-        ?.productId ?? "",
-    );
+        quantity: String(dealItem.requestedQuantity),
 
-    setReservationQuantity(
-      firstDraftItem
-        ?.quantity ?? "",
-    );
+        locationId: matchingStock?.locationId ?? "",
+
+        selected: true,
+      };
+    });
+
+    setReservationDraftItems(nextDraftItems);
+
+    const firstDraftItem = nextDraftItems[0];
+
+    setReservationLocationId(firstDraftItem?.locationId ?? "");
+
+    setReservationProductId(firstDraftItem?.productId ?? "");
+
+    setReservationQuantity(firstDraftItem?.quantity ?? "");
 
     setReservationNotes(
       [
         `Oportunidad: ${deal.name}`,
 
-        deal.itemsSummary
-          ? `Productos: ${deal.itemsSummary}`
-          : null,
+        deal.itemsSummary ? `Productos: ${deal.itemsSummary}` : null,
 
         `Etapa: ${deal.stage}`,
       ]
@@ -3011,98 +1879,64 @@ export default function InventariosPage() {
     );
   }
 
-  async function handleReservationSubmit(
-    event:
-      FormEvent<HTMLFormElement>,
-  ) {
+  async function handleReservationSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setReservationError(null);
 
-    if (
-      !reservationExpiresAt
-    ) {
+    if (!reservationExpiresAt) {
       setReservationError(
         "Selecciona la fecha y hora de vencimiento de la reserva.",
       );
       return;
     }
 
-    const isOpportunityReservation =
-      Boolean(
-        reservationDealId,
-      );
+    const isOpportunityReservation = Boolean(reservationDealId);
 
-    const selectedDraftItems =
-      reservationDraftItems.filter(
-        (item) =>
-          item.selected,
-      );
+    const selectedDraftItems = reservationDraftItems.filter(
+      (item) => item.selected,
+    );
 
-    let requestUrl =
-      "/api/crm/inventory/reservations";
+    let requestUrl = "/api/crm/inventory/reservations";
 
-    let requestBody:
-      Record<string, unknown>;
+    let requestBody: Record<string, unknown>;
 
-    if (
-      isOpportunityReservation
-    ) {
-      if (
-        selectedDraftItems.length ===
-        0
-      ) {
+    if (isOpportunityReservation) {
+      if (selectedDraftItems.length === 0) {
         setReservationError(
           `La oportunidad no contiene ${productPluralLabel.toLowerCase()} disponibles para reservar.`,
         );
         return;
       }
 
-      const validatedItems:
-        Array<{
-          locationId: string;
-          productId: string;
-          quantity: number;
-        }> = [];
+      const validatedItems: Array<{
+        locationId: string;
+        productId: string;
+        quantity: number;
+      }> = [];
 
-      for (
-        const draftItem of
-        selectedDraftItems
-      ) {
-        if (
-          !draftItem.locationId
-        ) {
+      for (const draftItem of selectedDraftItems) {
+        if (!draftItem.locationId) {
           setReservationError(
             `Selecciona una ubicación para "${draftItem.productName}".`,
           );
           return;
         }
 
-        const quantity =
-          Number(
-            draftItem.quantity,
-          );
+        const quantity = Number(draftItem.quantity);
 
-        if (
-          !Number.isInteger(
-            quantity,
-          ) ||
-          quantity <= 0
-        ) {
+        if (!Number.isInteger(quantity) || quantity <= 0) {
           setReservationError(
             `La cantidad de "${draftItem.productName}" debe ser un entero mayor que cero.`,
           );
           return;
         }
 
-        const selectedStock =
-          stocks.find(
-            (stock) =>
-              stock.initialized &&
-              stock.locationId ===
-              draftItem.locationId &&
-              stock.productId ===
-              draftItem.productId,
-          );
+        const selectedStock = stocks.find(
+          (stock) =>
+            stock.initialized &&
+            stock.locationId === draftItem.locationId &&
+            stock.productId === draftItem.productId,
+        );
 
         if (!selectedStock) {
           setReservationError(
@@ -3111,11 +1945,7 @@ export default function InventariosPage() {
           return;
         }
 
-        if (
-          quantity >
-          selectedStock
-            .availableQuantity
-        ) {
+        if (quantity > selectedStock.availableQuantity) {
           setReservationError(
             `Solo hay ${selectedStock.availableQuantity} unidad(es) disponibles de "${draftItem.productName}" en la ubicación seleccionada.`,
           );
@@ -3123,81 +1953,52 @@ export default function InventariosPage() {
         }
 
         validatedItems.push({
-          locationId:
-            draftItem.locationId,
+          locationId: draftItem.locationId,
 
-          productId:
-            draftItem.productId,
+          productId: draftItem.productId,
 
           quantity,
         });
       }
 
-      requestUrl =
-        "/api/crm/inventory/reservations/bulk";
+      requestUrl = "/api/crm/inventory/reservations/bulk";
 
       requestBody = {
-        sourceId:
-          reservationDealId,
+        sourceId: reservationDealId,
 
-        sourceReference:
-          reservationReference
-            .trim() ||
-          undefined,
+        sourceReference: reservationReference.trim() || undefined,
 
-        customerName:
-          reservationCustomerName
-            .trim() ||
-          undefined,
+        customerName: reservationCustomerName.trim() || undefined,
 
-        expiresAt:
-          reservationExpiresAt,
+        expiresAt: reservationExpiresAt,
 
-        notes:
-          reservationNotes
-            .trim() ||
-          undefined,
+        notes: reservationNotes.trim() || undefined,
 
-        items:
-          validatedItems,
+        items: validatedItems,
       };
     } else {
-      if (
-        !reservationLocationId ||
-        !reservationProductId
-      ) {
+      if (!reservationLocationId || !reservationProductId) {
         setReservationError(
           `Selecciona la ubicación y el ${productSingularLabel.toLowerCase()}.`,
         );
         return;
       }
 
-      const quantity =
-        Number(
-          reservationQuantity,
-        );
+      const quantity = Number(reservationQuantity);
 
-      if (
-        !Number.isInteger(
-          quantity,
-        ) ||
-        quantity <= 0
-      ) {
+      if (!Number.isInteger(quantity) || quantity <= 0) {
         setReservationError(
           "La cantidad reservada debe ser un entero mayor que cero.",
         );
         return;
       }
 
-      const selectedStock =
-        stocks.find(
-          (stock) =>
-            stock.initialized &&
-            stock.locationId ===
-            reservationLocationId &&
-            stock.productId ===
-            reservationProductId,
-        );
+      const selectedStock = stocks.find(
+        (stock) =>
+          stock.initialized &&
+          stock.locationId === reservationLocationId &&
+          stock.productId === reservationProductId,
+      );
 
       if (!selectedStock) {
         setReservationError(
@@ -3206,11 +2007,7 @@ export default function InventariosPage() {
         return;
       }
 
-      if (
-        quantity >
-        selectedStock
-          .availableQuantity
-      ) {
+      if (quantity > selectedStock.availableQuantity) {
         setReservationError(
           `Solo hay ${selectedStock.availableQuantity} unidades disponibles para reservar.`,
         );
@@ -3218,90 +2015,52 @@ export default function InventariosPage() {
       }
 
       requestBody = {
-        locationId:
-          reservationLocationId,
+        locationId: reservationLocationId,
 
-        productId:
-          reservationProductId,
+        productId: reservationProductId,
 
         quantity,
 
-        sourceType:
-          "Manual",
+        sourceType: "Manual",
 
-        sourceReference:
-          reservationReference
-            .trim() ||
-          undefined,
+        sourceReference: reservationReference.trim() || undefined,
 
-        customerName:
-          reservationCustomerName
-            .trim() ||
-          undefined,
+        customerName: reservationCustomerName.trim() || undefined,
 
-        expiresAt:
-          reservationExpiresAt,
+        expiresAt: reservationExpiresAt,
 
-        notes:
-          reservationNotes
-            .trim() ||
-          undefined,
+        notes: reservationNotes.trim() || undefined,
       };
     }
 
     try {
-      setIsReservationSubmitting(
-        true,
-      );
+      setIsReservationSubmitting(true);
 
-      const response =
-        await fetch(
-          requestUrl,
-          {
-            method: "POST",
+      const response = await fetch(requestUrl, {
+        method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-            body:
-              JSON.stringify(
-                requestBody,
-              ),
-          },
-        );
+        body: JSON.stringify(requestBody),
+      });
 
-      const result =
-        (await response.json()) as
-        ReservationWriteResponse;
+      const result = (await response.json()) as ReservationWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.error ??
-          "No fue posible registrar la reserva.",
-        );
+      if (!response.ok || !result.success) {
+        throw new Error(result.error ?? "No fue posible registrar la reserva.");
       }
 
       setSuccessMessage(
-        result.message ??
-        "La reserva fue registrada correctamente.",
+        result.message ?? "La reserva fue registrada correctamente.",
       );
 
-      setIsReservationDrawerOpen(
-        false,
-      );
+      setIsReservationDrawerOpen(false);
 
-      setReservationDraftItems(
-        [],
-      );
+      setReservationDraftItems([]);
 
-      setActiveView(
-        "reservations",
-      );
+      setActiveView("reservations");
 
       await loadInventory();
     } catch (error) {
@@ -3311,68 +2070,46 @@ export default function InventariosPage() {
           : "No fue posible registrar la reserva.",
       );
     } finally {
-      setIsReservationSubmitting(
-        false,
-      );
+      setIsReservationSubmitting(false);
     }
   }
 
   async function handleReactivateReservations() {
-    if (
-      !linkedDealReservationId ||
-      isReactivatingReservations
-    ) {
+    if (!linkedDealReservationId || isReactivatingReservations) {
       return;
     }
 
     try {
-      setIsReactivatingReservations(
-        true,
-      );
+      setIsReactivatingReservations(true);
 
       setPageError(null);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/reservations/bulk",
-          {
-            method: "PATCH",
+      const response = await fetch("/api/crm/inventory/reservations/bulk", {
+        method: "PATCH",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-            body: JSON.stringify({
-              sourceId:
-                linkedDealReservationId,
+        body: JSON.stringify({
+          sourceId: linkedDealReservationId,
 
-              expiresAt:
-                getReservationExpirationValue(
-                  reservationSettings
-                    .depositHours,
-                ),
-            }),
-          },
-        );
+          expiresAt: getReservationExpirationValue(
+            reservationSettings.depositHours,
+          ),
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        ReservationWriteResponse;
+      const result = (await response.json()) as ReservationWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible reactivar las reservas.",
+          result.error ?? "No fue posible reactivar las reservas.",
         );
       }
 
       setSuccessMessage(
-        result.message ??
-        "Las reservas fueron reactivadas correctamente.",
+        result.message ?? "Las reservas fueron reactivadas correctamente.",
       );
 
       await loadInventory();
@@ -3383,22 +2120,15 @@ export default function InventariosPage() {
           : "No fue posible reactivar las reservas.",
       );
     } finally {
-      setIsReactivatingReservations(
-        false,
-      );
+      setIsReactivatingReservations(false);
     }
   }
 
   async function handleReservationGroupAction(
     sourceId: string,
-    action:
-      | "Entregar"
-      | "Liberar"
-      | "Cancelar",
+    action: "Entregar" | "Liberar" | "Cancelar",
   ) {
-    if (
-      reservationGroupBeingUpdated
-    ) {
+    if (reservationGroupBeingUpdated) {
       return;
     }
 
@@ -3409,78 +2139,57 @@ export default function InventariosPage() {
           ? "¿Confirmas la cancelación de todas las reservas de esta oportunidad?"
           : "¿Confirmas la liberación de todas las reservas de esta oportunidad?";
 
-    if (
-      !window.confirm(
-        confirmationMessage,
-      )
-    ) {
+    if (!window.confirm(confirmationMessage)) {
       return;
     }
 
-    const reason =
-      window.prompt(
-        action === "Entregar"
-          ? "Motivo o referencia de la entrega:"
-          : action === "Cancelar"
-            ? "Motivo de la cancelación:"
-            : "Motivo de la liberación:",
-        action === "Entregar"
-          ? "Entrega completa al cliente"
-          : action === "Cancelar"
-            ? "Reservas canceladas"
-            : "Reservas liberadas",
-      );
+    const reason = window.prompt(
+      action === "Entregar"
+        ? "Motivo o referencia de la entrega:"
+        : action === "Cancelar"
+          ? "Motivo de la cancelación:"
+          : "Motivo de la liberación:",
+      action === "Entregar"
+        ? "Entrega completa al cliente"
+        : action === "Cancelar"
+          ? "Reservas canceladas"
+          : "Reservas liberadas",
+    );
 
     if (reason === null) {
       return;
     }
 
     try {
-      setReservationGroupBeingUpdated(
-        sourceId,
-      );
+      setReservationGroupBeingUpdated(sourceId);
 
       setPageError(null);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/reservations/bulk",
-          {
-            method: "PATCH",
+      const response = await fetch("/api/crm/inventory/reservations/bulk", {
+        method: "PATCH",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-            body: JSON.stringify({
-              sourceId,
-              action,
+        body: JSON.stringify({
+          sourceId,
+          action,
 
-              reason:
-                reason.trim() ||
-                undefined,
-            }),
-          },
-        );
+          reason: reason.trim() || undefined,
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        ReservationWriteResponse;
+      const result = (await response.json()) as ReservationWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible actualizar el grupo de reservas.",
+          result.error ?? "No fue posible actualizar el grupo de reservas.",
         );
       }
 
       setSuccessMessage(
-        result.message ??
-        "El grupo de reservas fue actualizado correctamente.",
+        result.message ?? "El grupo de reservas fue actualizado correctamente.",
       );
 
       await loadInventory();
@@ -3491,26 +2200,16 @@ export default function InventariosPage() {
           : "No fue posible actualizar el grupo de reservas.",
       );
     } finally {
-      setReservationGroupBeingUpdated(
-        null,
-      );
+      setReservationGroupBeingUpdated(null);
     }
   }
 
   async function handleReservationAction(
-    reservation:
-      ReservationRecord,
+    reservation: ReservationRecord,
 
-    action:
-      | "Liberar"
-      | "Cancelar"
-      | "Consumir",
+    action: "Liberar" | "Cancelar" | "Consumir",
   ) {
-    if (
-      !permissions.canEdit ||
-      reservation.status !==
-      "Activa"
-    ) {
+    if (!permissions.canEdit || reservation.status !== "Activa") {
       return;
     }
 
@@ -3521,82 +2220,58 @@ export default function InventariosPage() {
           ? "¿Confirmas la cancelación de esta reserva? Las unidades volverán a estar disponibles."
           : "¿Confirmas la liberación de esta reserva? Las unidades volverán a estar disponibles.";
 
-    if (
-      !window.confirm(
-        confirmationMessage,
-      )
-    ) {
+    if (!window.confirm(confirmationMessage)) {
       return;
     }
 
-    const releaseReason =
-      window.prompt(
-        action === "Consumir"
-          ? "Motivo o referencia de la entrega:"
-          : action === "Cancelar"
-            ? "Motivo de la cancelación:"
-            : "Motivo de la liberación:",
-        action === "Consumir"
-          ? "Entrega al cliente"
-          : action === "Cancelar"
-            ? "Reserva cancelada"
-            : "Reserva liberada",
-      );
+    const releaseReason = window.prompt(
+      action === "Consumir"
+        ? "Motivo o referencia de la entrega:"
+        : action === "Cancelar"
+          ? "Motivo de la cancelación:"
+          : "Motivo de la liberación:",
+      action === "Consumir"
+        ? "Entrega al cliente"
+        : action === "Cancelar"
+          ? "Reserva cancelada"
+          : "Reserva liberada",
+    );
 
-    if (
-      releaseReason === null
-    ) {
+    if (releaseReason === null) {
       return;
     }
 
     try {
-      setReservationBeingUpdated(
-        reservation.id,
-      );
+      setReservationBeingUpdated(reservation.id);
 
       setPageError(null);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/reservations",
-          {
-            method: "PATCH",
+      const response = await fetch("/api/crm/inventory/reservations", {
+        method: "PATCH",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-            body: JSON.stringify({
-              id:
-                reservation.id,
+        body: JSON.stringify({
+          id: reservation.id,
 
-              action,
+          action,
 
-              releaseReason:
-                releaseReason.trim() ||
-                undefined,
-            }),
-          },
-        );
+          releaseReason: releaseReason.trim() || undefined,
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        ReservationWriteResponse;
+      const result = (await response.json()) as ReservationWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible actualizar la reserva.",
+          result.error ?? "No fue posible actualizar la reserva.",
         );
       }
 
       setSuccessMessage(
-        result.message ??
-        "La reserva fue actualizada correctamente.",
+        result.message ?? "La reserva fue actualizada correctamente.",
       );
 
       await loadInventory();
@@ -3607,211 +2282,115 @@ export default function InventariosPage() {
           : "No fue posible actualizar la reserva.",
       );
     } finally {
-      setReservationBeingUpdated(
-        null,
-      );
+      setReservationBeingUpdated(null);
     }
   }
 
-  function openExtensionDrawer(
-    reservation:
-      ReservationRecord,
-  ) {
-    if (
-      !permissions.canEdit ||
-      reservation.status !==
-      "Activa"
-    ) {
+  function openExtensionDrawer(reservation: ReservationRecord) {
+    if (!permissions.canEdit || reservation.status !== "Activa") {
       return;
     }
 
-    if (
-      !reservationSettings
-        .allowExtensions
-    ) {
-      setPageError(
-        "La política de reservas no permite extensiones.",
-      );
+    if (!reservationSettings.allowExtensions) {
+      setPageError("La política de reservas no permite extensiones.");
       return;
     }
 
-    const currentExpiration =
-      reservation.expiresAt
-        ? new Date(
-          reservation.expiresAt,
-        )
-        : new Date();
+    const currentExpiration = reservation.expiresAt
+      ? new Date(reservation.expiresAt)
+      : new Date();
 
-    const suggestedExpiration =
-      new Date(
-        Math.max(
-          currentExpiration.getTime(),
-          Date.now(),
-        ) +
-        24 *
-        60 *
-        60 *
-        1000,
-      );
-
-    const timezoneOffset =
-      suggestedExpiration
-        .getTimezoneOffset() *
-      60 *
-      1000;
-
-    const suggestedValue =
-      new Date(
-        suggestedExpiration
-          .getTime() -
-        timezoneOffset,
-      )
-        .toISOString()
-        .slice(0, 16);
-
-    setExtensionReservation(
-      reservation,
+    const suggestedExpiration = new Date(
+      Math.max(currentExpiration.getTime(), Date.now()) + 24 * 60 * 60 * 1000,
     );
 
-    setExtensionExpiresAt(
-      suggestedValue,
-    );
+    const timezoneOffset = suggestedExpiration.getTimezoneOffset() * 60 * 1000;
 
-    setExtensionReason(
-      "Seguimiento comercial activo",
-    );
+    const suggestedValue = new Date(
+      suggestedExpiration.getTime() - timezoneOffset,
+    )
+      .toISOString()
+      .slice(0, 16);
 
-    setExtensionReservationGroupId(
-      null,
-    );
+    setExtensionReservation(reservation);
+
+    setExtensionExpiresAt(suggestedValue);
+
+    setExtensionReason("Seguimiento comercial activo");
+
+    setExtensionReservationGroupId(null);
 
     setExtensionError(null);
   }
 
-  function openGroupExtensionDrawer(
-    sourceId: string,
-  ) {
-    if (
-      !permissions.canEdit ||
-      !reservationSettings
-        .allowExtensions
-    ) {
+  function openGroupExtensionDrawer(sourceId: string) {
+    if (!permissions.canEdit || !reservationSettings.allowExtensions) {
       return;
     }
 
-    const groupReservations =
-      reservations.filter(
-        (reservation) =>
-          reservation.sourceType ===
-            "Oportunidad" &&
-          reservation.sourceId ===
-            sourceId &&
-          reservation.status ===
-            "Activa",
-      );
+    const groupReservations = reservations.filter(
+      (reservation) =>
+        reservation.sourceType === "Oportunidad" &&
+        reservation.sourceId === sourceId &&
+        reservation.status === "Activa",
+    );
 
-    const firstReservation =
-      groupReservations[0];
+    const firstReservation = groupReservations[0];
 
     if (!firstReservation) {
-      setPageError(
-        "No hay reservas activas para extender en este grupo.",
-      );
+      setPageError("No hay reservas activas para extender en este grupo.");
       return;
     }
 
-    const latestExpiration =
-      groupReservations.reduce(
-        (latest, reservation) => {
-          const expiration =
-            reservation.expiresAt
-              ? new Date(
-                  reservation.expiresAt,
-                ).getTime()
-              : Date.now();
+    const latestExpiration = groupReservations.reduce((latest, reservation) => {
+      const expiration = reservation.expiresAt
+        ? new Date(reservation.expiresAt).getTime()
+        : Date.now();
 
-          return Math.max(
-            latest,
-            expiration,
-          );
-        },
-        Date.now(),
-      );
+      return Math.max(latest, expiration);
+    }, Date.now());
 
-    const suggestedExpiration =
-      new Date(
-        latestExpiration +
-          24 *
-            60 *
-            60 *
-            1000,
-      );
-
-    const timezoneOffset =
-      suggestedExpiration
-        .getTimezoneOffset() *
-      60 *
-      1000;
-
-    const suggestedValue =
-      new Date(
-        suggestedExpiration
-          .getTime() -
-          timezoneOffset,
-      )
-        .toISOString()
-        .slice(0, 16);
-
-    setExtensionReservation(
-      firstReservation,
+    const suggestedExpiration = new Date(
+      latestExpiration + 24 * 60 * 60 * 1000,
     );
 
-    setExtensionReservationGroupId(
-      sourceId,
-    );
+    const timezoneOffset = suggestedExpiration.getTimezoneOffset() * 60 * 1000;
 
-    setExtensionExpiresAt(
-      suggestedValue,
-    );
+    const suggestedValue = new Date(
+      suggestedExpiration.getTime() - timezoneOffset,
+    )
+      .toISOString()
+      .slice(0, 16);
 
-    setExtensionReason(
-      "Seguimiento comercial activo",
-    );
+    setExtensionReservation(firstReservation);
+
+    setExtensionReservationGroupId(sourceId);
+
+    setExtensionExpiresAt(suggestedValue);
+
+    setExtensionReason("Seguimiento comercial activo");
 
     setExtensionError(null);
   }
 
   function closeExtensionDrawer() {
     if (
-      (
-        extensionReservation &&
-        reservationBeingUpdated ===
-          extensionReservation.id
-      ) ||
-      (
-        extensionReservationGroupId &&
-        reservationGroupBeingUpdated ===
-          extensionReservationGroupId
-      )
+      (extensionReservation &&
+        reservationBeingUpdated === extensionReservation.id) ||
+      (extensionReservationGroupId &&
+        reservationGroupBeingUpdated === extensionReservationGroupId)
     ) {
       return;
     }
 
-    setExtensionReservation(
-      null,
-    );
+    setExtensionReservation(null);
 
-    setExtensionReservationGroupId(
-      null,
-    );
+    setExtensionReservationGroupId(null);
 
     setExtensionError(null);
   }
 
-  async function handleExtensionSubmit(
-    event:
-      FormEvent<HTMLFormElement>,
-  ) {
+  async function handleExtensionSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setExtensionError(null);
 
@@ -3820,116 +2399,72 @@ export default function InventariosPage() {
     }
 
     if (!extensionExpiresAt) {
-      setExtensionError(
-        "Selecciona la nueva fecha y hora de vencimiento.",
-      );
+      setExtensionError("Selecciona la nueva fecha y hora de vencimiento.");
       return;
     }
 
-    const requestedDate =
-      new Date(
-        extensionExpiresAt,
-      );
+    const requestedDate = new Date(extensionExpiresAt);
 
-    if (
-      Number.isNaN(
-        requestedDate.getTime(),
-      )
-    ) {
-      setExtensionError(
-        "La nueva fecha de vencimiento no es válida.",
-      );
+    if (Number.isNaN(requestedDate.getTime())) {
+      setExtensionError("La nueva fecha de vencimiento no es válida.");
       return;
     }
 
     try {
-      if (
-        extensionReservationGroupId
-      ) {
-        setReservationGroupBeingUpdated(
-          extensionReservationGroupId,
-        );
+      if (extensionReservationGroupId) {
+        setReservationGroupBeingUpdated(extensionReservationGroupId);
       } else {
-        setReservationBeingUpdated(
-          extensionReservation.id,
-        );
+        setReservationBeingUpdated(extensionReservation.id);
       }
 
-      const response =
-        await fetch(
-          extensionReservationGroupId
-            ? "/api/crm/inventory/reservations/bulk"
-            : "/api/crm/inventory/reservations",
-          {
-            method: "PATCH",
+      const response = await fetch(
+        extensionReservationGroupId
+          ? "/api/crm/inventory/reservations/bulk"
+          : "/api/crm/inventory/reservations",
+        {
+          method: "PATCH",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify(
-              extensionReservationGroupId
-                ? {
-                    sourceId:
-                      extensionReservationGroupId,
-
-                    action:
-                      "Extender",
-
-                    expiresAt:
-                      requestedDate
-                        .toISOString(),
-
-                    reason:
-                      extensionReason.trim() ||
-                      undefined,
-                  }
-                : {
-                    id:
-                      extensionReservation.id,
-
-                    action:
-                      "Extender",
-
-                    expiresAt:
-                      requestedDate
-                        .toISOString(),
-
-                    releaseReason:
-                      extensionReason.trim() ||
-                      undefined,
-                  },
-            ),
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
 
-      const result =
-        (await response.json()) as
-        ReservationWriteResponse;
+          body: JSON.stringify(
+            extensionReservationGroupId
+              ? {
+                  sourceId: extensionReservationGroupId,
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.error ??
-          "No fue posible extender la reserva.",
-        );
+                  action: "Extender",
+
+                  expiresAt: requestedDate.toISOString(),
+
+                  reason: extensionReason.trim() || undefined,
+                }
+              : {
+                  id: extensionReservation.id,
+
+                  action: "Extender",
+
+                  expiresAt: requestedDate.toISOString(),
+
+                  releaseReason: extensionReason.trim() || undefined,
+                },
+          ),
+        },
+      );
+
+      const result = (await response.json()) as ReservationWriteResponse;
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error ?? "No fue posible extender la reserva.");
       }
 
       setSuccessMessage(
-        result.message ??
-        "La reserva fue extendida correctamente.",
+        result.message ?? "La reserva fue extendida correctamente.",
       );
 
-      setExtensionReservation(
-        null,
-      );
+      setExtensionReservation(null);
 
-      setExtensionReservationGroupId(
-        null,
-      );
+      setExtensionReservationGroupId(null);
 
       await loadInventory();
     } catch (error) {
@@ -3939,174 +2474,101 @@ export default function InventariosPage() {
           : "No fue posible extender la reserva.",
       );
     } finally {
-      setReservationBeingUpdated(
-        null,
-      );
+      setReservationBeingUpdated(null);
 
-      setReservationGroupBeingUpdated(
-        null,
-      );
+      setReservationGroupBeingUpdated(null);
     }
   }
 
-  function openTransferDrawer(
-    stock?: StockRecord,
-  ) {
+  function openTransferDrawer(stock?: StockRecord) {
     if (!permissions.canEdit) {
       return;
     }
 
     const sourceStock =
       stock ??
-      stocks.find(
-        (item) =>
-          item.initialized &&
-          item.availableQuantity >
-          0,
-      );
+      stocks.find((item) => item.initialized && item.availableQuantity > 0);
 
-    const sourceLocationId =
-      sourceStock?.locationId ??
-      "";
+    const sourceLocationId = sourceStock?.locationId ?? "";
 
-    const destinationLocation =
-      activeLocations.find(
-        (inventoryLocation) =>
-          inventoryLocation.value !==
-          sourceLocationId,
-      );
-
-    setTransferSourceLocationId(
-      sourceLocationId,
+    const destinationLocation = activeLocations.find(
+      (inventoryLocation) => inventoryLocation.value !== sourceLocationId,
     );
 
-    setTransferDestinationLocationId(
-      destinationLocation?.value ??
-      "",
-    );
+    setTransferSourceLocationId(sourceLocationId);
 
-    setTransferProductId(
-      sourceStock?.productId ??
-      "",
-    );
+    setTransferDestinationLocationId(destinationLocation?.value ?? "");
+
+    setTransferProductId(sourceStock?.productId ?? "");
 
     setTransferQuantity("");
 
-    setTransferReason(
-      "Transferencia entre ubicaciones",
-    );
+    setTransferReason("Transferencia entre ubicaciones");
 
     setTransferReference("");
     setTransferError(null);
 
-    setIsTransferDrawerOpen(
-      true,
-    );
+    setIsTransferDrawerOpen(true);
   }
 
-  function handleTransferSourceLocationChange(
-    locationId: string,
-  ) {
-    const firstAvailableStock =
-      stocks.find(
-        (stock) =>
-          stock.initialized &&
-          stock.locationId ===
-          locationId &&
-          stock.availableQuantity >
-          0,
-      );
-
-    const nextDestination =
-      activeLocations.find(
-        (inventoryLocation) =>
-          inventoryLocation.value !==
-          locationId,
-      );
-
-    setTransferSourceLocationId(
-      locationId,
+  function handleTransferSourceLocationChange(locationId: string) {
+    const firstAvailableStock = stocks.find(
+      (stock) =>
+        stock.initialized &&
+        stock.locationId === locationId &&
+        stock.availableQuantity > 0,
     );
 
-    setTransferProductId(
-      firstAvailableStock
-        ?.productId ?? "",
+    const nextDestination = activeLocations.find(
+      (inventoryLocation) => inventoryLocation.value !== locationId,
     );
+
+    setTransferSourceLocationId(locationId);
+
+    setTransferProductId(firstAvailableStock?.productId ?? "");
 
     if (
-      transferDestinationLocationId ===
-      locationId ||
+      transferDestinationLocationId === locationId ||
       !transferDestinationLocationId
     ) {
-      setTransferDestinationLocationId(
-        nextDestination?.value ??
-        "",
-      );
+      setTransferDestinationLocationId(nextDestination?.value ?? "");
     }
 
     setTransferQuantity("");
     setTransferError(null);
   }
 
-  async function handleTransferSubmit(
-    event:
-      FormEvent<HTMLFormElement>,
-  ) {
+  async function handleTransferSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTransferError(null);
 
-    if (
-      !transferSourceLocationId ||
-      !transferDestinationLocationId
-    ) {
-      setTransferError(
-        "Selecciona las ubicaciones de origen y destino.",
-      );
+    if (!transferSourceLocationId || !transferDestinationLocationId) {
+      setTransferError("Selecciona las ubicaciones de origen y destino.");
       return;
     }
 
-    if (
-      transferSourceLocationId ===
-      transferDestinationLocationId
-    ) {
+    if (transferSourceLocationId === transferDestinationLocationId) {
       setTransferError(
         "La ubicación de destino debe ser diferente a la de origen.",
       );
       return;
     }
 
-    if (
-      !transferProductId ||
-      !transferSourceStock
-    ) {
+    if (!transferProductId || !transferSourceStock) {
       setTransferError(
         `Selecciona un ${productSingularLabel.toLowerCase()} con existencias en el origen.`,
       );
       return;
     }
 
-    const parsedQuantity =
-      Number(
-        transferQuantity,
-      );
+    const parsedQuantity = Number(transferQuantity);
 
-    if (
-      !Number.isInteger(
-        parsedQuantity,
-      ) ||
-      parsedQuantity <= 0
-    ) {
-      setTransferError(
-        "La cantidad debe ser un entero mayor que cero.",
-      );
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
+      setTransferError("La cantidad debe ser un entero mayor que cero.");
       return;
     }
 
-    if (
-      parsedQuantity >
-      transferSourceStock
-        .availableQuantity
-    ) {
+    if (parsedQuantity > transferSourceStock.availableQuantity) {
       setTransferError(
         `Solo hay ${transferSourceStock.availableQuantity} unidades disponibles para transferir.`,
       );
@@ -4114,65 +2576,41 @@ export default function InventariosPage() {
     }
 
     try {
-      setIsTransferSubmitting(
-        true,
-      );
+      setIsTransferSubmitting(true);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/transfers",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              sourceLocationId:
-                transferSourceLocationId,
+      const response = await fetch("/api/crm/inventory/transfers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sourceLocationId: transferSourceLocationId,
 
-              destinationLocationId:
-                transferDestinationLocationId,
+          destinationLocationId: transferDestinationLocationId,
 
-              productId:
-                transferProductId,
+          productId: transferProductId,
 
-              quantity:
-                parsedQuantity,
+          quantity: parsedQuantity,
 
-              reason:
-                transferReason.trim() ||
-                undefined,
+          reason: transferReason.trim() || undefined,
 
-              reference:
-                transferReference.trim() ||
-                undefined,
-            }),
-          },
-        );
+          reference: transferReference.trim() || undefined,
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        MovementWriteResponse;
+      const result = (await response.json()) as MovementWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible registrar la transferencia.",
+          result.error ?? "No fue posible registrar la transferencia.",
         );
       }
 
       setSuccessMessage(
-        result.message ??
-        "La transferencia fue registrada correctamente.",
+        result.message ?? "La transferencia fue registrada correctamente.",
       );
 
-      setIsTransferDrawerOpen(
-        false,
-      );
+      setIsTransferDrawerOpen(false);
 
       await loadInventory();
     } catch (error) {
@@ -4182,97 +2620,54 @@ export default function InventariosPage() {
           : "No fue posible registrar la transferencia.",
       );
     } finally {
-      setIsTransferSubmitting(
-        false,
-      );
+      setIsTransferSubmitting(false);
     }
   }
 
-  function openStockConfiguration(
-    stock: StockRecord,
-  ) {
-    if (
-      !stock.stockId ||
-      !permissions.canEdit
-    ) {
+  function openStockConfiguration(stock: StockRecord) {
+    if (!stock.stockId || !permissions.canEdit) {
       return;
     }
 
-    setConfigurationStock(
-      stock,
-    );
+    setConfigurationStock(stock);
 
-    setConfigurationMinimum(
-      String(
-        stock.minimumQuantity,
-      ),
-    );
+    setConfigurationMinimum(String(stock.minimumQuantity));
 
     setConfigurationMaximum(
-      stock.maximumQuantity !==
-        null
-        ? String(
-          stock.maximumQuantity,
-        )
-        : "",
+      stock.maximumQuantity !== null ? String(stock.maximumQuantity) : "",
     );
 
     setConfigurationReorderPoint(
-      stock.reorderPoint !==
-        null
-        ? String(
-          stock.reorderPoint,
-        )
-        : "",
+      stock.reorderPoint !== null ? String(stock.reorderPoint) : "",
     );
 
-    setConfigurationBinLocation(
-      stock.binLocation ?? "",
-    );
+    setConfigurationBinLocation(stock.binLocation ?? "");
 
     setConfigurationError(null);
   }
 
   async function handleStockConfigurationSubmit(
-    event:
-      FormEvent<HTMLFormElement>,
+    event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
     setConfigurationError(null);
 
-    if (
-      !configurationStock
-        ?.stockId
-    ) {
-      setConfigurationError(
-        "No fue posible identificar la existencia.",
-      );
+    if (!configurationStock?.stockId) {
+      setConfigurationError("No fue posible identificar la existencia.");
       return;
     }
 
-    const minimum =
-      Number(
-        configurationMinimum,
-      );
+    const minimum = Number(configurationMinimum);
 
-    const maximum =
-      configurationMaximum
-        ? Number(
-          configurationMaximum,
-        )
-        : undefined;
+    const maximum = configurationMaximum
+      ? Number(configurationMaximum)
+      : undefined;
 
-    const reorderPoint =
-      configurationReorderPoint
-        ? Number(
-          configurationReorderPoint,
-        )
-        : undefined;
+    const reorderPoint = configurationReorderPoint
+      ? Number(configurationReorderPoint)
+      : undefined;
 
-    if (
-      !Number.isInteger(minimum) ||
-      minimum < 0
-    ) {
+    if (!Number.isInteger(minimum) || minimum < 0) {
       setConfigurationError(
         "La existencia mínima debe ser un entero igual o mayor que cero.",
       );
@@ -4281,12 +2676,7 @@ export default function InventariosPage() {
 
     if (
       maximum !== undefined &&
-      (
-        !Number.isInteger(
-          maximum,
-        ) ||
-        maximum < minimum
-      )
+      (!Number.isInteger(maximum) || maximum < minimum)
     ) {
       setConfigurationError(
         "La existencia máxima debe ser un entero igual o mayor que la mínima.",
@@ -4295,19 +2685,10 @@ export default function InventariosPage() {
     }
 
     if (
-      reorderPoint !==
-      undefined &&
-      (
-        !Number.isInteger(
-          reorderPoint,
-        ) ||
+      reorderPoint !== undefined &&
+      (!Number.isInteger(reorderPoint) ||
         reorderPoint < 0 ||
-        (
-          maximum !==
-          undefined &&
-          reorderPoint > maximum
-        )
-      )
+        (maximum !== undefined && reorderPoint > maximum))
     ) {
       setConfigurationError(
         "El punto de reorden debe ser válido y no superar la existencia máxima.",
@@ -4316,61 +2697,39 @@ export default function InventariosPage() {
     }
 
     try {
-      setIsConfigurationSubmitting(
-        true,
-      );
+      setIsConfigurationSubmitting(true);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/stocks",
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              stockId:
-                configurationStock
-                  .stockId,
+      const response = await fetch("/api/crm/inventory/stocks", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          stockId: configurationStock.stockId,
 
-              minimumQuantity:
-                minimum,
+          minimumQuantity: minimum,
 
-              maximumQuantity:
-                maximum,
+          maximumQuantity: maximum,
 
-              reorderPoint,
+          reorderPoint,
 
-              binLocation:
-                configurationBinLocation.trim() ||
-                undefined,
-            }),
-          },
-        );
+          binLocation: configurationBinLocation.trim() || undefined,
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        MovementWriteResponse;
+      const result = (await response.json()) as MovementWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible guardar la configuración.",
+          result.error ?? "No fue posible guardar la configuración.",
         );
       }
 
       setSuccessMessage(
-        result.message ??
-        "La configuración fue actualizada correctamente.",
+        result.message ?? "La configuración fue actualizada correctamente.",
       );
 
-      setConfigurationStock(
-        null,
-      );
+      setConfigurationStock(null);
 
       await loadInventory();
     } catch (error) {
@@ -4380,42 +2739,28 @@ export default function InventariosPage() {
           : "No fue posible guardar la configuración.",
       );
     } finally {
-      setIsConfigurationSubmitting(
-        false,
-      );
+      setIsConfigurationSubmitting(false);
     }
   }
 
-    function hasOpenReplenishmentRequest(
-    stockId: string | null,
-  ) {
+  function hasOpenReplenishmentRequest(stockId: string | null) {
     if (!stockId) {
       return false;
     }
 
     return replenishmentRequests.some(
       (request) =>
-        request.status !==
-          "Cancelada" &&
-        request.status !==
-          "Recibida" &&
-        request.items.some(
-          (item) =>
-            item.stockId ===
-            stockId,
-        ),
+        request.status !== "Cancelada" &&
+        request.status !== "Recibida" &&
+        request.items.some((item) => item.stockId === stockId),
     );
   }
 
-    async function createReplenishmentRequest(
+  async function createReplenishmentRequest(
     stock: StockRecord,
     quantity: number,
   ) {
-    if (
-      !stock.stockId ||
-      !Number.isInteger(quantity) ||
-      quantity <= 0
-    ) {
+    if (!stock.stockId || !Number.isInteger(quantity) || quantity <= 0) {
       setReplenishmentError(
         "No fue posible determinar la cantidad de reposición.",
       );
@@ -4426,60 +2771,44 @@ export default function InventariosPage() {
       setReplenishmentError(null);
       setReplenishmentMessage(null);
 
-      setRequestingStockIds(
-        (currentIds) => [
-          ...currentIds,
-          stock.stockId as string,
-        ],
-      );
+      setRequestingStockIds((currentIds) => [
+        ...currentIds,
+        stock.stockId as string,
+      ]);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/replenishment",
-          {
-            method: "POST",
+      const response = await fetch("/api/crm/inventory/replenishment", {
+        method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          currency: stock.currency,
+
+          notes: "Solicitud generada desde las sugerencias de reposición.",
+
+          items: [
+            {
+              stockId: stock.stockId,
+
+              quantity,
             },
+          ],
+        }),
+      });
 
-            body: JSON.stringify({
-              currency:
-                stock.currency,
+      const payload = (await response.json()) as ReplenishmentResponse;
 
-              notes:
-                "Solicitud generada desde las sugerencias de reposición.",
-
-              items: [
-                {
-                  stockId:
-                    stock.stockId,
-
-                  quantity,
-                },
-              ],
-            }),
-          },
-        );
-
-      const payload =
-        (await response.json()) as
-          ReplenishmentResponse;
-
-      if (
-        !response.ok ||
-        !payload.success
-      ) {
+      if (!response.ok || !payload.success) {
         throw new Error(
-          payload.error ??
-          "No fue posible crear la solicitud de reposición.",
+          payload.error ?? "No fue posible crear la solicitud de reposición.",
         );
       }
 
       setReplenishmentMessage(
         payload.message ??
-        "La solicitud de reposición fue creada correctamente.",
+          "La solicitud de reposición fue creada correctamente.",
       );
 
       await loadInventory();
@@ -4490,97 +2819,54 @@ export default function InventariosPage() {
           : "No fue posible crear la solicitud de reposición.",
       );
     } finally {
-      setRequestingStockIds(
-        (currentIds) =>
-          currentIds.filter(
-            (stockId) =>
-              stockId !==
-              stock.stockId,
-          ),
+      setRequestingStockIds((currentIds) =>
+        currentIds.filter((stockId) => stockId !== stock.stockId),
       );
     }
   }
 
   function openMovementDrawer(
     stock?: StockRecord,
-    type: MovementType =
-      "Entrada",
+    type: MovementType = "Entrada",
     suggestedQuantity?: number,
   ) {
     const preferredBranchId =
-      stock?.branchId ??
-      branchFilter ??
-      primaryBranchId ??
-      "";
+      stock?.branchId ?? branchFilter ?? primaryBranchId ?? "";
 
-    const preferredLocation =
-      stock
-        ? activeLocations.find(
-          (item) =>
-            item.value ===
-            stock.locationId,
-        )
-        : activeLocations.find(
-          (item) =>
-            item.branchId ===
-            preferredBranchId &&
-            item.isDefault,
+    const preferredLocation = stock
+      ? activeLocations.find((item) => item.value === stock.locationId)
+      : (activeLocations.find(
+          (item) => item.branchId === preferredBranchId && item.isDefault,
         ) ??
-        activeLocations.find(
-          (item) =>
-            item.branchId ===
-            preferredBranchId,
-        ) ??
-        activeLocations[0];
+        activeLocations.find((item) => item.branchId === preferredBranchId) ??
+        activeLocations[0]);
 
-    const nextLocationId =
-      stock?.locationId ??
-      preferredLocation?.value ??
-      "";
+    const nextLocationId = stock?.locationId ?? preferredLocation?.value ?? "";
 
-    const nextBranchId =
-      stock?.branchId ??
-      preferredLocation
-        ?.branchId ??
-      "";
+    const nextBranchId = stock?.branchId ?? preferredLocation?.branchId ?? "";
 
     setMovementType(type);
 
-    setMovementBranchId(
-      nextBranchId,
-    );
+    setMovementBranchId(nextBranchId);
 
-    setMovementLocationId(
-      nextLocationId,
-    );
+    setMovementLocationId(nextLocationId);
 
-    setMovementProductId(
-      stock?.productId ?? "",
-    );
+    setMovementProductId(stock?.productId ?? "");
 
     setMovementQuantity(
-      type === "Ajuste" &&
-        stock
+      type === "Ajuste" && stock
         ? String(stock.quantity)
-        : type === "Entrada" &&
-            suggestedQuantity !==
-              undefined
-          ? String(
-              suggestedQuantity,
-            )
+        : type === "Entrada" && suggestedQuantity !== undefined
+          ? String(suggestedQuantity)
           : "",
     );
 
     setMovementUnitCost(
       type === "Entrada" &&
         permissions.canViewCost &&
-        stock?.lastUnitCost !==
-        null &&
-        stock?.lastUnitCost !==
-        undefined
-        ? String(
-          stock.lastUnitCost,
-        )
+        stock?.lastUnitCost !== null &&
+        stock?.lastUnitCost !== undefined
+        ? String(stock.lastUnitCost)
         : "",
     );
 
@@ -4606,136 +2892,74 @@ export default function InventariosPage() {
     setFormError(null);
   }
 
-  function handleMovementProductChange(
-    productId: string,
-  ) {
-    setMovementProductId(
-      productId,
+  function handleMovementProductChange(productId: string) {
+    setMovementProductId(productId);
+
+    const stock = stocks.find(
+      (item) =>
+        item.locationId === movementLocationId && item.productId === productId,
     );
 
-    const stock =
-      stocks.find(
-        (item) =>
-          item.locationId ===
-          movementLocationId &&
-          item.productId ===
-          productId,
-      );
-
     setMovementUnitCost(
-      movementType ===
-        "Entrada" &&
+      movementType === "Entrada" &&
         permissions.canViewCost &&
-        stock?.lastUnitCost !==
-        null &&
-        stock?.lastUnitCost !==
-        undefined
-        ? String(
-          stock.lastUnitCost,
-        )
+        stock?.lastUnitCost !== null &&
+        stock?.lastUnitCost !== undefined
+        ? String(stock.lastUnitCost)
         : "",
     );
   }
 
-  function handleMovementLocationChange(
-    locationId: string,
-  ) {
-    setMovementLocationId(
-      locationId,
+  function handleMovementLocationChange(locationId: string) {
+    setMovementLocationId(locationId);
+
+    const selectedLocation = activeLocations.find(
+      (item) => item.value === locationId,
     );
 
-    const selectedLocation =
-      activeLocations.find(
-        (item) =>
-          item.value ===
-          locationId,
-      );
+    setMovementBranchId(selectedLocation?.branchId ?? "");
 
-    setMovementBranchId(
-      selectedLocation
-        ?.branchId ??
-      "",
+    const stock = stocks.find(
+      (item) =>
+        item.locationId === locationId && item.productId === movementProductId,
     );
-
-    const stock =
-      stocks.find(
-        (item) =>
-          item.locationId ===
-          locationId &&
-          item.productId ===
-          movementProductId,
-      );
 
     setMovementUnitCost(
-      movementType ===
-        "Entrada" &&
+      movementType === "Entrada" &&
         permissions.canViewCost &&
-        stock?.lastUnitCost !==
-        null &&
-        stock?.lastUnitCost !==
-        undefined
-        ? String(
-          stock.lastUnitCost,
-        )
+        stock?.lastUnitCost !== null &&
+        stock?.lastUnitCost !== undefined
+        ? String(stock.lastUnitCost)
         : "",
     );
   }
 
-  function handleMovementBranchChange(
-    branchId: string,
-  ) {
-    setMovementBranchId(
-      branchId,
-    );
+  function handleMovementBranchChange(branchId: string) {
+    setMovementBranchId(branchId);
 
     const nextLocation =
       activeLocations.find(
-        (item) =>
-          item.branchId ===
-          branchId &&
-          item.isDefault,
-      ) ??
-      activeLocations.find(
-        (item) =>
-          item.branchId ===
-          branchId,
-      );
+        (item) => item.branchId === branchId && item.isDefault,
+      ) ?? activeLocations.find((item) => item.branchId === branchId);
 
-    handleMovementLocationChange(
-      nextLocation?.value ??
-      "",
-    );
+    handleMovementLocationChange(nextLocation?.value ?? "");
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
-    if (
-      !movementLocationId ||
-      !movementProductId
-    ) {
-      setFormError(
-        "Selecciona la ubicación y el producto.",
-      );
+    if (!movementLocationId || !movementProductId) {
+      setFormError("Selecciona la ubicación y el producto.");
       return;
     }
 
-    const parsedQuantity =
-      Number(movementQuantity);
+    const parsedQuantity = Number(movementQuantity);
 
     if (
-      !Number.isInteger(
-        parsedQuantity,
-      ) ||
+      !Number.isInteger(parsedQuantity) ||
       parsedQuantity < 0 ||
-      (
-        movementType !==
-        "Ajuste" &&
-        parsedQuantity === 0
-      )
+      (movementType !== "Ajuste" && parsedQuantity === 0)
     ) {
       setFormError(
         movementType === "Ajuste"
@@ -4745,90 +2969,56 @@ export default function InventariosPage() {
       return;
     }
 
-    const parsedUnitCost =
-      movementUnitCost
-        ? Number(
-          movementUnitCost,
-        )
-        : undefined;
+    const parsedUnitCost = movementUnitCost
+      ? Number(movementUnitCost)
+      : undefined;
 
     if (
-      movementType ===
-      "Entrada" &&
+      movementType === "Entrada" &&
       permissions.canManage &&
-      (
-        parsedUnitCost ===
-        undefined ||
-        !Number.isFinite(
-          parsedUnitCost,
-        ) ||
-        parsedUnitCost < 0
-      )
+      (parsedUnitCost === undefined ||
+        !Number.isFinite(parsedUnitCost) ||
+        parsedUnitCost < 0)
     ) {
-      setFormError(
-        "Captura un costo unitario válido para la entrada.",
-      );
+      setFormError("Captura un costo unitario válido para la entrada.");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      const response =
-        await fetch(
-          "/api/crm/inventory/movements",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              branchId:
-                movementBranchId ||
-                undefined,
+      const response = await fetch("/api/crm/inventory/movements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          branchId: movementBranchId || undefined,
 
-              locationId:
-                movementLocationId,
+          locationId: movementLocationId,
 
-              productId:
-                movementProductId,
-              type: movementType,
-              quantity:
-                parsedQuantity,
-              unitCost:
-                movementType ===
-                  "Entrada" &&
-                  permissions.canManage
-                  ? parsedUnitCost
-                  : undefined,
-              reason:
-                movementReason.trim() ||
-                undefined,
-              reference:
-                movementReference.trim() ||
-                undefined,
-            }),
-          },
-        );
+          productId: movementProductId,
+          type: movementType,
+          quantity: parsedQuantity,
+          unitCost:
+            movementType === "Entrada" && permissions.canManage
+              ? parsedUnitCost
+              : undefined,
+          reason: movementReason.trim() || undefined,
+          reference: movementReference.trim() || undefined,
+        }),
+      });
 
-      const result =
-        (await response.json()) as
-        MovementWriteResponse;
+      const result = (await response.json()) as MovementWriteResponse;
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          result.error ??
-          "No fue posible registrar el movimiento.",
+          result.error ?? "No fue posible registrar el movimiento.",
         );
       }
 
       setSuccessMessage(
-        result.message ??
-        "El movimiento fue registrado correctamente.",
+        result.message ?? "El movimiento fue registrado correctamente.",
       );
 
       setIsDrawerOpen(false);
@@ -4847,56 +3037,33 @@ export default function InventariosPage() {
   const summaryCards = [
     {
       label: "Existencia total",
-      value:
-        summary.totalUnits.toLocaleString(
-          "es-MX",
-        ),
-      detail:
-        `${summary.availableUnits.toLocaleString("es-MX")} unidades disponibles`,
-      className:
-        "from-blue-700 to-cyan-500",
+      value: summary.totalUnits.toLocaleString("es-MX"),
+      detail: `${summary.availableUnits.toLocaleString("es-MX")} unidades disponibles`,
+      className: "from-blue-700 to-cyan-500",
     },
     {
       label: "Valor del inventario",
       value:
-        summary.inventoryValue !==
-          null
-          ? formatMoney(
-            summary.inventoryValue,
-          )
+        summary.inventoryValue !== null
+          ? formatMoney(summary.inventoryValue)
           : "Restringido",
       detail:
-        summary.inventoryValue !==
-          null
+        summary.inventoryValue !== null
           ? "Valor contable a costo promedio"
           : "Requiere permiso para consultar costos",
-      className:
-        "from-slate-950 to-slate-700",
+      className: "from-slate-950 to-slate-700",
     },
     {
       label: "Unidades reservadas",
-      value:
-        summary.reservedUnits.toLocaleString(
-          "es-MX",
-        ),
-      detail:
-        "Comprometidas comercialmente",
-      className:
-        "from-violet-700 to-indigo-500",
+      value: summary.reservedUnits.toLocaleString("es-MX"),
+      detail: "Comprometidas comercialmente",
+      className: "from-violet-700 to-indigo-500",
     },
     {
       label: "Alertas de stock",
-      value:
-        (
-          summary.lowStock +
-          summary.outOfStock
-        ).toLocaleString(
-          "es-MX",
-        ),
-      detail:
-        `${summary.lowStock} bajas · ${summary.outOfStock} agotadas`,
-      className:
-        "from-amber-600 to-orange-500",
+      value: (summary.lowStock + summary.outOfStock).toLocaleString("es-MX"),
+      detail: `${summary.lowStock} bajas · ${summary.outOfStock} agotadas`,
+      className: "from-amber-600 to-orange-500",
     },
   ];
 
@@ -4913,11 +3080,7 @@ export default function InventariosPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() =>
-                    setIsLocationsDrawerOpen(
-                      true,
-                    )
-                  }
+                  onClick={() => setIsLocationsDrawerOpen(true)}
                 >
                   Administrar ubicaciones
                 </Button>
@@ -4927,9 +3090,7 @@ export default function InventariosPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() =>
-                    openTransferDrawer()
-                  }
+                  onClick={() => openTransferDrawer()}
                 >
                   Transferir inventario
                 </Button>
@@ -4940,21 +3101,14 @@ export default function InventariosPage() {
                   type="button"
                   variant="secondary"
                   className="border-violet-200 bg-violet-50 text-violet-700 hover:border-violet-300 hover:bg-violet-100"
-                  onClick={() =>
-                    openReservationDrawer()
-                  }
+                  onClick={() => openReservationDrawer()}
                 >
                   Reservar inventario
                 </Button>
               )}
 
               {permissions.canCreate && (
-                <Button
-                  type="button"
-                  onClick={() =>
-                    openMovementDrawer()
-                  }
-                >
+                <Button type="button" onClick={() => openMovementDrawer()}>
                   Registrar movimiento
                 </Button>
               )}
@@ -4975,98 +3129,77 @@ export default function InventariosPage() {
         )}
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map(
-            (card) => (
-              <article
-                key={card.label}
-                className={[
-                  "overflow-hidden rounded-[26px] bg-gradient-to-br p-5 text-white shadow-lg",
-                  card.className,
-                ].join(" ")}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
-                  {card.label}
-                </p>
+          {summaryCards.map((card) => (
+            <article
+              key={card.label}
+              className={[
+                "overflow-hidden rounded-[26px] bg-gradient-to-br p-5 text-white shadow-lg",
+                card.className,
+              ].join(" ")}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
+                {card.label}
+              </p>
 
-                <p className="mt-4 text-3xl font-black tracking-tight">
-                  {card.value}
-                </p>
+              <p className="mt-4 text-3xl font-black tracking-tight">
+                {card.value}
+              </p>
 
-                {card.label ===
-                  "Alertas de stock" ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/70"
-                      onClick={() => {
-                        setActiveView(
-                          "stocks",
-                        );
+              {card.label === "Alertas de stock" ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/70"
+                    onClick={() => {
+                      setActiveView("stocks");
 
-                        setStatusFilter(
-                          "Bajo",
-                        );
+                      setStatusFilter("Bajo");
 
-                        window.setTimeout(
-                          () =>
-                            document
-                              .getElementById(
-                                "inventory-detail-table",
-                              )
-                              ?.scrollIntoView({
-                                behavior:
-                                  "smooth",
+                      window.setTimeout(
+                        () =>
+                          document
+                            .getElementById("inventory-detail-table")
+                            ?.scrollIntoView({
+                              behavior: "smooth",
 
-                                block:
-                                  "start",
-                              }),
-                          0,
-                        );
-                      }}
-                    >
-                      {summary.lowStock} bajas
-                    </button>
+                              block: "start",
+                            }),
+                        0,
+                      );
+                    }}
+                  >
+                    {summary.lowStock} bajas
+                  </button>
 
-                    <button
-                      type="button"
-                      className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/70"
-                      onClick={() => {
-                        setActiveView(
-                          "stocks",
-                        );
+                  <button
+                    type="button"
+                    className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/70"
+                    onClick={() => {
+                      setActiveView("stocks");
 
-                        setStatusFilter(
-                          "Agotado",
-                        );
+                      setStatusFilter("Agotado");
 
-                        window.setTimeout(
-                          () =>
-                            document
-                              .getElementById(
-                                "inventory-detail-table",
-                              )
-                              ?.scrollIntoView({
-                                behavior:
-                                  "smooth",
+                      window.setTimeout(
+                        () =>
+                          document
+                            .getElementById("inventory-detail-table")
+                            ?.scrollIntoView({
+                              behavior: "smooth",
 
-                                block:
-                                  "start",
-                              }),
-                          0,
-                        );
-                      }}
-                    >
-                      {summary.outOfStock} agotadas
-                    </button>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-white/75">
-                    {card.detail}
-                  </p>
-                )}
-              </article>
-            ),
-          )}
+                              block: "start",
+                            }),
+                        0,
+                      );
+                    }}
+                  >
+                    {summary.outOfStock} agotadas
+                  </button>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-white/75">{card.detail}</p>
+              )}
+            </article>
+          ))}
         </section>
 
         <section
@@ -5074,110 +3207,69 @@ export default function InventariosPage() {
           className="scroll-mt-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm"
         >
           <header className="border-b border-slate-200 bg-slate-50 px-5 py-5 sm:px-6">
-            {activeView ===
-              "stocks" &&
-              inventoryProductTypes.length >
-                0 && (
-                <div className="mb-5">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-                    Tipo de inventario
-                  </p>
+            {activeView === "stocks" && inventoryProductTypes.length > 0 && (
+              <div className="mb-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                  Tipo de inventario
+                </p>
 
-                  {inventoryProductTypes.length <=
-                  5 ? (
-                    <div className="inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
+                {inventoryProductTypes.length <= 5 ? (
+                  <div className="inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
+                    <button
+                      type="button"
+                      className={[
+                        "whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition",
+                        productTypeFilter === ""
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-slate-100",
+                      ].join(" ")}
+                      onClick={() => {
+                        setProductTypeFilter("");
+                        setCategoryFilter("");
+                      }}
+                    >
+                      Todos
+                    </button>
+
+                    {inventoryProductTypes.map((productType) => (
                       <button
+                        key={productType.id}
                         type="button"
                         className={[
                           "whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition",
-                          productTypeFilter ===
-                          ""
+                          productTypeFilter === productType.id
                             ? "bg-blue-600 text-white shadow-sm"
                             : "text-slate-600 hover:bg-slate-100",
                         ].join(" ")}
                         onClick={() => {
-                          setProductTypeFilter(
-                            "",
-                          );
-                          setCategoryFilter(
-                            "",
-                          );
+                          setProductTypeFilter(productType.id);
+                          setCategoryFilter("");
                         }}
                       >
-                        Todos
+                        {productType.name}
                       </button>
+                    ))}
+                  </div>
+                ) : (
+                  <select
+                    value={productTypeFilter}
+                    className="w-full max-w-sm rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    onChange={(event) => {
+                      setProductTypeFilter(event.target.value);
+                      setCategoryFilter("");
+                    }}
+                  >
+                    <option value="">Todos los tipos</option>
 
-                      {inventoryProductTypes.map(
-                        (productType) => (
-                          <button
-                            key={
-                              productType.id
-                            }
-                            type="button"
-                            className={[
-                              "whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition",
-                              productTypeFilter ===
-                              productType.id
-                                ? "bg-blue-600 text-white shadow-sm"
-                                : "text-slate-600 hover:bg-slate-100",
-                            ].join(" ")}
-                            onClick={() => {
-                              setProductTypeFilter(
-                                productType.id,
-                              );
-                              setCategoryFilter(
-                                "",
-                              );
-                            }}
-                          >
-                            {
-                              productType.name
-                            }
-                          </button>
-                        ),
-                      )}
-                    </div>
-                  ) : (
-                    <select
-                      value={
-                        productTypeFilter
-                      }
-                      className="w-full max-w-sm rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      onChange={(
-                        event,
-                      ) => {
-                        setProductTypeFilter(
-                          event.target.value,
-                        );
-                        setCategoryFilter(
-                          "",
-                        );
-                      }}
-                    >
-                      <option value="">
-                        Todos los tipos
+                    {inventoryProductTypes.map((productType) => (
+                      <option key={productType.id} value={productType.id}>
+                        {productType.name}
                       </option>
-
-                      {inventoryProductTypes.map(
-                        (productType) => (
-                          <option
-                            key={
-                              productType.id
-                            }
-                            value={
-                              productType.id
-                            }
-                          >
-                            {
-                              productType.name
-                            }
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  )}
-                </div>
-              )}
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-col gap-4">
               <div className="flex rounded-xl border border-slate-200 bg-white p-1">
@@ -5185,16 +3277,11 @@ export default function InventariosPage() {
                   type="button"
                   className={[
                     "rounded-lg px-4 py-2 text-sm font-semibold transition",
-                    activeView ===
-                      "stocks"
+                    activeView === "stocks"
                       ? "bg-slate-950 text-white shadow-sm"
                       : "text-slate-600 hover:bg-slate-100",
                   ].join(" ")}
-                  onClick={() =>
-                    setActiveView(
-                      "stocks",
-                    )
-                  }
+                  onClick={() => setActiveView("stocks")}
                 >
                   Existencias
                 </button>
@@ -5203,16 +3290,11 @@ export default function InventariosPage() {
                   type="button"
                   className={[
                     "rounded-lg px-4 py-2 text-sm font-semibold transition",
-                    activeView ===
-                      "movements"
+                    activeView === "movements"
                       ? "bg-slate-950 text-white shadow-sm"
                       : "text-slate-600 hover:bg-slate-100",
                   ].join(" ")}
-                  onClick={() =>
-                    setActiveView(
-                      "movements",
-                    )
-                  }
+                  onClick={() => setActiveView("movements")}
                 >
                   Kardex
                 </button>
@@ -5221,56 +3303,21 @@ export default function InventariosPage() {
                   type="button"
                   className={[
                     "rounded-lg px-4 py-2 text-sm font-semibold transition",
-                    activeView ===
-                      "reservations"
+                    activeView === "reservations"
                       ? "bg-slate-950 text-white shadow-sm"
                       : "text-slate-600 hover:bg-slate-100",
                   ].join(" ")}
-                  onClick={() =>
-                    setActiveView(
-                      "reservations",
-                    )
-                  }
+                  onClick={() => setActiveView("reservations")}
                 >
                   Reservas
                   {reservations.filter(
-                    (reservation) =>
-                      reservation.status ===
-                      "Activa",
+                    (reservation) => reservation.status === "Activa",
                   ).length > 0 && (
-                      <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">
-                        {
-                          reservations.filter(
-                            (reservation) =>
-                              reservation.status ===
-                              "Activa",
-                          ).length
-                        }
-                      </span>
-                    )}
-                </button>
-
-                <button
-                  type="button"
-                  className={[
-                    "rounded-lg px-4 py-2 text-sm font-semibold transition",
-                    activeView ===
-                      "replenishment"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100",
-                  ].join(" ")}
-                  onClick={() =>
-                    setActiveView(
-                      "replenishment",
-                    )
-                  }
-                >
-                  Reposición
-                  {replenishmentSuggestions.length >
-                    0 && (
-                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                    <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">
                       {
-                        replenishmentSuggestions.length
+                        reservations.filter(
+                          (reservation) => reservation.status === "Activa",
+                        ).length
                       }
                     </span>
                   )}
@@ -5280,16 +3327,29 @@ export default function InventariosPage() {
                   type="button"
                   className={[
                     "rounded-lg px-4 py-2 text-sm font-semibold transition",
-                    activeView ===
-                      "counts"
+                    activeView === "replenishment"
                       ? "bg-slate-950 text-white shadow-sm"
                       : "text-slate-600 hover:bg-slate-100",
                   ].join(" ")}
-                  onClick={() =>
-                    setActiveView(
-                      "counts",
-                    )
-                  }
+                  onClick={() => setActiveView("replenishment")}
+                >
+                  Reposición
+                  {replenishmentSuggestions.length > 0 && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                      {replenishmentSuggestions.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className={[
+                    "rounded-lg px-4 py-2 text-sm font-semibold transition",
+                    activeView === "counts"
+                      ? "bg-slate-950 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-100",
+                  ].join(" ")}
+                  onClick={() => setActiveView("counts")}
                 >
                   Conteos físicos
                 </button>
@@ -5299,224 +3359,117 @@ export default function InventariosPage() {
                     type="button"
                     className={[
                       "rounded-lg px-4 py-2 text-sm font-semibold transition",
-                      activeView ===
-                        "audit"
+                      activeView === "audit"
                         ? "bg-slate-950 text-white shadow-sm"
                         : "text-slate-600 hover:bg-slate-100",
                     ].join(" ")}
-                    onClick={() =>
-                      setActiveView(
-                        "audit",
-                      )
-                    }
+                    onClick={() => setActiveView("audit")}
                   >
                     Auditoría
                   </button>
                 )}
               </div>
 
-              {activeView !==
-                "counts" &&
-                activeView !==
-                  "audit" && (
+              {activeView !== "counts" && activeView !== "audit" && (
                 <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <input
-                  type="search"
-                  value={search}
-                  placeholder="Buscar producto, código..."
-                  className="w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  onChange={(event) =>
-                    setSearch(
-                      event.target.value,
-                    )
-                  }
-                />
+                    type="search"
+                    value={search}
+                    placeholder="Buscar producto, código..."
+                    className="w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    onChange={(event) => setSearch(event.target.value)}
+                  />
 
-                <select
-                  value={branchFilter}
-                  className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
-                  onChange={(event) =>
-                    setBranchFilter(
-                      event.target.value,
-                    )
-                  }
-                >
-                  <option value="">
-                    Todas las sucursales
-                  </option>
+                  <select
+                    value={branchFilter}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
+                    onChange={(event) => setBranchFilter(event.target.value)}
+                  >
+                    <option value="">Todas las sucursales</option>
 
-                  {branches.map(
-                    (branch) => (
-                      <option
-                        key={branch.value}
-                        value={branch.value}
-                      >
+                    {branches.map((branch) => (
+                      <option key={branch.value} value={branch.value}>
                         {branch.label}
                       </option>
-                    ),
-                  )}
-                </select>
+                    ))}
+                  </select>
 
-                {activeView ===
-                  "stocks" && (
+                  {activeView === "stocks" && (
                     <select
-                      value={
-                        categoryFilter
-                      }
+                      value={categoryFilter}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
-                      onChange={(
-                        event,
-                      ) =>
-                        setCategoryFilter(
-                          event.target
-                            .value,
-                        )
+                      onChange={(event) =>
+                        setCategoryFilter(event.target.value)
                       }
                     >
-                      <option value="">
-                        Todas las categorías
-                      </option>
+                      <option value="">Todas las categorías</option>
 
-                      {inventoryCategories.map(
-                        (category) => (
-                          <option
-                            key={
-                              category
-                            }
-                            value={
-                              category
-                            }
-                          >
-                            {category}
-                          </option>
-                        ),
-                      )}
+                      {inventoryCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
                     </select>
                   )}
 
-                {activeView ===
-                  "stocks" && (
+                  {activeView === "stocks" && (
                     <select
                       value={statusFilter}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
-                      onChange={(
-                        event,
-                      ) =>
-                        setStatusFilter(
-                          event.target.value,
-                        )
-                      }
+                      onChange={(event) => setStatusFilter(event.target.value)}
                     >
-                      <option value="">
-                        Todos los estados
-                      </option>
-                      <option value="Disponible">
-                        Disponible
-                      </option>
-                      <option value="Bajo">
-                        Stock bajo
-                      </option>
-                      <option value="Agotado">
-                        Agotado
-                      </option>
+                      <option value="">Todos los estados</option>
+                      <option value="Disponible">Disponible</option>
+                      <option value="Bajo">Stock bajo</option>
+                      <option value="Agotado">Agotado</option>
                     </select>
                   )}
-                {activeView ===
-                  "reservations" && (
+                  {activeView === "reservations" && (
                     <select
-                      value={
-                        reservationStatusFilter
-                      }
+                      value={reservationStatusFilter}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
-                      onChange={(
-                        event,
-                      ) =>
-                        setReservationStatusFilter(
-                          event.target.value,
-                        )
+                      onChange={(event) =>
+                        setReservationStatusFilter(event.target.value)
                       }
                     >
-                      <option value="">
-                        Todos los estados
-                      </option>
+                      <option value="">Todos los estados</option>
 
-                      <option value="Activa">
-                        Activas
-                      </option>
+                      <option value="Activa">Activas</option>
 
-                      <option value="Consumida">
-                        Entregadas
-                      </option>
+                      <option value="Consumida">Entregadas</option>
 
-                      <option value="Liberada">
-                        Liberadas
-                      </option>
+                      <option value="Liberada">Liberadas</option>
 
-                      <option value="Cancelada">
-                        Canceladas
-                      </option>
+                      <option value="Cancelada">Canceladas</option>
 
-                      <option value="Vencida">
-                        Vencidas
-                      </option>
+                      <option value="Vencida">Vencidas</option>
                     </select>
                   )}
 
-                {activeView ===
-                  "movements" && (
+                  {activeView === "movements" && (
                     <select
-                      value={
-                        movementTypeFilter
-                      }
+                      value={movementTypeFilter}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
-                      onChange={(
-                        event,
-                      ) =>
-                        setMovementTypeFilter(
-                          event.target.value,
-                        )
+                      onChange={(event) =>
+                        setMovementTypeFilter(event.target.value)
                       }
                     >
-                      <option value="">
-                        Todos los movimientos
-                      </option>
+                      <option value="">Todos los movimientos</option>
 
                       {Array.from(
-                        new Set(
-                          movements.map(
-                            (movement) =>
-                              movement.type,
-                          ),
-                        ),
+                        new Set(movements.map((movement) => movement.type)),
                       )
-                        .sort(
-                          (
-                            first,
-                            second,
-                          ) =>
-                            first.localeCompare(
-                              second,
-                              "es-MX",
-                            ),
+                        .sort((first, second) =>
+                          first.localeCompare(second, "es-MX"),
                         )
-                        .map(
-                          (
-                            movementTypeOption,
-                          ) => (
-                            <option
-                              key={
-                                movementTypeOption
-                              }
-                              value={
-                                movementTypeOption
-                              }
-                            >
-                              {
-                                movementTypeOption
-                              }
-                            </option>
-                          ),
-                        )}
+                        .map((movementTypeOption) => (
+                          <option
+                            key={movementTypeOption}
+                            value={movementTypeOption}
+                          >
+                            {movementTypeOption}
+                          </option>
+                        ))}
                     </select>
                   )}
                 </div>
@@ -5524,79 +3477,60 @@ export default function InventariosPage() {
             </div>
           </header>
 
-          {activeView ===
-            "reservations" &&
-            linkedDealReservationId && (
-              <div className="flex flex-col gap-3 border-b border-blue-200 bg-blue-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-bold text-blue-900">
-                    Reservas de la oportunidad seleccionada
-                  </p>
+          {activeView === "reservations" && linkedDealReservationId && (
+            <div className="flex flex-col gap-3 border-b border-blue-200 bg-blue-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-blue-900">
+                  Reservas de la oportunidad seleccionada
+                </p>
 
-                  <p className="mt-1 text-xs text-blue-700">
-                    Confirma la entrega de cada modelo para descontar la existencia y registrar su salida en el Kardex.
-                  </p>
-                </div>
-
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  {!visibleReservations.some(
-                    (reservation) =>
-                      reservation.status ===
-                      "Activa",
-                  ) &&
-                    visibleReservations.some(
-                      (reservation) =>
-                        reservation.status ===
-                        "Liberada" ||
-                        reservation.status ===
-                        "Cancelada" ||
-                        reservation.status ===
-                        "Vencida",
-                    ) && (
-                      <Button
-                        type="button"
-                        disabled={
-                          isReactivatingReservations
-                        }
-                        onClick={() =>
-                          void handleReactivateReservations()
-                        }
-                      >
-                        {isReactivatingReservations
-                          ? "Reactivando..."
-                          : "Reactivar reservas"}
-                      </Button>
-                    )}
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      setLinkedDealReservationId(
-                        null,
-                      );
-
-                      window.history.replaceState(
-                        {},
-                        "",
-                        "/crm/inventarios",
-                      );
-                    }}
-                  >
-                    Ver todas las reservas
-                  </Button>
-                </div>
+                <p className="mt-1 text-xs text-blue-700">
+                  Confirma la entrega de cada modelo para descontar la
+                  existencia y registrar su salida en el Kardex.
+                </p>
               </div>
-            )}
 
-          {activeView ===
-            "audit" &&
-            permissions.canManage ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {!visibleReservations.some(
+                  (reservation) => reservation.status === "Activa",
+                ) &&
+                  visibleReservations.some(
+                    (reservation) =>
+                      reservation.status === "Liberada" ||
+                      reservation.status === "Cancelada" ||
+                      reservation.status === "Vencida",
+                  ) && (
+                    <Button
+                      type="button"
+                      disabled={isReactivatingReservations}
+                      onClick={() => void handleReactivateReservations()}
+                    >
+                      {isReactivatingReservations
+                        ? "Reactivando..."
+                        : "Reactivar reservas"}
+                    </Button>
+                  )}
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setLinkedDealReservationId(null);
+
+                    window.history.replaceState({}, "", "/crm/inventarios");
+                  }}
+                >
+                  Ver todas las reservas
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {activeView === "audit" && permissions.canManage ? (
             <div className="p-5 sm:p-6">
               <InventoryAuditWorkspace />
             </div>
-          ) : activeView ===
-            "replenishment" ? (
+          ) : activeView === "replenishment" ? (
             <div className="space-y-5 p-5 sm:p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -5605,31 +3539,25 @@ export default function InventariosPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Modelos cuya disponibilidad alcanzó el punto de reorden o la existencia mínima.
+                    Modelos cuya disponibilidad alcanzó el punto de reorden o la
+                    existencia mínima.
                   </p>
                 </div>
 
                 <p className="text-sm font-semibold text-amber-700">
-                  {
-                    replenishmentSuggestions.length
-                  }{" "}
-                  sugerencia(s)
+                  {replenishmentSuggestions.length} sugerencia(s)
                 </p>
               </div>
 
               {replenishmentMessage && (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
-                  {
-                    replenishmentMessage
-                  }
+                  {replenishmentMessage}
                 </div>
               )}
 
               {replenishmentError && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
-                  {
-                    replenishmentError
-                  }
+                  {replenishmentError}
                 </div>
               )}
 
@@ -5644,11 +3572,7 @@ export default function InventariosPage() {
                         "Punto de reorden",
                         "Objetivo",
                         "Compra sugerida",
-                        ...(permissions.canViewCost
-                          ? [
-                              "Costo estimado",
-                            ]
-                          : []),
+                        ...(permissions.canViewCost ? ["Costo estimado"] : []),
                         "Acciones",
                       ].map((header) => (
                         <th
@@ -5662,93 +3586,75 @@ export default function InventariosPage() {
                   </thead>
 
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {replenishmentSuggestions.map(
-                      (suggestion) => (
-                        <tr
-                          key={
-                            suggestion.id
-                          }
-                          className="transition hover:bg-amber-50/40"
-                        >
-                          <td className="min-w-60 px-5 py-4">
-                            <p className="font-bold text-slate-950">
-                              {
-                                suggestion.productName
-                              }
-                            </p>
+                    {replenishmentSuggestions.map((suggestion) => (
+                      <tr
+                        key={suggestion.id}
+                        className="transition hover:bg-amber-50/40"
+                      >
+                        <td className="min-w-60 px-5 py-4">
+                          <p className="font-bold text-slate-950">
+                            {suggestion.productName}
+                          </p>
 
-                            <p className="mt-1 text-xs text-slate-500">
-                              {suggestion.productCode ??
-                                "Sin código"}
-                            </p>
-                          </td>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {suggestion.productCode ?? "Sin código"}
+                          </p>
+                        </td>
 
-                          <td className="min-w-56 px-5 py-4">
-                            <p className="font-semibold text-slate-800">
-                              {
-                                suggestion.locationLabel
-                              }
-                            </p>
+                        <td className="min-w-56 px-5 py-4">
+                          <p className="font-semibold text-slate-800">
+                            {suggestion.locationLabel}
+                          </p>
 
-                            <p className="mt-1 text-xs text-slate-500">
-                              {
-                                suggestion.branchName
-                              }
-                            </p>
-                          </td>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {suggestion.branchName}
+                          </p>
+                        </td>
 
-                          <td className="whitespace-nowrap px-5 py-4 text-lg font-black text-red-700">
-                            {
-                              suggestion.availableQuantity
-                            }
-                          </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-lg font-black text-red-700">
+                          {suggestion.availableQuantity}
+                        </td>
 
-                          <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-700">
-                            {
-                              suggestion.triggerQuantity
-                            }
-                          </td>
+                        <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-700">
+                          {suggestion.triggerQuantity}
+                        </td>
 
-                          <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-700">
-                            {suggestion.requiresMaximum
-                              ? "Sin máximo"
-                              : suggestion.targetQuantity}
-                          </td>
+                        <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-700">
+                          {suggestion.requiresMaximum
+                            ? "Sin máximo"
+                            : suggestion.targetQuantity}
+                        </td>
 
-                          <td className="whitespace-nowrap px-5 py-4">
-                            {suggestion.requiresMaximum ? (
-                              <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-                                Configura un máximo
-                              </span>
-                            ) : (
-                              <span className="text-lg font-black text-blue-700">
-                                {
-                                  suggestion.suggestedQuantity
-                                }
-                              </span>
-                            )}
-                          </td>
-
-                          {permissions.canViewCost && (
-                            <td className="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
-                              {suggestion.requiresMaximum ||
-                              suggestion.averageUnitCost ===
-                                null
-                                ? "—"
-                                : formatMoney(
-                                    suggestion.suggestedQuantity *
-                                      suggestion.averageUnitCost,
-                                    suggestion.currency,
-                                  )}
-                            </td>
+                        <td className="whitespace-nowrap px-5 py-4">
+                          {suggestion.requiresMaximum ? (
+                            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+                              Configura un máximo
+                            </span>
+                          ) : (
+                            <span className="text-lg font-black text-blue-700">
+                              {suggestion.suggestedQuantity}
+                            </span>
                           )}
+                        </td>
 
-                          <td className="whitespace-nowrap px-5 py-4">
-                            <div className="flex min-w-max items-center gap-2">
-                              {permissions.canManage &&
-                                !suggestion.requiresMaximum &&
-                                suggestion.suggestedQuantity >
-                                  0 && (
+                        {permissions.canViewCost && (
+                          <td className="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
+                            {suggestion.requiresMaximum ||
+                            suggestion.averageUnitCost === null
+                              ? "—"
+                              : formatMoney(
+                                  suggestion.suggestedQuantity *
+                                    suggestion.averageUnitCost,
+                                  suggestion.currency,
+                                )}
+                          </td>
+                        )}
+
+                        <td className="whitespace-nowrap px-5 py-4">
+                          <div className="flex min-w-max items-center gap-2">
+                            {permissions.canManage &&
+                              !suggestion.requiresMaximum &&
+                              suggestion.suggestedQuantity > 0 && (
                                 <Button
                                   type="button"
                                   size="sm"
@@ -5756,13 +3662,10 @@ export default function InventariosPage() {
                                     hasOpenReplenishmentRequest(
                                       suggestion.stockId,
                                     ) ||
-                                    (
-                                      suggestion.stockId !==
-                                        null &&
+                                    (suggestion.stockId !== null &&
                                       requestingStockIds.includes(
                                         suggestion.stockId,
-                                      )
-                                    )
+                                      ))
                                   }
                                   onClick={() =>
                                     void createReplenishmentRequest(
@@ -5775,20 +3678,18 @@ export default function InventariosPage() {
                                     suggestion.stockId,
                                   )
                                     ? "Solicitud pendiente"
-                                    : suggestion.stockId !==
-                                        null &&
-                                      requestingStockIds.includes(
-                                        suggestion.stockId,
-                                      )
+                                    : suggestion.stockId !== null &&
+                                        requestingStockIds.includes(
+                                          suggestion.stockId,
+                                        )
                                       ? "Generando..."
                                       : "Generar solicitud"}
                                 </Button>
                               )}
 
-                              {permissions.canCreate &&
-                                !suggestion.requiresMaximum &&
-                                suggestion.suggestedQuantity >
-                                  0 && (
+                            {permissions.canCreate &&
+                              !suggestion.requiresMaximum &&
+                              suggestion.suggestedQuantity > 0 && (
                                 <Button
                                   type="button"
                                   size="sm"
@@ -5804,37 +3705,32 @@ export default function InventariosPage() {
                                 </Button>
                               )}
 
-                              {permissions.canEdit && (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() =>
-                                    openStockConfiguration(
-                                      suggestion,
-                                    )
-                                  }
-                                >
-                                  Configurar niveles
-                                </Button>
-                              )}
+                            {permissions.canEdit && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                onClick={() =>
+                                  openStockConfiguration(suggestion)
+                                }
+                              >
+                                Configurar niveles
+                              </Button>
+                            )}
 
-                              {!permissions.canCreate &&
-                                !permissions.canEdit && (
-                                <span className="text-sm text-slate-400">
-                                  Solo consulta
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ),
-                    )}
+                            {!permissions.canCreate && !permissions.canEdit && (
+                              <span className="text-sm text-slate-400">
+                                Solo consulta
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
 
-                {replenishmentSuggestions.length ===
-                  0 && (
+                {replenishmentSuggestions.length === 0 && (
                   <div className="px-6 py-20 text-center">
                     <p className="text-lg font-bold text-slate-800">
                       No hay reposiciones pendientes
@@ -5854,7 +3750,8 @@ export default function InventariosPage() {
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Solicitudes internas preparadas para su futura integración con compras o ERP.
+                    Solicitudes internas preparadas para su futura integración
+                    con compras o ERP.
                   </p>
                 </header>
 
@@ -5870,169 +3767,115 @@ export default function InventariosPage() {
                           "Estado",
                           "Integración",
                           ...(permissions.canViewCost
-                            ? [
-                                "Total estimado",
-                              ]
+                            ? ["Total estimado"]
                             : []),
-                        ].map(
-                          (header) => (
-                            <th
-                              key={
-                                header
-                              }
-                              className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500"
-                            >
-                              {
-                                header
-                              }
-                            </th>
-                          ),
-                        )}
+                        ].map((header) => (
+                          <th
+                            key={header}
+                            className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500"
+                          >
+                            {header}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
 
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {replenishmentRequests.map(
-                        (request) => (
-                          <tr
-                            key={
-                              request.id
-                            }
-                            className="hover:bg-slate-50"
-                          >
-                            <td className="whitespace-nowrap px-5 py-4">
-                              <p className="font-bold text-slate-950">
-                                {
-                                  request.reference
-                                }
-                              </p>
+                      {replenishmentRequests.map((request) => (
+                        <tr key={request.id} className="hover:bg-slate-50">
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <p className="font-bold text-slate-950">
+                              {request.reference}
+                            </p>
 
-                              <p className="mt-1 text-xs text-slate-500">
-                                {request.requestedByName ??
-                                  "Usuario"}
-                              </p>
-                            </td>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {request.requestedByName ?? "Usuario"}
+                            </p>
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-700">
-                              {formatDate(
-                                request.requestedAt,
-                              )}
-                            </td>
+                          <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-700">
+                            {formatDate(request.requestedAt)}
+                          </td>
 
-                            <td className="min-w-56 px-5 py-4">
-                              <p className="text-sm font-semibold text-slate-800">
-                                {Array.from(
-                                  new Set(
-                                    request.items.map(
-                                      (item) =>
-                                        item.locationLabel,
-                                    ),
+                          <td className="min-w-56 px-5 py-4">
+                            <p className="text-sm font-semibold text-slate-800">
+                              {Array.from(
+                                new Set(
+                                  request.items.map(
+                                    (item) => item.locationLabel,
                                   ),
-                                ).join(", ")}
-                              </p>
-
-                              <p className="mt-1 text-xs text-slate-500">
-                                {
-                                  request.branchLabel
-                                }
-                              </p>
-                            </td>
-
-                            <td className="min-w-72 px-5 py-4">
-                              {request.items.map(
-                                (item) => (
-                                  <p
-                                    key={
-                                      item.id
-                                    }
-                                    className="text-sm text-slate-700"
-                                  >
-                                    {
-                                      item.requestedQuantity
-                                    }{" "}
-                                    ×{" "}
-                                    {
-                                      item.productName
-                                    }{" "}
-                                    ·{" "}
-                                    {
-                                      item.locationLabel
-                                    }
-                                  </p>
                                 ),
+                              ).join(", ")}
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-500">
+                              {request.branchLabel}
+                            </p>
+                          </td>
+
+                          <td className="min-w-72 px-5 py-4">
+                            {request.items.map((item) => (
+                              <p
+                                key={item.id}
+                                className="text-sm text-slate-700"
+                              >
+                                {item.requestedQuantity} × {item.productName} ·{" "}
+                                {item.locationLabel}
+                              </p>
+                            ))}
+                          </td>
+
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                              {request.status}
+                            </span>
+                          </td>
+
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                              {request.syncStatus}
+                            </span>
+                          </td>
+
+                          {permissions.canViewCost && (
+                            <td className="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
+                              {formatMoney(
+                                request.items.reduce(
+                                  (total, item) =>
+                                    total + (item.totalCost ?? 0),
+                                  0,
+                                ),
+                                request.currency,
                               )}
                             </td>
-
-                            <td className="whitespace-nowrap px-5 py-4">
-                              <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                                {
-                                  request.status
-                                }
-                              </span>
-                            </td>
-
-                            <td className="whitespace-nowrap px-5 py-4">
-                              <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                                {
-                                  request.syncStatus
-                                }
-                              </span>
-                            </td>
-
-                            {permissions.canViewCost && (
-                              <td className="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
-                                {formatMoney(
-                                  request.items.reduce(
-                                    (
-                                      total,
-                                      item,
-                                    ) =>
-                                      total +
-                                      (
-                                        item.totalCost ??
-                                        0
-                                      ),
-                                    0,
-                                  ),
-                                  request.currency,
-                                )}
-                              </td>
-                            )}
-                          </tr>
-                        ),
-                      )}
+                          )}
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
 
-                  {replenishmentRequests.length ===
-                    0 && (
+                  {replenishmentRequests.length === 0 && (
                     <div className="px-6 py-12 text-center">
                       <p className="font-bold text-slate-800">
                         Todavía no hay solicitudes de reposición
                       </p>
 
                       <p className="mt-2 text-sm text-slate-500">
-                        Usa “Generar solicitud” en una sugerencia para crear la primera.
+                        Usa “Generar solicitud” en una sugerencia para crear la
+                        primera.
                       </p>
                     </div>
                   )}
                 </DataraTableScroll>
               </section>
             </div>
-          ) : activeView ===
-            "counts" ? (
+          ) : activeView === "counts" ? (
             <div className="p-5 sm:p-6">
               <InventoryCountsWorkspace
                 locations={locations}
-                canCreate={
-                  permissions.canCreate
-                }
-                canEdit={
-                  permissions.canEdit
-                }
-                onInventoryChanged={
-                  loadInventory
-                }
+                canCreate={permissions.canCreate}
+                canEdit={permissions.canEdit}
+                onInventoryChanged={loadInventory}
               />
             </div>
           ) : isLoading ? (
@@ -6045,460 +3888,367 @@ export default function InventariosPage() {
                 </p>
               </div>
             </div>
-          ) : activeView ===
-            "stocks" ? (
+          ) : activeView === "stocks" ? (
             <DataraTableScroll>
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr>
                     {[
                       {
-                        label:
-                          productSingularLabel,
-                        field:
-                          "productName" as
-                          StockSortField,
+                        label: productSingularLabel,
+                        field: "productName" as StockSortField,
                       },
                       {
-                        label:
-                          "Existencia total",
-                        field:
-                          "quantity" as
-                          StockSortField,
+                        label: "Existencia total",
+                        field: "quantity" as StockSortField,
                       },
                       {
                         label: "Reservado",
-                        field:
-                          "reservedQuantity" as
-                          StockSortField,
+                        field: "reservedQuantity" as StockSortField,
                       },
                       {
                         label: "Disponible",
-                        field:
-                          "availableQuantity" as
-                          StockSortField,
+                        field: "availableQuantity" as StockSortField,
                       },
                       {
                         label: "Ubicaciones",
-                        field:
-                          "locationCount" as
-                          StockSortField,
+                        field: "locationCount" as StockSortField,
                       },
                       {
                         label: "Estado",
-                        field:
-                          "status" as
-                          StockSortField,
+                        field: "status" as StockSortField,
                       },
                       {
                         label: "Valor",
-                        field:
-                          "inventoryValue" as
-                          StockSortField,
+                        field: "inventoryValue" as StockSortField,
                       },
                       {
                         label: "Detalle",
                         field: null,
                       },
-                    ].map(
-                      (header) => (
-                        <th
-                          key={
-                            header.label
-                          }
-                          className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
-                        >
-                          {header.field ? (
-                            <button
-                              type="button"
-                              className="inline-flex items-center gap-2 transition hover:text-slate-950"
-                              onClick={() =>
-                                handleStockSort(
-                                  header.field,
-                                )
-                              }
-                            >
-                              {
-                                header.label
-                              }
+                    ].map((header) => (
+                      <th
+                        key={header.label}
+                        className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+                      >
+                        {header.field ? (
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-2 transition hover:text-slate-950"
+                            onClick={() => handleStockSort(header.field)}
+                          >
+                            {header.label}
 
-                              {stockSortField ===
-                                header.field && (
-                                  <span className="text-blue-600">
-                                    {stockSortDirection ===
-                                      "asc"
-                                      ? "↑"
-                                      : "↓"}
-                                  </span>
-                                )}
-                            </button>
-                          ) : (
-                            header.label
-                          )}
-                        </th>
-                      ),
-                    )}
+                            {stockSortField === header.field && (
+                              <span className="text-blue-600">
+                                {stockSortDirection === "asc" ? "↑" : "↓"}
+                              </span>
+                            )}
+                          </button>
+                        ) : (
+                          header.label
+                        )}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {visibleStocks.map(
-                    (record) => {
-                      const isExpanded =
-                        expandedProductIds.includes(
-                          record.productId,
-                        );
+                  {visibleStocks.map((record) => {
+                    const isExpanded = expandedProductIds.includes(
+                      record.productId,
+                    );
 
-                      return (
-                        <Fragment
-                          key={
-                            record.productId
-                          }
-                        >
-                          <tr className="transition hover:bg-slate-50">
-                            <td className="min-w-64 px-5 py-4">
-                              <p className="font-semibold text-slate-950">
-                                {
-                                  record.productName
-                                }
-                              </p>
+                    return (
+                      <Fragment key={record.productId}>
+                        <tr className="transition hover:bg-slate-50">
+                          <td className="min-w-64 px-5 py-4">
+                            <p className="font-semibold text-slate-950">
+                              {record.productName}
+                            </p>
 
-                              <p className="mt-1 text-xs text-slate-500">
-                                {record.productCode ??
-                                  "Sin código"}
+                            <p className="mt-1 text-xs text-slate-500">
+                              {record.productCode ?? "Sin código"}
 
-                                {record.category
-                                  ? ` · ${record.category}`
-                                  : ""}
-                              </p>
-                            </td>
+                              {record.category ? ` · ${record.category}` : ""}
+                            </p>
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4 text-xl font-black text-slate-950">
-                              {
-                                record.quantity
-                              }
-                            </td>
+                          <td className="whitespace-nowrap px-5 py-4 text-xl font-black text-slate-950">
+                            {record.quantity}
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-violet-700">
-                              {
-                                record.reservedQuantity
-                              }
-                            </td>
+                          <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-violet-700">
+                            {record.reservedQuantity}
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4 text-xl font-black text-blue-700">
-                              {
-                                record.availableQuantity
-                              }
-                            </td>
+                          <td className="whitespace-nowrap px-5 py-4 text-xl font-black text-blue-700">
+                            {record.availableQuantity}
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4">
-                              <p className="font-bold text-slate-900">
-                                {
-                                  record.locationCount
-                                }
-                              </p>
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <p className="font-bold text-slate-900">
+                              {record.locationCount}
+                            </p>
 
-                              <p className="mt-1 text-xs text-slate-500">
-                                {record.locationCount ===
-                                  1
-                                  ? "ubicación con existencias"
-                                  : "ubicaciones con existencias"}
-                              </p>
-                            </td>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {record.locationCount === 1
+                                ? "ubicación con existencias"
+                                : "ubicaciones con existencias"}
+                            </p>
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4">
-                              <span
-                                className={[
-                                  "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
-                                  getStatusClassName(
-                                    record.status,
-                                  ),
-                                ].join(
-                                  " ",
-                                )}
-                              >
-                                {
-                                  record.status
-                                }
-                              </span>
-                            </td>
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <span
+                              className={[
+                                "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
+                                getStatusClassName(record.status),
+                              ].join(" ")}
+                            >
+                              {record.status}
+                            </span>
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-slate-800">
-                              {record.inventoryValue !==
-                                null
-                                ? formatMoney(
+                          <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-slate-800">
+                            {record.inventoryValue !== null
+                              ? formatMoney(
                                   record.inventoryValue,
                                   record.currency,
                                 )
-                                : "Restringido"}
-                            </td>
+                              : "Restringido"}
+                          </td>
 
-                            <td className="whitespace-nowrap px-5 py-4">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="secondary"
-                                onClick={() =>
-                                  toggleProductLocations(
-                                    record.productId,
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() =>
+                                toggleProductLocations(record.productId)
+                              }
+                            >
+                              {isExpanded
+                                ? "Ocultar ubicaciones"
+                                : "Ver ubicaciones"}
+                            </Button>
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr className="bg-slate-50/80">
+                            <td colSpan={8} className="px-5 py-5">
+                              <div className="mb-4 flex items-center justify-between gap-4">
+                                <div>
+                                  <p className="font-bold text-slate-950">
+                                    Distribución por ubicación
+                                  </p>
+
+                                  <p className="mt-1 text-sm text-slate-500">
+                                    Existencias y parámetros operativos de cada
+                                    sucursal o bodega.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="grid gap-4 xl:grid-cols-2">
+                                {record.locations
+                                  .filter(
+                                    (locationStock) =>
+                                      locationStock.quantity > 0,
                                   )
-                                }
-                              >
-                                {isExpanded
-                                  ? "Ocultar ubicaciones"
-                                  : "Ver ubicaciones"}
-                              </Button>
+                                  .map((locationStock) => (
+                                    <article
+                                      key={locationStock.id}
+                                      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                          <p className="font-bold text-slate-950">
+                                            {locationStock.locationLabel}
+                                          </p>
+
+                                          <p className="mt-1 text-sm text-slate-500">
+                                            {locationStock.branchName}
+                                            {" · "}
+                                            {locationStock.locationType}
+                                          </p>
+
+                                          <p className="mt-1 text-xs text-slate-400">
+                                            {locationStock.binLocation
+                                              ? `Posición: ${locationStock.binLocation}`
+                                              : "Sin posición física"}
+                                          </p>
+                                        </div>
+
+                                        <span
+                                          className={[
+                                            "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
+                                            getStatusClassName(
+                                              locationStock.status,
+                                            ),
+                                          ].join(" ")}
+                                        >
+                                          {locationStock.status}
+                                        </span>
+                                      </div>
+
+                                      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                        <div className="rounded-xl bg-slate-100 p-3">
+                                          <p className="text-xs uppercase tracking-wider text-slate-500">
+                                            Existencia
+                                          </p>
+
+                                          <p className="mt-1 text-lg font-black text-slate-950">
+                                            {locationStock.quantity}
+                                          </p>
+                                        </div>
+
+                                        <div className="rounded-xl bg-violet-50 p-3">
+                                          <p className="text-xs uppercase tracking-wider text-violet-600">
+                                            Reservado
+                                          </p>
+
+                                          <p className="mt-1 text-lg font-black text-violet-700">
+                                            {locationStock.reservedQuantity}
+                                          </p>
+                                        </div>
+
+                                        <div className="rounded-xl bg-blue-50 p-3">
+                                          <p className="text-xs uppercase tracking-wider text-blue-600">
+                                            Disponible
+                                          </p>
+
+                                          <p className="mt-1 text-lg font-black text-blue-700">
+                                            {locationStock.availableQuantity}
+                                          </p>
+                                        </div>
+
+                                        <div className="rounded-xl bg-amber-50 p-3">
+                                          <p className="text-xs uppercase tracking-wider text-amber-600">
+                                            Mínimo
+                                          </p>
+
+                                          <p className="mt-1 text-lg font-black text-amber-700">
+                                            {locationStock.minimumQuantity}
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                                        {permissions.canCreate && (
+                                          <>
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              onClick={() =>
+                                                openMovementDrawer(
+                                                  locationStock,
+                                                  "Entrada",
+                                                )
+                                              }
+                                            >
+                                              Entrada
+                                            </Button>
+
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              variant="secondary"
+                                              disabled={
+                                                locationStock.availableQuantity <=
+                                                0
+                                              }
+                                              onClick={() =>
+                                                openMovementDrawer(
+                                                  locationStock,
+                                                  "Salida",
+                                                )
+                                              }
+                                            >
+                                              Salida
+                                            </Button>
+                                          </>
+                                        )}
+
+                                        {permissions.canEdit && (
+                                          <>
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              variant="secondary"
+                                              disabled={
+                                                locationStock.availableQuantity <=
+                                                  0 ||
+                                                activeLocations.length < 2
+                                              }
+                                              className="border-violet-200 bg-violet-50 text-violet-700 hover:border-violet-300 hover:bg-violet-100"
+                                              onClick={() =>
+                                                openTransferDrawer(
+                                                  locationStock,
+                                                )
+                                              }
+                                            >
+                                              Transferir
+                                            </Button>
+
+                                            <Button
+                                              type="button"
+                                              size="sm"
+                                              variant="secondary"
+                                              className="border-blue-300 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100"
+                                              onClick={() =>
+                                                openMovementDrawer(
+                                                  locationStock,
+                                                  "Ajuste",
+                                                )
+                                              }
+                                            >
+                                              Ajustar
+                                            </Button>
+
+                                            {locationStock.stockId && (
+                                              <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="secondary"
+                                                className="border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 hover:bg-slate-200"
+                                                onClick={() =>
+                                                  openStockConfiguration(
+                                                    locationStock,
+                                                  )
+                                                }
+                                              >
+                                                Configurar
+                                              </Button>
+                                            )}
+                                          </>
+                                        )}
+                                      </div>
+                                    </article>
+                                  ))}
+                              </div>
                             </td>
                           </tr>
-
-                          {isExpanded && (
-                            <tr className="bg-slate-50/80">
-                              <td
-                                colSpan={8}
-                                className="px-5 py-5"
-                              >
-                                <div className="mb-4 flex items-center justify-between gap-4">
-                                  <div>
-                                    <p className="font-bold text-slate-950">
-                                      Distribución por ubicación
-                                    </p>
-
-                                    <p className="mt-1 text-sm text-slate-500">
-                                      Existencias y parámetros operativos de cada sucursal o bodega.
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="grid gap-4 xl:grid-cols-2">
-                                  {record.locations
-                                    .filter(
-                                      (
-                                        locationStock,
-                                      ) =>
-                                        locationStock.quantity >
-                                        0,
-                                    )
-                                    .map(
-                                      (
-                                        locationStock,
-                                      ) => (
-                                        <article
-                                          key={
-                                            locationStock.id
-                                          }
-                                          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                                        >
-                                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                            <div>
-                                              <p className="font-bold text-slate-950">
-                                                {
-                                                  locationStock.locationLabel
-                                                }
-                                              </p>
-
-                                              <p className="mt-1 text-sm text-slate-500">
-                                                {
-                                                  locationStock.branchName
-                                                }
-                                                {" · "}
-                                                {
-                                                  locationStock.locationType
-                                                }
-                                              </p>
-
-                                              <p className="mt-1 text-xs text-slate-400">
-                                                {locationStock.binLocation
-                                                  ? `Posición: ${locationStock.binLocation}`
-                                                  : "Sin posición física"}
-                                              </p>
-                                            </div>
-
-                                            <span
-                                              className={[
-                                                "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
-                                                getStatusClassName(
-                                                  locationStock.status,
-                                                ),
-                                              ].join(
-                                                " ",
-                                              )}
-                                            >
-                                              {
-                                                locationStock.status
-                                              }
-                                            </span>
-                                          </div>
-
-                                          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                            <div className="rounded-xl bg-slate-100 p-3">
-                                              <p className="text-xs uppercase tracking-wider text-slate-500">
-                                                Existencia
-                                              </p>
-
-                                              <p className="mt-1 text-lg font-black text-slate-950">
-                                                {
-                                                  locationStock.quantity
-                                                }
-                                              </p>
-                                            </div>
-
-                                            <div className="rounded-xl bg-violet-50 p-3">
-                                              <p className="text-xs uppercase tracking-wider text-violet-600">
-                                                Reservado
-                                              </p>
-
-                                              <p className="mt-1 text-lg font-black text-violet-700">
-                                                {
-                                                  locationStock.reservedQuantity
-                                                }
-                                              </p>
-                                            </div>
-
-                                            <div className="rounded-xl bg-blue-50 p-3">
-                                              <p className="text-xs uppercase tracking-wider text-blue-600">
-                                                Disponible
-                                              </p>
-
-                                              <p className="mt-1 text-lg font-black text-blue-700">
-                                                {
-                                                  locationStock.availableQuantity
-                                                }
-                                              </p>
-                                            </div>
-
-                                            <div className="rounded-xl bg-amber-50 p-3">
-                                              <p className="text-xs uppercase tracking-wider text-amber-600">
-                                                Mínimo
-                                              </p>
-
-                                              <p className="mt-1 text-lg font-black text-amber-700">
-                                                {
-                                                  locationStock.minimumQuantity
-                                                }
-                                              </p>
-                                            </div>
-                                          </div>
-
-                                          <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                                            {permissions.canCreate && (
-                                              <>
-                                                <Button
-                                                  type="button"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    openMovementDrawer(
-                                                      locationStock,
-                                                      "Entrada",
-                                                    )
-                                                  }
-                                                >
-                                                  Entrada
-                                                </Button>
-
-                                                <Button
-                                                  type="button"
-                                                  size="sm"
-                                                  variant="secondary"
-                                                  disabled={
-                                                    locationStock.availableQuantity <=
-                                                    0
-                                                  }
-                                                  onClick={() =>
-                                                    openMovementDrawer(
-                                                      locationStock,
-                                                      "Salida",
-                                                    )
-                                                  }
-                                                >
-                                                  Salida
-                                                </Button>
-                                              </>
-                                            )}
-
-                                            {permissions.canEdit && (
-                                              <>
-                                                <Button
-                                                  type="button"
-                                                  size="sm"
-                                                  variant="secondary"
-                                                  disabled={
-                                                    locationStock.availableQuantity <=
-                                                    0 ||
-                                                    activeLocations.length <
-                                                    2
-                                                  }
-                                                  className="border-violet-200 bg-violet-50 text-violet-700 hover:border-violet-300 hover:bg-violet-100"
-                                                  onClick={() =>
-                                                    openTransferDrawer(
-                                                      locationStock,
-                                                    )
-                                                  }
-                                                >
-                                                  Transferir
-                                                </Button>
-
-                                                <Button
-                                                  type="button"
-                                                  size="sm"
-                                                  variant="secondary"
-                                                  className="border-blue-300 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100"
-                                                  onClick={() =>
-                                                    openMovementDrawer(
-                                                      locationStock,
-                                                      "Ajuste",
-                                                    )
-                                                  }
-                                                >
-                                                  Ajustar
-                                                </Button>
-
-                                                {locationStock.stockId && (
-                                                  <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="secondary"
-                                                    className="border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 hover:bg-slate-200"
-                                                    onClick={() =>
-                                                      openStockConfiguration(
-                                                        locationStock,
-                                                      )
-                                                    }
-                                                  >
-                                                    Configurar
-                                                  </Button>
-                                                )}
-                                              </>
-                                            )}
-                                          </div>
-                                        </article>
-                                      ),
-                                    )}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      );
-                    },
-                  )}
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
 
-              {visibleStocks.length ===
-                0 && (
-                  <div className="px-6 py-20 text-center">
-                    <p className="text-lg font-bold text-slate-800">
-                      No encontramos existencias
-                    </p>
+              {visibleStocks.length === 0 && (
+                <div className="px-6 py-20 text-center">
+                  <p className="text-lg font-bold text-slate-800">
+                    No encontramos existencias
+                  </p>
 
-                    <p className="mt-2 text-sm text-slate-500">
-                      Cambia los filtros o registra el primer movimiento.
-                    </p>
-                  </div>
-                )}
+                  <p className="mt-2 text-sm text-slate-500">
+                    Cambia los filtros o registra el primer movimiento.
+                  </p>
+                </div>
+              )}
             </DataraTableScroll>
-          ) : activeView ===
-            "movements" ? (
+          ) : activeView === "movements" ? (
             <DataraTableScroll>
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
@@ -6506,218 +4256,153 @@ export default function InventariosPage() {
                     {[
                       {
                         label: "Fecha",
-                        field:
-                          "createdAt" as
-                          MovementSortField,
+                        field: "createdAt" as MovementSortField,
                       },
                       {
                         label: "Movimiento",
-                        field:
-                          "type" as
-                          MovementSortField,
+                        field: "type" as MovementSortField,
                       },
                       {
-                        label:
-                          productSingularLabel,
-                        field:
-                          "productName" as
-                          MovementSortField,
+                        label: productSingularLabel,
+                        field: "productName" as MovementSortField,
                       },
                       {
                         label: "Ubicación",
-                        field:
-                          "locationName" as
-                          MovementSortField,
+                        field: "locationName" as MovementSortField,
                       },
                       {
                         label: "Sucursal",
-                        field:
-                          "branchName" as
-                          MovementSortField,
+                        field: "branchName" as MovementSortField,
                       },
                       {
                         label: "Cantidad",
-                        field:
-                          "quantity" as
-                          MovementSortField,
+                        field: "quantity" as MovementSortField,
                       },
                       {
                         label: "Anterior",
-                        field:
-                          "previousQuantity" as
-                          MovementSortField,
+                        field: "previousQuantity" as MovementSortField,
                       },
                       {
                         label: "Resultado",
-                        field:
-                          "resultingQuantity" as
-                          MovementSortField,
+                        field: "resultingQuantity" as MovementSortField,
                       },
                       {
                         label: "Motivo",
-                        field:
-                          "reason" as
-                          MovementSortField,
+                        field: "reason" as MovementSortField,
                       },
                       {
                         label: "Referencia",
-                        field:
-                          "reference" as
-                          MovementSortField,
+                        field: "reference" as MovementSortField,
                       },
                       {
                         label: "Realizado por",
-                        field:
-                          "performedByName" as
-                          MovementSortField,
+                        field: "performedByName" as MovementSortField,
                       },
-                    ].map(
-                      (header) => (
-                        <th
-                          key={
-                            header.label
-                          }
-                          className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+                    ].map((header) => (
+                      <th
+                        key={header.label}
+                        className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+                      >
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 transition hover:text-slate-950"
+                          onClick={() => handleMovementSort(header.field)}
                         >
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-2 transition hover:text-slate-950"
-                            onClick={() =>
-                              handleMovementSort(
-                                header.field,
-                              )
-                            }
-                          >
-                            {
-                              header.label
-                            }
+                          {header.label}
 
-                            {movementSortField ===
-                              header.field && (
-                                <span className="text-blue-600">
-                                  {movementSortDirection ===
-                                    "asc"
-                                    ? "↑"
-                                    : "↓"}
-                                </span>
-                              )}
-                          </button>
-                        </th>
-                      ),
-                    )}
+                          {movementSortField === header.field && (
+                            <span className="text-blue-600">
+                              {movementSortDirection === "asc" ? "↑" : "↓"}
+                            </span>
+                          )}
+                        </button>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {visibleMovements.map(
-                    (movement) => (
-                      <tr
-                        key={movement.id}
-                        className="hover:bg-slate-50"
-                      >
-                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                          {formatDate(
-                            movement.createdAt,
-                          )}
-                        </td>
+                  {visibleMovements.map((movement) => (
+                    <tr key={movement.id} className="hover:bg-slate-50">
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                        {formatDate(movement.createdAt)}
+                      </td>
 
-                        <td className="whitespace-nowrap px-5 py-4">
-                          <span
-                            className={[
-                              "rounded-full px-3 py-1 text-xs font-semibold",
-                              getMovementClassName(
-                                movement.type,
-                              ),
-                            ].join(" ")}
-                          >
-                            {movement.type}
-                          </span>
-                        </td>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        <span
+                          className={[
+                            "rounded-full px-3 py-1 text-xs font-semibold",
+                            getMovementClassName(movement.type),
+                          ].join(" ")}
+                        >
+                          {movement.type}
+                        </span>
+                      </td>
 
-                        <td className="min-w-56 px-5 py-4">
-                          <p className="font-semibold text-slate-950">
-                            {
-                              movement.productName
-                            }
-                          </p>
+                      <td className="min-w-56 px-5 py-4">
+                        <p className="font-semibold text-slate-950">
+                          {movement.productName}
+                        </p>
 
-                          <p className="mt-1 text-xs text-slate-500">
-                            {movement.productCode ??
-                              "Sin código"}
-                          </p>
-                        </td>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {movement.productCode ?? "Sin código"}
+                        </p>
+                      </td>
 
-                        <td className="min-w-52 px-5 py-4">
-                          <p className="font-semibold text-slate-900">
-                            {movement.locationName ??
-                              "Sin ubicación"}
-                          </p>
+                      <td className="min-w-52 px-5 py-4">
+                        <p className="font-semibold text-slate-900">
+                          {movement.locationName ?? "Sin ubicación"}
+                        </p>
 
-                          <p className="mt-1 text-xs text-slate-500">
-                            Ubicación de inventario
-                          </p>
-                        </td>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Ubicación de inventario
+                        </p>
+                      </td>
 
-                        <td className="min-w-48 px-5 py-4 text-sm text-slate-700">
-                          {
-                            movement.branchName
-                          }
-                        </td>
+                      <td className="min-w-48 px-5 py-4 text-sm text-slate-700">
+                        {movement.branchName}
+                      </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-sm font-black text-slate-950">
-                          {movement.quantity >
-                            0
-                            ? "+"
-                            : ""}
-                          {
-                            movement.quantity
-                          }
-                        </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-sm font-black text-slate-950">
+                        {movement.quantity > 0 ? "+" : ""}
+                        {movement.quantity}
+                      </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                          {
-                            movement.previousQuantity
-                          }
-                        </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                        {movement.previousQuantity}
+                      </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">
-                          {
-                            movement.resultingQuantity
-                          }
-                        </td>
+                      <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">
+                        {movement.resultingQuantity}
+                      </td>
 
-                        <td className="min-w-52 px-5 py-4 text-sm text-slate-600">
-                          {movement.reason ??
-                            "Sin motivo"}
-                        </td>
+                      <td className="min-w-52 px-5 py-4 text-sm text-slate-600">
+                        {movement.reason ?? "Sin motivo"}
+                      </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                          {movement.reference ??
-                            "—"}
-                        </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                        {movement.reference ?? "—"}
+                      </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                          {movement.performedByName ??
-                            "Usuario"}
-                        </td>
-                      </tr>
-                    ),
-                  )}
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                        {movement.performedByName ?? "Usuario"}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 
-              {visibleMovements.length ===
-                0 && (
-                  <div className="px-6 py-20 text-center">
-                    <p className="text-lg font-bold text-slate-800">
-                      Aún no hay movimientos
-                    </p>
+              {visibleMovements.length === 0 && (
+                <div className="px-6 py-20 text-center">
+                  <p className="text-lg font-bold text-slate-800">
+                    Aún no hay movimientos
+                  </p>
 
-                    <p className="mt-2 text-sm text-slate-500">
-                      Las entradas, salidas y ajustes aparecerán aquí.
-                    </p>
-                  </div>
-                )}
+                  <p className="mt-2 text-sm text-slate-500">
+                    Las entradas, salidas y ajustes aparecerán aquí.
+                  </p>
+                </div>
+              )}
             </DataraTableScroll>
           ) : (
             <DataraTableScroll>
@@ -6733,581 +4418,459 @@ export default function InventariosPage() {
                       "Estado",
                       "Vencimiento",
                       "Acciones",
-                    ].map(
-                      (header) => (
-                        <th
-                          key={header}
-                          className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
-                        >
-                          {header}
-                        </th>
-                      ),
-                    )}
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {visibleReservations.map(
-                    (reservation) => {
-                      const isUpdating =
-                        reservationBeingUpdated ===
-                        reservation.id;
+                  {visibleReservations.map((reservation) => {
+                    const isUpdating =
+                      reservationBeingUpdated === reservation.id;
 
-                      const reservationGroupId =
-                        reservation.sourceType ===
-                          "Oportunidad" &&
-                          reservation.sourceId
-                          ? reservation.sourceId
-                          : null;
+                    const reservationGroupId =
+                      reservation.sourceType === "Oportunidad" &&
+                      reservation.sourceId
+                        ? reservation.sourceId
+                        : null;
 
-                      const relatedReservations =
-                        reservationGroupId
-                          ? visibleReservations.filter(
-                            (
-                              relatedReservation,
-                            ) =>
-                              relatedReservation.sourceType ===
-                              "Oportunidad" &&
-                              relatedReservation.sourceId ===
-                              reservationGroupId,
-                          )
-                          : [
-                            reservation,
-                          ];
+                    const relatedReservations = reservationGroupId
+                      ? visibleReservations.filter(
+                          (relatedReservation) =>
+                            relatedReservation.sourceType === "Oportunidad" &&
+                            relatedReservation.sourceId === reservationGroupId,
+                        )
+                      : [reservation];
 
-                      const relatedReservationCount =
-                        relatedReservations.length;
+                    const relatedReservationCount = relatedReservations.length;
 
-                      const isReservationGroup =
-                        Boolean(
-                          reservationGroupId,
-                        ) &&
-                        relatedReservationCount >
-                        1;
+                    const isReservationGroup =
+                      Boolean(reservationGroupId) &&
+                      relatedReservationCount > 1;
 
-                      const isFirstGroupReservation =
-                        !isReservationGroup ||
-                        relatedReservations[0]
-                          ?.id ===
-                        reservation.id;
+                    const isFirstGroupReservation =
+                      !isReservationGroup ||
+                      relatedReservations[0]?.id === reservation.id;
 
-                      const isReservationGroupExpanded =
-                        reservationGroupId
-                          ? expandedReservationGroupIds.includes(
-                            reservationGroupId,
-                          )
-                          : false;
+                    const isReservationGroupExpanded = reservationGroupId
+                      ? expandedReservationGroupIds.includes(reservationGroupId)
+                      : false;
 
-                      const groupQuantity =
-                        relatedReservations.reduce(
-                          (
-                            total,
-                            relatedReservation,
-                          ) =>
-                            total +
-                            relatedReservation.quantity,
-                          0,
-                        );
+                    const groupQuantity = relatedReservations.reduce(
+                      (total, relatedReservation) =>
+                        total + relatedReservation.quantity,
+                      0,
+                    );
 
-                      const activeGroupReservations =
-                        relatedReservations.filter(
-                          (
-                            relatedReservation,
-                          ) =>
-                            relatedReservation.status ===
-                            "Activa",
-                        ).length;
+                    const activeGroupReservations = relatedReservations.filter(
+                      (relatedReservation) =>
+                        relatedReservation.status === "Activa",
+                    ).length;
 
-                      const deliveredGroupReservations =
-                        relatedReservations.filter(
-                          (
-                            relatedReservation,
-                          ) =>
-                            relatedReservation.status ===
-                            "Consumida",
-                        ).length;
+                    const deliveredGroupReservations =
+                      relatedReservations.filter(
+                        (relatedReservation) =>
+                          relatedReservation.status === "Consumida",
+                      ).length;
 
-                      const releasedGroupReservations =
-                        relatedReservations.filter(
-                          (
-                            relatedReservation,
-                          ) =>
-                            relatedReservation.status ===
-                            "Liberada",
-                        ).length;
+                    const releasedGroupReservations =
+                      relatedReservations.filter(
+                        (relatedReservation) =>
+                          relatedReservation.status === "Liberada",
+                      ).length;
 
-                      const cancelledGroupReservations =
-                        relatedReservations.filter(
-                          (
-                            relatedReservation,
-                          ) =>
-                            relatedReservation.status ===
-                            "Cancelada",
-                        ).length;
+                    const cancelledGroupReservations =
+                      relatedReservations.filter(
+                        (relatedReservation) =>
+                          relatedReservation.status === "Cancelada",
+                      ).length;
 
-                      const expiredGroupReservations =
-                        relatedReservations.filter(
-                          (
-                            relatedReservation,
-                          ) =>
-                            relatedReservation.status ===
-                            "Vencida",
-                        ).length;
+                    const expiredGroupReservations = relatedReservations.filter(
+                      (relatedReservation) =>
+                        relatedReservation.status === "Vencida",
+                    ).length;
 
-                      const groupStatusLabel =
-                        activeGroupReservations ===
-                          relatedReservationCount
-                          ? `${activeGroupReservations} partida(s) activa(s) · ${groupQuantity} unidad(es)`
-                          : deliveredGroupReservations ===
+                    const groupStatusLabel =
+                      activeGroupReservations === relatedReservationCount
+                        ? `${activeGroupReservations} partida(s) activa(s) · ${groupQuantity} unidad(es)`
+                        : deliveredGroupReservations === relatedReservationCount
+                          ? `${deliveredGroupReservations} partida(s) entregada(s) · ${groupQuantity} unidad(es)`
+                          : releasedGroupReservations ===
                               relatedReservationCount
-                            ? `${deliveredGroupReservations} partida(s) entregada(s) · ${groupQuantity} unidad(es)`
-                            : releasedGroupReservations ===
-                                relatedReservationCount
-                              ? `${releasedGroupReservations} partida(s) liberada(s) · ${groupQuantity} unidad(es)`
-                              : cancelledGroupReservations ===
-                                  relatedReservationCount
-                                ? `${cancelledGroupReservations} partida(s) cancelada(s) · ${groupQuantity} unidad(es)`
-                                : expiredGroupReservations ===
-                                    relatedReservationCount
-                                  ? `${expiredGroupReservations} partida(s) vencida(s) · ${groupQuantity} unidad(es)`
-                                  : "Estados mixtos";
-
-                      const groupStatusClassName =
-                        activeGroupReservations ===
-                          relatedReservationCount
-                          ? "bg-violet-50 text-violet-700 ring-violet-600/20"
-                          : deliveredGroupReservations ===
-                              relatedReservationCount
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                            ? `${releasedGroupReservations} partida(s) liberada(s) · ${groupQuantity} unidad(es)`
                             : cancelledGroupReservations ===
                                 relatedReservationCount
-                              ? "bg-red-50 text-red-700 ring-red-600/20"
+                              ? `${cancelledGroupReservations} partida(s) cancelada(s) · ${groupQuantity} unidad(es)`
                               : expiredGroupReservations ===
                                   relatedReservationCount
-                                ? "bg-amber-50 text-amber-700 ring-amber-600/20"
-                                : "bg-slate-100 text-slate-700 ring-slate-500/20";
+                                ? `${expiredGroupReservations} partida(s) vencida(s) · ${groupQuantity} unidad(es)`
+                                : "Estados mixtos";
 
-                      const isGroupUpdating =
-                        reservationGroupId
-                          ? reservationGroupBeingUpdated ===
-                          reservationGroupId
-                          : false;
-
-                      const statusClassName =
-                        reservation.status ===
-                          "Activa"
-                          ? "bg-violet-50 text-violet-700 ring-violet-600/20"
-                          : reservation.status ===
-                            "Consumida"
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-                            : reservation.status ===
-                              "Cancelada"
-                              ? "bg-red-50 text-red-700 ring-red-600/20"
+                    const groupStatusClassName =
+                      activeGroupReservations === relatedReservationCount
+                        ? "bg-violet-50 text-violet-700 ring-violet-600/20"
+                        : deliveredGroupReservations === relatedReservationCount
+                          ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                          : cancelledGroupReservations ===
+                              relatedReservationCount
+                            ? "bg-red-50 text-red-700 ring-red-600/20"
+                            : expiredGroupReservations ===
+                                relatedReservationCount
+                              ? "bg-amber-50 text-amber-700 ring-amber-600/20"
                               : "bg-slate-100 text-slate-700 ring-slate-500/20";
 
-                      return (
-                        <Fragment
-                          key={
-                            reservation.id
-                          }
-                        >
-                          {isReservationGroup &&
-                            isFirstGroupReservation && (
-                              <tr className="bg-blue-50/70">
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {formatDate(
-                                    relatedReservations[0]
-                                      .createdAt,
-                                  )}
-                                </td>
+                    const isGroupUpdating = reservationGroupId
+                      ? reservationGroupBeingUpdated === reservationGroupId
+                      : false;
 
-                                <td className="min-w-64 px-5 py-4">
-                                  <p className="font-black text-slate-950">
-                                    {relatedReservationCount} modelos reservados
-                                  </p>
+                    const statusClassName =
+                      reservation.status === "Activa"
+                        ? "bg-violet-50 text-violet-700 ring-violet-600/20"
+                        : reservation.status === "Consumida"
+                          ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                          : reservation.status === "Cancelada"
+                            ? "bg-red-50 text-red-700 ring-red-600/20"
+                            : "bg-slate-100 text-slate-700 ring-slate-500/20";
 
-                                  <p className="mt-1 max-w-72 truncate text-xs text-slate-500">
-                                    {relatedReservations
-                                      .map(
-                                        (
-                                          relatedReservation,
-                                        ) =>
-                                          relatedReservation.productName,
-                                      )
-                                      .join(
-                                        " · ",
-                                      )}
-                                  </p>
-                                </td>
+                    return (
+                      <Fragment key={reservation.id}>
+                        {isReservationGroup && isFirstGroupReservation && (
+                          <tr className="bg-blue-50/70">
+                            <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                              {formatDate(relatedReservations[0].createdAt)}
+                            </td>
 
-                                <td className="min-w-64 px-5 py-4">
-                                  <p className="font-semibold text-slate-800">
-                                    {
-                                      new Set(
-                                        relatedReservations.map(
-                                          (
-                                            relatedReservation,
-                                          ) =>
-                                            relatedReservation.locationId,
-                                        ),
-                                      ).size
-                                    }{" "}
-                                    ubicación(es)
-                                  </p>
+                            <td className="min-w-64 px-5 py-4">
+                              <p className="font-black text-slate-950">
+                                {relatedReservationCount} modelos reservados
+                              </p>
 
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    Abre el grupo para consultar cada modelo.
-                                  </p>
-                                </td>
+                              <p className="mt-1 max-w-72 truncate text-xs text-slate-500">
+                                {relatedReservations
+                                  .map(
+                                    (relatedReservation) =>
+                                      relatedReservation.productName,
+                                  )
+                                  .join(" · ")}
+                              </p>
+                            </td>
 
-                                <td className="min-w-60 px-5 py-4">
-                                  <p className="font-semibold text-slate-900">
-                                    {reservation.customerName ??
-                                      "Sin cliente"}
-                                  </p>
+                            <td className="min-w-64 px-5 py-4">
+                              <p className="font-semibold text-slate-800">
+                                {
+                                  new Set(
+                                    relatedReservations.map(
+                                      (relatedReservation) =>
+                                        relatedReservation.locationId,
+                                    ),
+                                  ).size
+                                }{" "}
+                                ubicación(es)
+                              </p>
 
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {reservation.sourceReference ??
-                                      "Sin referencia"}
-                                  </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                Abre el grupo para consultar cada modelo.
+                              </p>
+                            </td>
 
-                                  <span className="mt-2 inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-800">
-                                    Oportunidad
-                                  </span>
-                                </td>
+                            <td className="min-w-60 px-5 py-4">
+                              <p className="font-semibold text-slate-900">
+                                {reservation.customerName ?? "Sin cliente"}
+                              </p>
 
-                                <td className="whitespace-nowrap px-5 py-4 text-lg font-black text-violet-700">
-                                  {
-                                    groupQuantity
-                                  }
-                                </td>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {reservation.sourceReference ??
+                                  "Sin referencia"}
+                              </p>
 
-                                <td className="whitespace-nowrap px-5 py-4">
-                                  <span
-                                    className={[
-                                      "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
-                                      groupStatusClassName,
-                                    ].join(" ")}
-                                  >
-                                    {
-                                      groupStatusLabel
-                                    }
-                                  </span>
-                                </td>
+                              <span className="mt-2 inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-800">
+                                Oportunidad
+                              </span>
+                            </td>
 
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {reservation.expiresAt
-                                    ? formatDate(
-                                      reservation.expiresAt,
-                                    )
-                                    : "Sin vencimiento"}
-                                </td>
+                            <td className="whitespace-nowrap px-5 py-4 text-lg font-black text-violet-700">
+                              {groupQuantity}
+                            </td>
 
-                                <td className="whitespace-nowrap px-5 py-4">
-                                  <div className="flex min-w-max items-center gap-2">
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="secondary"
-                                      onClick={() =>
-                                        reservationGroupId &&
-                                        toggleReservationGroup(
-                                          reservationGroupId,
-                                        )
-                                      }
-                                    >
-                                      {isReservationGroupExpanded
-                                        ? "Ocultar modelos"
-                                        : `Ver ${relatedReservationCount} modelos`}
-                                    </Button>
-
-                                    {activeGroupReservations >
-                                      0 &&
-                                      permissions.canEdit &&
-                                      reservationGroupId && (
-                                        <div className="flex flex-nowrap items-center gap-2">
-                                          {reservationSettings.allowExtensions && (
-                                            <Button
-                                              type="button"
-                                              size="sm"
-                                              variant="secondary"
-                                              disabled={
-                                                isGroupUpdating
-                                              }
-                                              className="border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
-                                              onClick={() =>
-                                                openGroupExtensionDrawer(
-                                                  reservationGroupId,
-                                                )
-                                              }
-                                            >
-                                              Extender todas
-                                            </Button>
-                                          )}
-                                          <Button
-                                            type="button"
-                                            size="sm"
-                                            disabled={
-                                              isGroupUpdating
-                                            }
-                                            onClick={() =>
-                                              void handleReservationGroupAction(
-                                                reservationGroupId,
-                                                "Entregar",
-                                              )
-                                            }
-                                          >
-                                            {isGroupUpdating
-                                              ? "Procesando..."
-                                              : "Confirmar todas"}
-                                          </Button>
-
-                                          <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="secondary"
-                                            disabled={
-                                              isGroupUpdating
-                                            }
-                                            onClick={() =>
-                                              void handleReservationGroupAction(
-                                                reservationGroupId,
-                                                "Liberar",
-                                              )
-                                            }
-                                          >
-                                            Liberar todas
-                                          </Button>
-
-                                          <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="danger"
-                                            disabled={
-                                              isGroupUpdating
-                                            }
-                                            onClick={() =>
-                                              void handleReservationGroupAction(
-                                                reservationGroupId,
-                                                "Cancelar",
-                                              )
-                                            }
-                                          >
-                                            Cancelar todas
-                                          </Button>
-                                        </div>
-                                      )}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-
-                          {(
-                            !isReservationGroup ||
-                            isReservationGroupExpanded
-                          ) && (
-                              <tr
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <span
                                 className={[
-                                  "transition hover:bg-slate-50",
-                                  isReservationGroup
-                                    ? "bg-blue-50/20"
-                                    : "",
+                                  "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
+                                  groupStatusClassName,
                                 ].join(" ")}
                               >
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {formatDate(
-                                    reservation.createdAt,
-                                  )}
-                                </td>
+                                {groupStatusLabel}
+                              </span>
+                            </td>
 
-                                <td className="min-w-64 px-5 py-4">
-                                  <p className="font-semibold text-slate-950">
-                                    {
-                                      reservation.productName
-                                    }
-                                  </p>
+                            <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                              {reservation.expiresAt
+                                ? formatDate(reservation.expiresAt)
+                                : "Sin vencimiento"}
+                            </td>
 
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {reservation.productCode ??
-                                      "Sin código"}
-                                  </p>
-                                </td>
-
-                                <td className="min-w-64 px-5 py-4">
-                                  <p className="font-semibold text-slate-800">
-                                    {
-                                      reservation.locationLabel
-                                    }
-                                  </p>
-
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {
-                                      reservation.branchLabel
-                                    }
-                                  </p>
-                                </td>
-
-                                <td className="min-w-60 px-5 py-4">
-                                  <p className="font-semibold text-slate-800">
-                                    {reservation.customerName ??
-                                      "Sin cliente"}
-                                  </p>
-
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {reservation.sourceReference ??
-                                      "Sin referencia"}
-                                  </p>
-
-                                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
-                                      {
-                                        reservation.sourceType
-                                      }
-                                    </span>
-
-                                    {reservation.sourceType ===
-                                      "Oportunidad" &&
-                                      relatedReservationCount >
-                                      1 && (
-                                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-600/15">
-                                          Grupo de{" "}
-                                          {
-                                            relatedReservationCount
-                                          } modelos
-                                        </span>
-                                      )}
-                                  </div>
-                                </td>
-
-                                <td className="whitespace-nowrap px-5 py-4 text-lg font-black text-violet-700">
-                                  {
-                                    reservation.quantity
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <div className="flex min-w-max items-center gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    reservationGroupId &&
+                                    toggleReservationGroup(reservationGroupId)
                                   }
-                                </td>
+                                >
+                                  {isReservationGroupExpanded
+                                    ? "Ocultar modelos"
+                                    : `Ver ${relatedReservationCount} modelos`}
+                                </Button>
 
-                                <td className="whitespace-nowrap px-5 py-4">
-                                  <span
-                                    className={[
-                                      "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
-                                      statusClassName,
-                                    ].join(" ")}
-                                  >
-                                    {reservation.status ===
-                                      "Consumida"
-                                      ? "Entregada"
-                                      : reservation.status}
-                                  </span>
-                                </td>
-
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {reservation.expiresAt
-                                    ? formatDate(
-                                      reservation.expiresAt,
-                                    )
-                                    : "Sin vencimiento"}
-                                </td>
-
-                                <td className="whitespace-nowrap px-5 py-4">
-                                  {reservation.status ===
-                                    "Activa" &&
-                                    permissions.canEdit ? (
-                                    <div className="flex min-w-max flex-nowrap items-center gap-2">
+                                {activeGroupReservations > 0 &&
+                                  permissions.canEdit &&
+                                  reservationGroupId && (
+                                    <div className="flex flex-nowrap items-center gap-2">
                                       {reservationSettings.allowExtensions && (
                                         <Button
                                           type="button"
                                           size="sm"
                                           variant="secondary"
-                                          disabled={
-                                            isUpdating
-                                          }
+                                          disabled={isGroupUpdating}
                                           className="border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
                                           onClick={() =>
-                                            openExtensionDrawer(
-                                              reservation,
+                                            openGroupExtensionDrawer(
+                                              reservationGroupId,
                                             )
                                           }
                                         >
-                                          Extender
+                                          Extender todas
                                         </Button>
                                       )}
-
                                       <Button
                                         type="button"
                                         size="sm"
-                                        disabled={
-                                          isUpdating
-                                        }
+                                        disabled={isGroupUpdating}
                                         onClick={() =>
-                                          void handleReservationAction(
-                                            reservation,
-                                            "Consumir",
+                                          void handleReservationGroupAction(
+                                            reservationGroupId,
+                                            "Entregar",
                                           )
                                         }
                                       >
-                                        Confirmar entrega
+                                        {isGroupUpdating
+                                          ? "Procesando..."
+                                          : "Confirmar todas"}
                                       </Button>
 
                                       <Button
                                         type="button"
                                         size="sm"
                                         variant="secondary"
-                                        disabled={
-                                          isUpdating
-                                        }
+                                        disabled={isGroupUpdating}
                                         onClick={() =>
-                                          void handleReservationAction(
-                                            reservation,
+                                          void handleReservationGroupAction(
+                                            reservationGroupId,
                                             "Liberar",
                                           )
                                         }
                                       >
-                                        Liberar
+                                        Liberar todas
                                       </Button>
 
                                       <Button
                                         type="button"
                                         size="sm"
                                         variant="danger"
-                                        disabled={
-                                          isUpdating
-                                        }
+                                        disabled={isGroupUpdating}
                                         onClick={() =>
-                                          void handleReservationAction(
-                                            reservation,
+                                          void handleReservationGroupAction(
+                                            reservationGroupId,
                                             "Cancelar",
                                           )
                                         }
                                       >
-                                        Cancelar
+                                        Cancelar todas
                                       </Button>
                                     </div>
-                                  ) : (
-                                    <span className="text-sm text-slate-400">
-                                      Sin acciones
+                                  )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+
+                        {(!isReservationGroup ||
+                          isReservationGroupExpanded) && (
+                          <tr
+                            className={[
+                              "transition hover:bg-slate-50",
+                              isReservationGroup ? "bg-blue-50/20" : "",
+                            ].join(" ")}
+                          >
+                            <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                              {formatDate(reservation.createdAt)}
+                            </td>
+
+                            <td className="min-w-64 px-5 py-4">
+                              <p className="font-semibold text-slate-950">
+                                {reservation.productName}
+                              </p>
+
+                              <p className="mt-1 text-xs text-slate-500">
+                                {reservation.productCode ?? "Sin código"}
+                              </p>
+                            </td>
+
+                            <td className="min-w-64 px-5 py-4">
+                              <p className="font-semibold text-slate-800">
+                                {reservation.locationLabel}
+                              </p>
+
+                              <p className="mt-1 text-xs text-slate-500">
+                                {reservation.branchLabel}
+                              </p>
+                            </td>
+
+                            <td className="min-w-60 px-5 py-4">
+                              <p className="font-semibold text-slate-800">
+                                {reservation.customerName ?? "Sin cliente"}
+                              </p>
+
+                              <p className="mt-1 text-xs text-slate-500">
+                                {reservation.sourceReference ??
+                                  "Sin referencia"}
+                              </p>
+
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                                  {reservation.sourceType}
+                                </span>
+
+                                {reservation.sourceType === "Oportunidad" &&
+                                  relatedReservationCount > 1 && (
+                                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-600/15">
+                                      Grupo de {relatedReservationCount} modelos
                                     </span>
                                   )}
-                                </td>
-                              </tr>
-                            )}
-                        </Fragment>
-                      );
-                    },
-                  )}
+                              </div>
+                            </td>
+
+                            <td className="whitespace-nowrap px-5 py-4 text-lg font-black text-violet-700">
+                              {reservation.quantity}
+                            </td>
+
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <span
+                                className={[
+                                  "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
+                                  statusClassName,
+                                ].join(" ")}
+                              >
+                                {reservation.status === "Consumida"
+                                  ? "Entregada"
+                                  : reservation.status}
+                              </span>
+                            </td>
+
+                            <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                              {reservation.expiresAt
+                                ? formatDate(reservation.expiresAt)
+                                : "Sin vencimiento"}
+                            </td>
+
+                            <td className="whitespace-nowrap px-5 py-4">
+                              {reservation.status === "Activa" &&
+                              permissions.canEdit ? (
+                                <div className="flex min-w-max flex-nowrap items-center gap-2">
+                                  {reservationSettings.allowExtensions && (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="secondary"
+                                      disabled={isUpdating}
+                                      className="border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
+                                      onClick={() =>
+                                        openExtensionDrawer(reservation)
+                                      }
+                                    >
+                                      Extender
+                                    </Button>
+                                  )}
+
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() =>
+                                      void handleReservationAction(
+                                        reservation,
+                                        "Consumir",
+                                      )
+                                    }
+                                  >
+                                    Confirmar entrega
+                                  </Button>
+
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    disabled={isUpdating}
+                                    onClick={() =>
+                                      void handleReservationAction(
+                                        reservation,
+                                        "Liberar",
+                                      )
+                                    }
+                                  >
+                                    Liberar
+                                  </Button>
+
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="danger"
+                                    disabled={isUpdating}
+                                    onClick={() =>
+                                      void handleReservationAction(
+                                        reservation,
+                                        "Cancelar",
+                                      )
+                                    }
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-slate-400">
+                                  Sin acciones
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
 
-              {visibleReservations.length ===
-                0 && (
-                  <div className="px-6 py-20 text-center">
-                    <p className="text-lg font-bold text-slate-800">
-                      Aún no hay reservas
-                    </p>
+              {visibleReservations.length === 0 && (
+                <div className="px-6 py-20 text-center">
+                  <p className="text-lg font-bold text-slate-800">
+                    Aún no hay reservas
+                  </p>
 
-                    <p className="mt-2 text-sm text-slate-500">
-                      Las unidades apartadas para clientes o documentos comerciales aparecerán aquí.
-                    </p>
-                  </div>
-                )}
+                  <p className="mt-2 text-sm text-slate-500">
+                    Las unidades apartadas para clientes o documentos
+                    comerciales aparecerán aquí.
+                  </p>
+                </div>
+              )}
             </DataraTableScroll>
           )}
         </section>
@@ -7319,11 +4882,7 @@ export default function InventariosPage() {
             type="button"
             aria-label="Cerrar ubicaciones"
             className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
-            onClick={() =>
-              setIsLocationsDrawerOpen(
-                false,
-              )
-            }
+            onClick={() => setIsLocationsDrawerOpen(false)}
           />
 
           <aside className="absolute right-0 top-0 flex h-full w-full max-w-3xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl">
@@ -7339,17 +4898,12 @@ export default function InventariosPage() {
                   </h2>
 
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Administra sucursales con inventario y bodegas independientes.
+                    Administra sucursales con inventario y bodegas
+                    independientes.
                   </p>
                 </div>
 
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={
-                    openNewLocationForm
-                  }
-                >
+                <Button type="button" size="sm" onClick={openNewLocationForm}>
                   Nueva ubicación
                 </Button>
 
@@ -7357,11 +4911,7 @@ export default function InventariosPage() {
                   type="button"
                   aria-label="Cerrar"
                   className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:border-blue-300 hover:text-blue-700"
-                  onClick={() =>
-                    setIsLocationsDrawerOpen(
-                      false,
-                    )
-                  }
+                  onClick={() => setIsLocationsDrawerOpen(false)}
                 >
                   ×
                 </button>
@@ -7369,98 +4919,89 @@ export default function InventariosPage() {
             </header>
 
             <div className="flex-1 space-y-4 overflow-y-auto p-6 sm:p-8">
-              {locations.map(
-                (inventoryLocation) => (
-                  <article
-                    key={
-                      inventoryLocation.value
-                    }
-                    className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-bold text-slate-950">
-                            {
-                              inventoryLocation.label
-                            }
-                          </h3>
+              {locations.map((inventoryLocation) => (
+                <article
+                  key={inventoryLocation.value}
+                  className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-slate-950">
+                          {inventoryLocation.label}
+                        </h3>
 
-                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                            {
-                              inventoryLocation.type
-                            }
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                          {inventoryLocation.type}
+                        </span>
+
+                        {inventoryLocation.isDefault && (
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            Predeterminada
                           </span>
+                        )}
 
-                          {inventoryLocation.isDefault && (
-                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                              Predeterminada
-                            </span>
-                          )}
-
-                          {!inventoryLocation.active && (
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                              Inactiva
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="mt-2 text-sm text-slate-500">
-                          {inventoryLocation.branchLabel ??
-                            "Bodega independiente"}
-                        </p>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                          {[
-                            inventoryLocation.addressLine,
-                            inventoryLocation.city,
-                            inventoryLocation.state,
-                          ]
-                            .filter(Boolean)
-                            .join(", ") ||
-                            "Sin dirección registrada"}
-                        </p>
+                        {!inventoryLocation.active && (
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                            Inactiva
+                          </span>
+                        )}
                       </div>
 
-                      <div className="flex shrink-0 flex-wrap gap-2">
+                      <p className="mt-2 text-sm text-slate-500">
+                        {inventoryLocation.branchLabel ??
+                          "Bodega independiente"}
+                      </p>
+
+                      {inventoryLocation.source === "branch" ? (
+                        <span className="mt-2 block text-xs font-semibold text-blue-700">
+                          Administrada desde la configuración de sucursales
+                        </span>
+                      ) : null}
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        {[
+                          inventoryLocation.addressLine,
+                          inventoryLocation.city,
+                          inventoryLocation.state,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "Sin dirección registrada"}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={inventoryLocation.source === "branch"}
+                        onClick={() => openEditLocationForm(inventoryLocation)}
+                      >
+                        Editar
+                      </Button>
+
+                      {permissions.canManage && (
                         <Button
                           type="button"
                           size="sm"
-                          variant="secondary"
+                          variant={
+                            inventoryLocation.active ? "danger" : "secondary"
+                          }
+                          disabled={inventoryLocation.source === "branch"}
                           onClick={() =>
-                            openEditLocationForm(
-                              inventoryLocation,
-                            )
+                            handleToggleLocationActive(inventoryLocation)
                           }
                         >
-                          Editar
+                          {inventoryLocation.active
+                            ? "Desactivar"
+                            : "Reactivar"}
                         </Button>
-
-                        {permissions.canManage && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={
-                              inventoryLocation.active
-                                ? "danger"
-                                : "secondary"
-                            }
-                            onClick={() =>
-                              handleToggleLocationActive(
-                                inventoryLocation,
-                              )
-                            }
-                          >
-                            {inventoryLocation.active
-                              ? "Desactivar"
-                              : "Reactivar"}
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </article>
-                ),
-              )}
+                  </div>
+                </article>
+              ))}
 
               {locations.length === 0 && (
                 <div className="rounded-[24px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
@@ -7469,7 +5010,8 @@ export default function InventariosPage() {
                   </p>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    Crea la primera ubicación para comenzar a controlar existencias.
+                    Crea la primera ubicación para comenzar a controlar
+                    existencias.
                   </p>
                 </div>
               )}
@@ -7485,12 +5027,8 @@ export default function InventariosPage() {
             aria-label="Cerrar formulario de ubicación"
             className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
             onClick={() => {
-              if (
-                !isLocationSubmitting
-              ) {
-                setIsLocationFormOpen(
-                  false,
-                );
+              if (!isLocationSubmitting) {
+                setIsLocationFormOpen(false);
               }
             }}
           />
@@ -7504,9 +5042,7 @@ export default function InventariosPage() {
                   </p>
 
                   <h2 className="mt-2 text-2xl font-black text-slate-950">
-                    {locationForm.id
-                      ? "Editar ubicación"
-                      : "Nueva ubicación"}
+                    {locationForm.id ? "Editar ubicación" : "Nueva ubicación"}
                   </h2>
 
                   <p className="mt-2 text-sm text-slate-500">
@@ -7517,15 +5053,9 @@ export default function InventariosPage() {
                 <button
                   type="button"
                   aria-label="Cerrar"
-                  disabled={
-                    isLocationSubmitting
-                  }
+                  disabled={isLocationSubmitting}
                   className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
-                  onClick={() =>
-                    setIsLocationFormOpen(
-                      false,
-                    )
-                  }
+                  onClick={() => setIsLocationFormOpen(false)}
                 >
                   ×
                 </button>
@@ -7534,16 +5064,12 @@ export default function InventariosPage() {
 
             <form
               className="flex min-h-0 flex-1 flex-col"
-              onSubmit={
-                handleLocationSubmit
-              }
+              onSubmit={handleLocationSubmit}
             >
               <div className="flex-1 space-y-6 overflow-y-auto p-6 sm:p-8">
                 {locationFormError && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
-                    {
-                      locationFormError
-                    }
+                    {locationFormError}
                   </div>
                 )}
 
@@ -7557,162 +5083,90 @@ export default function InventariosPage() {
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
                       Nombre *
-
                       <input
-                        value={
-                          locationForm.name
-                        }
+                        value={locationForm.name}
                         placeholder="Ej. Bodega central"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setLocationForm(
-                            (current) => ({
-                              ...current,
-                              name:
-                                event
-                                  .target
-                                  .value,
-                            }),
-                          )
+                        onChange={(event) =>
+                          setLocationForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Código
-
                       <input
-                        value={
-                          locationForm.code
-                        }
+                        value={locationForm.code}
                         placeholder="Ej. BOD-CEN"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal uppercase text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setLocationForm(
-                            (current) => ({
-                              ...current,
-                              code:
-                                event
-                                  .target
-                                  .value,
-                            }),
-                          )
+                        onChange={(event) =>
+                          setLocationForm((current) => ({
+                            ...current,
+                            code: event.target.value,
+                          }))
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Tipo *
-
                       <select
-                        value={
-                          locationForm.type
-                        }
+                        value={locationForm.type}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setLocationForm(
-                            (current) => ({
-                              ...current,
-                              type:
-                                event
-                                  .target
-                                  .value,
-                            }),
-                          )
+                        onChange={(event) =>
+                          setLocationForm((current) => ({
+                            ...current,
+                            type: event.target.value,
+                          }))
                         }
                       >
-                        <option value="Bodega">
-                          Bodega
-                        </option>
-                        <option value="Sucursal">
-                          Sucursal
-                        </option>
-                        <option value="Patio">
-                          Patio
-                        </option>
-                        <option value="Taller">
-                          Taller
-                        </option>
-                        <option value="Tránsito">
-                          Tránsito
-                        </option>
+                        <option value="Bodega">Bodega</option>
+                        <option value="Sucursal">Sucursal</option>
+                        <option value="Patio">Patio</option>
+                        <option value="Taller">Taller</option>
+                        <option value="Tránsito">Tránsito</option>
                       </select>
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
                       Sucursal relacionada
-
                       <select
-                        value={
-                          locationForm.branchId
-                        }
+                        value={locationForm.branchId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setLocationForm(
-                            (current) => ({
-                              ...current,
-                              branchId:
-                                event
-                                  .target
-                                  .value,
-                            }),
-                          )
+                        onChange={(event) =>
+                          setLocationForm((current) => ({
+                            ...current,
+                            branchId: event.target.value,
+                          }))
                         }
                       >
-                        <option value="">
-                          Bodega independiente
-                        </option>
+                        <option value="">Bodega independiente</option>
 
-                        {branches.map(
-                          (branch) => (
-                            <option
-                              key={
-                                branch.value
-                              }
-                              value={
-                                branch.value
-                              }
-                            >
-                              {
-                                branch.label
-                              }
-                            </option>
-                          ),
-                        )}
+                        {branches.map((branch) => (
+                          <option key={branch.value} value={branch.value}>
+                            {branch.label}
+                          </option>
+                        ))}
                       </select>
-
                       <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">
-                        Déjalo vacío cuando la bodega atienda a varias sucursales.
+                        Déjalo vacío cuando la bodega atienda a varias
+                        sucursales.
                       </span>
                     </label>
 
                     <label className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
                       <input
                         type="checkbox"
-                        checked={
-                          locationForm.isDefault
-                        }
+                        checked={locationForm.isDefault}
                         className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
-                        onChange={(
-                          event,
-                        ) =>
-                          setLocationForm(
-                            (current) => ({
-                              ...current,
-                              isDefault:
-                                event
-                                  .target
-                                  .checked,
-                            }),
-                          )
+                        onChange={(event) =>
+                          setLocationForm((current) => ({
+                            ...current,
+                            isDefault: event.target.checked,
+                          }))
                         }
                       />
 
@@ -7729,22 +5183,13 @@ export default function InventariosPage() {
                     <label className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
                       <input
                         type="checkbox"
-                        checked={
-                          locationForm.active
-                        }
+                        checked={locationForm.active}
                         className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
-                        onChange={(
-                          event,
-                        ) =>
-                          setLocationForm(
-                            (current) => ({
-                              ...current,
-                              active:
-                                event
-                                  .target
-                                  .checked,
-                            }),
-                          )
+                        onChange={(event) =>
+                          setLocationForm((current) => ({
+                            ...current,
+                            active: event.target.checked,
+                          }))
                         }
                       />
 
@@ -7765,24 +5210,13 @@ export default function InventariosPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={
-                    isLocationSubmitting
-                  }
-                  onClick={() =>
-                    setIsLocationFormOpen(
-                      false,
-                    )
-                  }
+                  disabled={isLocationSubmitting}
+                  onClick={() => setIsLocationFormOpen(false)}
                 >
                   Cancelar
                 </Button>
 
-                <Button
-                  type="submit"
-                  disabled={
-                    isLocationSubmitting
-                  }
-                >
+                <Button type="submit" disabled={isLocationSubmitting}>
                   {isLocationSubmitting
                     ? "Guardando..."
                     : locationForm.id
@@ -7802,12 +5236,8 @@ export default function InventariosPage() {
             aria-label="Cerrar transferencia"
             className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
             onClick={() => {
-              if (
-                !isTransferSubmitting
-              ) {
-                setIsTransferDrawerOpen(
-                  false,
-                );
+              if (!isTransferSubmitting) {
+                setIsTransferDrawerOpen(false);
               }
             }}
           />
@@ -7825,22 +5255,17 @@ export default function InventariosPage() {
                   </h2>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    Mueve existencias entre sucursales o bodegas conservando su costo y trazabilidad.
+                    Mueve existencias entre sucursales o bodegas conservando su
+                    costo y trazabilidad.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   aria-label="Cerrar"
-                  disabled={
-                    isTransferSubmitting
-                  }
+                  disabled={isTransferSubmitting}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
-                  onClick={() =>
-                    setIsTransferDrawerOpen(
-                      false,
-                    )
-                  }
+                  onClick={() => setIsTransferDrawerOpen(false)}
                 >
                   ×
                 </button>
@@ -7849,9 +5274,7 @@ export default function InventariosPage() {
 
             <form
               className="flex min-h-0 flex-1 flex-col"
-              onSubmit={
-                handleTransferSubmit
-              }
+              onSubmit={handleTransferSubmit}
             >
               <div className="flex-1 space-y-6 overflow-y-auto p-6">
                 {transferError && (
@@ -7870,82 +5293,46 @@ export default function InventariosPage() {
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       Ubicación de origen *
-
                       <select
                         required
-                        value={
-                          transferSourceLocationId
-                        }
+                        value={transferSourceLocationId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          handleTransferSourceLocationChange(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          handleTransferSourceLocationChange(event.target.value)
                         }
                       >
-                        <option value="">
-                          Selecciona el origen
-                        </option>
+                        <option value="">Selecciona el origen</option>
 
-                        {activeLocations.map(
-                          (
-                            inventoryLocation,
-                          ) => (
-                            <option
-                              key={
-                                inventoryLocation.value
-                              }
-                              value={
-                                inventoryLocation.value
-                              }
-                            >
-                              {
-                                inventoryLocation.label
-                              }
-                            </option>
-                          ),
-                        )}
+                        {activeLocations.map((inventoryLocation) => (
+                          <option
+                            key={inventoryLocation.value}
+                            value={inventoryLocation.value}
+                          >
+                            {inventoryLocation.label}
+                          </option>
+                        ))}
                       </select>
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Ubicación de destino *
-
                       <select
                         required
-                        value={
-                          transferDestinationLocationId
-                        }
+                        value={transferDestinationLocationId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setTransferDestinationLocationId(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setTransferDestinationLocationId(event.target.value)
                         }
                       >
-                        <option value="">
-                          Selecciona el destino
-                        </option>
+                        <option value="">Selecciona el destino</option>
 
                         {transferDestinationLocations.map(
-                          (
-                            inventoryLocation,
-                          ) => (
+                          (inventoryLocation) => (
                             <option
-                              key={
-                                inventoryLocation.value
-                              }
-                              value={
-                                inventoryLocation.value
-                              }
+                              key={inventoryLocation.value}
+                              value={inventoryLocation.value}
                             >
-                              {
-                                inventoryLocation.label
-                              }
+                              {inventoryLocation.label}
                             </option>
                           ),
                         )}
@@ -7964,90 +5351,55 @@ export default function InventariosPage() {
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       {productSingularLabel} *
-
                       <select
                         required
-                        value={
-                          transferProductId
-                        }
+                        value={transferProductId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) => {
-                          setTransferProductId(
-                            event.target.value,
-                          );
+                        onChange={(event) => {
+                          setTransferProductId(event.target.value);
 
-                          setTransferQuantity(
-                            "",
-                          );
+                          setTransferQuantity("");
 
-                          setTransferError(
-                            null,
-                          );
+                          setTransferError(null);
                         }}
                       >
                         <option value="">
-                          Selecciona un{" "}
-                          {productSingularLabel.toLowerCase()}
+                          Selecciona un {productSingularLabel.toLowerCase()}
                         </option>
 
                         {stocks
                           .filter(
                             (stock) =>
                               stock.initialized &&
-                              stock.locationId ===
-                              transferSourceLocationId &&
-                              stock.availableQuantity >
-                              0,
+                              stock.locationId === transferSourceLocationId &&
+                              stock.availableQuantity > 0,
                           )
-                          .map(
-                            (stock) => (
-                              <option
-                                key={
-                                  stock.productId
-                                }
-                                value={
-                                  stock.productId
-                                }
-                              >
-                                {
-                                  stock.productName
-                                }
-                                {" · "}
-                                {
-                                  stock.availableQuantity
-                                }{" "}
-                                disponibles
-                              </option>
-                            ),
-                          )}
+                          .map((stock) => (
+                            <option
+                              key={stock.productId}
+                              value={stock.productId}
+                            >
+                              {stock.productName}
+                              {" · "}
+                              {stock.availableQuantity} disponibles
+                            </option>
+                          ))}
                       </select>
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Cantidad *
-
                       <input
                         type="number"
                         min="1"
-                        max={
-                          transferSourceStock
-                            ?.availableQuantity
-                        }
+                        max={transferSourceStock?.availableQuantity}
                         step="1"
                         required
-                        value={
-                          transferQuantity
-                        }
+                        value={transferQuantity}
                         placeholder="Unidades"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setTransferQuantity(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setTransferQuantity(event.target.value)
                         }
                       />
                     </label>
@@ -8060,9 +5412,7 @@ export default function InventariosPage() {
                           </p>
 
                           <p className="mt-1 text-xl font-black">
-                            {
-                              transferSourceStock.quantity
-                            }
+                            {transferSourceStock.quantity}
                           </p>
                         </div>
 
@@ -8072,9 +5422,7 @@ export default function InventariosPage() {
                           </p>
 
                           <p className="mt-1 text-xl font-black text-violet-300">
-                            {
-                              transferSourceStock.reservedQuantity
-                            }
+                            {transferSourceStock.reservedQuantity}
                           </p>
                         </div>
 
@@ -8084,9 +5432,7 @@ export default function InventariosPage() {
                           </p>
 
                           <p className="mt-1 text-xl font-black text-blue-300">
-                            {
-                              transferSourceStock.availableQuantity
-                            }
+                            {transferSourceStock.availableQuantity}
                           </p>
                         </div>
                       </div>
@@ -8096,46 +5442,30 @@ export default function InventariosPage() {
 
                 <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
                   <header className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-                    <h3 className="font-bold text-slate-950">
-                      Trazabilidad
-                    </h3>
+                    <h3 className="font-bold text-slate-950">Trazabilidad</h3>
                   </header>
 
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       Motivo
-
                       <input
-                        value={
-                          transferReason
-                        }
+                        value={transferReason}
                         placeholder="Motivo de la transferencia"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setTransferReason(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setTransferReason(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Referencia
-
                       <input
-                        value={
-                          transferReference
-                        }
+                        value={transferReference}
                         placeholder="Ej. Solicitud interna 104"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setTransferReference(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setTransferReference(event.target.value)
                         }
                       />
                     </label>
@@ -8143,7 +5473,8 @@ export default function InventariosPage() {
                 </section>
 
                 <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-800">
-                  La operación registrará una salida en el origen y una entrada en el destino con la misma referencia.
+                  La operación registrará una salida en el origen y una entrada
+                  en el destino con la misma referencia.
                 </div>
               </div>
 
@@ -8151,24 +5482,15 @@ export default function InventariosPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={
-                    isTransferSubmitting
-                  }
-                  onClick={() =>
-                    setIsTransferDrawerOpen(
-                      false,
-                    )
-                  }
+                  disabled={isTransferSubmitting}
+                  onClick={() => setIsTransferDrawerOpen(false)}
                 >
                   Cancelar
                 </Button>
 
                 <Button
                   type="submit"
-                  disabled={
-                    isTransferSubmitting ||
-                    !transferSourceStock
-                  }
+                  disabled={isTransferSubmitting || !transferSourceStock}
                 >
                   {isTransferSubmitting
                     ? "Transfiriendo..."
@@ -8187,12 +5509,8 @@ export default function InventariosPage() {
             aria-label="Cerrar configuración"
             className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
             onClick={() => {
-              if (
-                !isConfigurationSubmitting
-              ) {
-                setConfigurationStock(
-                  null,
-                );
+              if (!isConfigurationSubmitting) {
+                setConfigurationStock(null);
               }
             }}
           />
@@ -8210,22 +5528,17 @@ export default function InventariosPage() {
                   </h2>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    Define los niveles de control sin modificar las unidades existentes.
+                    Define los niveles de control sin modificar las unidades
+                    existentes.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   aria-label="Cerrar"
-                  disabled={
-                    isConfigurationSubmitting
-                  }
+                  disabled={isConfigurationSubmitting}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
-                  onClick={() =>
-                    setConfigurationStock(
-                      null,
-                    )
-                  }
+                  onClick={() => setConfigurationStock(null)}
                 >
                   ×
                 </button>
@@ -8234,16 +5547,12 @@ export default function InventariosPage() {
 
             <form
               className="flex min-h-0 flex-1 flex-col"
-              onSubmit={
-                handleStockConfigurationSubmit
-              }
+              onSubmit={handleStockConfigurationSubmit}
             >
               <div className="flex-1 space-y-6 overflow-y-auto p-6">
                 {configurationError && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
-                    {
-                      configurationError
-                    }
+                    {configurationError}
                   </div>
                 )}
 
@@ -8253,15 +5562,11 @@ export default function InventariosPage() {
                   </p>
 
                   <h3 className="mt-2 text-xl font-black">
-                    {
-                      configurationStock.productName
-                    }
+                    {configurationStock.productName}
                   </h3>
 
                   <p className="mt-2 text-sm text-slate-300">
-                    {
-                      configurationStock.locationLabel
-                    }
+                    {configurationStock.locationLabel}
                   </p>
 
                   <div className="mt-5 grid grid-cols-2 gap-4">
@@ -8271,9 +5576,7 @@ export default function InventariosPage() {
                       </p>
 
                       <p className="mt-1 text-2xl font-black">
-                        {
-                          configurationStock.quantity
-                        }
+                        {configurationStock.quantity}
                       </p>
                     </div>
 
@@ -8283,9 +5586,7 @@ export default function InventariosPage() {
                       </p>
 
                       <p className="mt-1 text-2xl font-black text-blue-300">
-                        {
-                          configurationStock.availableQuantity
-                        }
+                        {configurationStock.availableQuantity}
                       </p>
                     </div>
                   </div>
@@ -8298,92 +5599,65 @@ export default function InventariosPage() {
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Estos valores generan alertas, pero no cambian las existencias.
+                      Estos valores generan alertas, pero no cambian las
+                      existencias.
                     </p>
                   </header>
 
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       Existencia mínima *
-
                       <input
                         type="number"
                         min="0"
                         step="1"
                         required
-                        value={
-                          configurationMinimum
-                        }
+                        value={configurationMinimum}
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setConfigurationMinimum(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setConfigurationMinimum(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Existencia máxima
-
                       <input
                         type="number"
                         min="0"
                         step="1"
-                        value={
-                          configurationMaximum
-                        }
+                        value={configurationMaximum}
                         placeholder="Sin límite"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setConfigurationMaximum(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setConfigurationMaximum(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Punto de reorden
-
                       <input
                         type="number"
                         min="0"
                         step="1"
-                        value={
-                          configurationReorderPoint
-                        }
+                        value={configurationReorderPoint}
                         placeholder="Nivel para volver a comprar"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setConfigurationReorderPoint(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setConfigurationReorderPoint(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Posición física
-
                       <input
-                        value={
-                          configurationBinLocation
-                        }
+                        value={configurationBinLocation}
                         placeholder="Ej. Pasillo 2, nivel B"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setConfigurationBinLocation(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setConfigurationBinLocation(event.target.value)
                         }
                       />
                     </label>
@@ -8395,24 +5669,13 @@ export default function InventariosPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={
-                    isConfigurationSubmitting
-                  }
-                  onClick={() =>
-                    setConfigurationStock(
-                      null,
-                    )
-                  }
+                  disabled={isConfigurationSubmitting}
+                  onClick={() => setConfigurationStock(null)}
                 >
                   Cancelar
                 </Button>
 
-                <Button
-                  type="submit"
-                  disabled={
-                    isConfigurationSubmitting
-                  }
-                >
+                <Button type="submit" disabled={isConfigurationSubmitting}>
                   {isConfigurationSubmitting
                     ? "Guardando..."
                     : "Guardar configuración"}
@@ -8429,9 +5692,7 @@ export default function InventariosPage() {
             type="button"
             aria-label="Cerrar movimiento"
             className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
-            onClick={
-              closeMovementDrawer
-            }
+            onClick={closeMovementDrawer}
           />
 
           <aside className="absolute right-0 top-0 flex h-full w-full max-w-2xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl">
@@ -8447,16 +5708,15 @@ export default function InventariosPage() {
                   </h2>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    Actualiza la existencia y conserva la trazabilidad del cambio.
+                    Actualiza la existencia y conserva la trazabilidad del
+                    cambio.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:bg-slate-100"
-                  onClick={
-                    closeMovementDrawer
-                  }
+                  onClick={closeMovementDrawer}
                 >
                   ×
                 </button>
@@ -8482,136 +5742,84 @@ export default function InventariosPage() {
                   </header>
 
                   <div className="grid gap-3 p-5 sm:grid-cols-3">
-                    {(
-                      [
-                        "Entrada",
-                        "Salida",
-                        "Ajuste",
-                      ] as MovementType[]
-                    ).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        className={[
-                          "rounded-2xl border px-4 py-4 text-sm font-bold transition",
-                          movementType ===
-                            type
-                            ? "border-blue-600 bg-blue-50 text-blue-700 ring-4 ring-blue-100"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-blue-300",
-                        ].join(" ")}
-                        onClick={() => {
-                          setMovementType(
-                            type,
-                          );
+                    {(["Entrada", "Salida", "Ajuste"] as MovementType[]).map(
+                      (type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          className={[
+                            "rounded-2xl border px-4 py-4 text-sm font-bold transition",
+                            movementType === type
+                              ? "border-blue-600 bg-blue-50 text-blue-700 ring-4 ring-blue-100"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-blue-300",
+                          ].join(" ")}
+                          onClick={() => {
+                            setMovementType(type);
 
-                          setMovementReason(
-                            type ===
-                              "Entrada"
-                              ? "Recepción de inventario"
-                              : type ===
-                                "Salida"
-                                ? "Salida de inventario"
-                                : "Ajuste de inventario",
-                          );
-                        }}
-                      >
-                        {type}
-                      </button>
-                    ))}
+                            setMovementReason(
+                              type === "Entrada"
+                                ? "Recepción de inventario"
+                                : type === "Salida"
+                                  ? "Salida de inventario"
+                                  : "Ajuste de inventario",
+                            );
+                          }}
+                        >
+                          {type}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </section>
 
                 <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
                   <header className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-                    <h3 className="font-bold text-slate-950">
-                      Existencia
-                    </h3>
+                    <h3 className="font-bold text-slate-950">Existencia</h3>
                   </header>
 
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       Ubicación *
-
                       <select
-                        value={
-                          movementLocationId
-                        }
+                        value={movementLocationId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          handleMovementLocationChange(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          handleMovementLocationChange(event.target.value)
                         }
                       >
-                        <option value="">
-                          Selecciona una ubicación
-                        </option>
+                        <option value="">Selecciona una ubicación</option>
 
-                        {activeLocations.map(
-                          (
-                            inventoryLocation,
-                          ) => (
-                            <option
-                              key={
-                                inventoryLocation.value
-                              }
-                              value={
-                                inventoryLocation.value
-                              }
-                            >
-                              {
-                                inventoryLocation.label
-                              }
-                              {" · "}
-                              {
-                                inventoryLocation.type
-                              }
-                            </option>
-                          ),
-                        )}
+                        {activeLocations.map((inventoryLocation) => (
+                          <option
+                            key={inventoryLocation.value}
+                            value={inventoryLocation.value}
+                          >
+                            {inventoryLocation.label}
+                            {" · "}
+                            {inventoryLocation.type}
+                          </option>
+                        ))}
                       </select>
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       {productSingularLabel} *
-
                       <select
-                        value={
-                          movementProductId
-                        }
+                        value={movementProductId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          handleMovementProductChange(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          handleMovementProductChange(event.target.value)
                         }
                       >
                         <option value="">
                           Selecciona {productSingularLabel.toLowerCase()}
                         </option>
 
-                        {products.map(
-                          (product) => (
-                            <option
-                              key={
-                                product.id
-                              }
-                              value={
-                                product.id
-                              }
-                            >
-                              {
-                                product.label
-                              }
-                            </option>
-                          ),
-                        )}
+                        {products.map((product) => (
+                          <option key={product.id} value={product.id}>
+                            {product.label}
+                          </option>
+                        ))}
                       </select>
                     </label>
 
@@ -8622,9 +5830,7 @@ export default function InventariosPage() {
                             Existencia
                           </p>
                           <p className="mt-1 text-xl font-black">
-                            {
-                              selectedStock.quantity
-                            }
+                            {selectedStock.quantity}
                           </p>
                         </div>
 
@@ -8633,9 +5839,7 @@ export default function InventariosPage() {
                             Reservado
                           </p>
                           <p className="mt-1 text-xl font-black">
-                            {
-                              selectedStock.reservedQuantity
-                            }
+                            {selectedStock.reservedQuantity}
                           </p>
                         </div>
 
@@ -8644,128 +5848,83 @@ export default function InventariosPage() {
                             Disponible
                           </p>
                           <p className="mt-1 text-xl font-black text-cyan-300">
-                            {
-                              selectedStock.availableQuantity
-                            }
+                            {selectedStock.availableQuantity}
                           </p>
                         </div>
                       </div>
                     )}
 
                     <label className="text-sm font-semibold text-slate-700">
-                      {movementType ===
-                        "Ajuste"
+                      {movementType === "Ajuste"
                         ? "Existencia final *"
                         : "Cantidad *"}
 
                       <input
                         type="number"
-                        min={
-                          movementType ===
-                            "Ajuste"
-                            ? 0
-                            : 1
-                        }
+                        min={movementType === "Ajuste" ? 0 : 1}
                         step="1"
-                        value={
-                          movementQuantity
-                        }
+                        value={movementQuantity}
                         placeholder={
-                          movementType ===
-                            "Ajuste"
+                          movementType === "Ajuste"
                             ? "Nueva existencia"
                             : "Número de unidades"
                         }
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setMovementQuantity(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setMovementQuantity(event.target.value)
                         }
                       />
                     </label>
 
-                    {movementType ===
-                      "Entrada" &&
-                      permissions.canManage && (
-                        <label className="text-sm font-semibold text-slate-700">
-                          Costo unitario *
-
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={
-                              movementUnitCost
-                            }
-                            placeholder="Costo de adquisición"
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                            onChange={(
-                              event,
-                            ) =>
-                              setMovementUnitCost(
-                                event.target
-                                  .value,
-                              )
-                            }
-                          />
-
-                          <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">
-                            Información privada para calcular el valor contable del inventario.
-                          </span>
-                        </label>
-                      )}
-
+                    {movementType === "Entrada" && permissions.canManage && (
+                      <label className="text-sm font-semibold text-slate-700">
+                        Costo unitario *
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={movementUnitCost}
+                          placeholder="Costo de adquisición"
+                          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                          onChange={(event) =>
+                            setMovementUnitCost(event.target.value)
+                          }
+                        />
+                        <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">
+                          Información privada para calcular el valor contable
+                          del inventario.
+                        </span>
+                      </label>
+                    )}
                   </div>
                 </section>
 
                 <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
                   <header className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-                    <h3 className="font-bold text-slate-950">
-                      Trazabilidad
-                    </h3>
+                    <h3 className="font-bold text-slate-950">Trazabilidad</h3>
                   </header>
 
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       Motivo
-
                       <input
-                        value={
-                          movementReason
-                        }
+                        value={movementReason}
                         placeholder="Motivo del movimiento"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setMovementReason(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setMovementReason(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Referencia
-
                       <input
-                        value={
-                          movementReference
-                        }
+                        value={movementReference}
                         placeholder="Factura, orden o folio"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setMovementReference(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setMovementReference(event.target.value)
                         }
                       />
                     </label>
@@ -8778,20 +5937,13 @@ export default function InventariosPage() {
                   type="button"
                   variant="secondary"
                   disabled={isSubmitting}
-                  onClick={
-                    closeMovementDrawer
-                  }
+                  onClick={closeMovementDrawer}
                 >
                   Cancelar
                 </Button>
 
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting
-                    ? "Registrando..."
-                    : "Registrar movimiento"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Registrando..." : "Registrar movimiento"}
                 </Button>
               </footer>
             </form>
@@ -8805,9 +5957,7 @@ export default function InventariosPage() {
             type="button"
             aria-label="Cerrar reserva"
             className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
-            onClick={
-              closeReservationDrawer
-            }
+            onClick={closeReservationDrawer}
           />
 
           <aside className="absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col bg-slate-50 shadow-2xl">
@@ -8822,7 +5972,8 @@ export default function InventariosPage() {
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Aparta unidades disponibles sin modificar la existencia física.
+                  Aparta unidades disponibles sin modificar la existencia
+                  física.
                 </p>
               </div>
 
@@ -8830,9 +5981,7 @@ export default function InventariosPage() {
                 type="button"
                 aria-label="Cerrar"
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:border-violet-300 hover:text-violet-700"
-                onClick={
-                  closeReservationDrawer
-                }
+                onClick={closeReservationDrawer}
               >
                 ×
               </button>
@@ -8840,9 +5989,7 @@ export default function InventariosPage() {
 
             <form
               className="flex min-h-0 flex-1 flex-col"
-              onSubmit={
-                handleReservationSubmit
-              }
+              onSubmit={handleReservationSubmit}
             >
               <div className="flex-1 space-y-5 overflow-y-auto p-6 sm:p-8">
                 {reservationError && (
@@ -8861,19 +6008,11 @@ export default function InventariosPage() {
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
                       Oportunidad o trato
-
                       <select
-                        value={
-                          reservationDealId
-                        }
+                        value={reservationDealId}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          handleReservationDealChange(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          handleReservationDealChange(event.target.value)
                         }
                       >
                         <option value="">
@@ -8881,72 +6020,44 @@ export default function InventariosPage() {
                         </option>
 
                         {deals
-                          .filter(
-                            (deal) => {
-                              const stage =
-                                deal.stage
-                                  .trim()
-                                  .toLowerCase()
-                                  .normalize(
-                                    "NFD",
-                                  )
-                                  .replace(
-                                    /[\u0300-\u036f]/g,
-                                    "",
-                                  );
+                          .filter((deal) => {
+                            const stage = deal.stage
+                              .trim()
+                              .toLowerCase()
+                              .normalize("NFD")
+                              .replace(/[\u0300-\u036f]/g, "");
 
-                              const status =
-                                deal.status
-                                  .trim()
-                                  .toLowerCase()
-                                  .normalize(
-                                    "NFD",
-                                  )
-                                  .replace(
-                                    /[\u0300-\u036f]/g,
-                                    "",
-                                  );
+                            const status = deal.status
+                              .trim()
+                              .toLowerCase()
+                              .normalize("NFD")
+                              .replace(/[\u0300-\u036f]/g, "");
 
-                              return (
-                                !stage.includes(
-                                  "prospecto",
-                                ) &&
-                                !stage.includes(
-                                  "contactado",
-                                ) &&
-                                !status.includes(
-                                  "ganad",
-                                ) &&
-                                !status.includes(
-                                  "perdid",
-                                ) &&
-                                !status.includes(
-                                  "cancel",
-                                )
-                              );
-                            },
-                          )
-                          .map(
-                            (deal) => (
-                              <option
-                                key={deal.id}
-                                value={deal.id}
-                              >
-                                {deal.name}
-                                {deal.customerName
-                                  ? ` · ${deal.customerName}`
-                                  : ""}
-                                {deal.itemsSummary
-                                  ? ` · ${deal.itemsSummary}`
-                                  : ""}
-                                {` · ${deal.stage}`}
-                              </option>
-                            ),
-                          )}
+                            return (
+                              !stage.includes("prospecto") &&
+                              !stage.includes("contactado") &&
+                              !status.includes("ganad") &&
+                              !status.includes("perdid") &&
+                              !status.includes("cancel")
+                            );
+                          })
+                          .map((deal) => (
+                            <option key={deal.id} value={deal.id}>
+                              {deal.name}
+                              {deal.customerName
+                                ? ` · ${deal.customerName}`
+                                : ""}
+                              {deal.itemsSummary
+                                ? ` · ${deal.itemsSummary}`
+                                : ""}
+                              {` · ${deal.stage}`}
+                            </option>
+                          ))}
                       </select>
-
                       <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">
-                        Al elegir una oportunidad se cargarán automáticamente el cliente, la sucursal, el modelo, la cantidad y la referencia disponibles.
+                        Al elegir una oportunidad se cargarán automáticamente el
+                        cliente, la sucursal, el modelo, la cantidad y la
+                        referencia disponibles.
                       </span>
                     </label>
 
@@ -8958,281 +6069,192 @@ export default function InventariosPage() {
                           </h4>
 
                           <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Se creará una reserva separada por modelo, agrupadas bajo la misma oportunidad.
+                            Se creará una reserva separada por modelo, agrupadas
+                            bajo la misma oportunidad.
                           </p>
                         </div>
 
-                        {reservationDraftItems.length ===
-                          0 ? (
+                        {reservationDraftItems.length === 0 ? (
                           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-semibold text-amber-800">
-                            La oportunidad no contiene modelos válidos para reservar.
+                            La oportunidad no contiene modelos válidos para
+                            reservar.
                           </div>
                         ) : (
-                          reservationDraftItems.map(
-                            (draftItem) => {
-                              const selectedStock =
-                                stocks.find(
-                                  (stock) =>
-                                    stock.initialized &&
-                                    stock.productId ===
-                                    draftItem.productId &&
-                                    stock.locationId ===
-                                    draftItem.locationId,
-                                );
+                          reservationDraftItems.map((draftItem) => {
+                            const selectedStock = stocks.find(
+                              (stock) =>
+                                stock.initialized &&
+                                stock.productId === draftItem.productId &&
+                                stock.locationId === draftItem.locationId,
+                            );
 
-                              return (
-                                <article
-                                  key={
-                                    draftItem.key
-                                  }
-                                  className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4"
-                                >
-                                  <div className="flex flex-col gap-4">
-                                    <div>
-                                      <p className="font-bold text-slate-950">
-                                        {
-                                          draftItem.productName
-                                        }
-                                      </p>
+                            return (
+                              <article
+                                key={draftItem.key}
+                                className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4"
+                              >
+                                <div className="flex flex-col gap-4">
+                                  <div>
+                                    <p className="font-bold text-slate-950">
+                                      {draftItem.productName}
+                                    </p>
 
-                                      <p className="mt-1 text-xs text-slate-500">
-                                        Cantidad solicitada en la oportunidad:{" "}
-                                        {
-                                          draftItem.requestedQuantity
-                                        }
-                                      </p>
-                                    </div>
-
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                      <label className="text-sm font-semibold text-slate-700">
-                                        Ubicación *
-
-                                        <select
-                                          value={
-                                            draftItem.locationId
-                                          }
-                                          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                                          onChange={(
-                                            event,
-                                          ) =>
-                                            setReservationDraftItems(
-                                              (
-                                                currentItems,
-                                              ) =>
-                                                currentItems.map(
-                                                  (
-                                                    currentItem,
-                                                  ) =>
-                                                    currentItem.key ===
-                                                      draftItem.key
-                                                      ? {
-                                                        ...currentItem,
-
-                                                        locationId:
-                                                          event
-                                                            .target
-                                                            .value,
-                                                      }
-                                                      : currentItem,
-                                                ),
-                                            )
-                                          }
-                                        >
-                                          <option value="">
-                                            Selecciona una ubicación
-                                          </option>
-
-                                          {stocks
-                                            .filter(
-                                              (
-                                                stock,
-                                              ) =>
-                                                stock.initialized &&
-                                                stock.productId ===
-                                                draftItem.productId &&
-                                                stock.availableQuantity >
-                                                0 &&
-                                                activeLocations.some(
-                                                  (
-                                                    inventoryLocation,
-                                                  ) =>
-                                                    inventoryLocation.value ===
-                                                    stock.locationId,
-                                                ),
-                                            )
-                                            .map(
-                                              (
-                                                stock,
-                                              ) => {
-                                                const inventoryLocation =
-                                                  activeLocations.find(
-                                                    (
-                                                      locationOption,
-                                                    ) =>
-                                                      locationOption.value ===
-                                                      stock.locationId,
-                                                  );
-
-                                                return (
-                                                  <option
-                                                    key={
-                                                      stock.locationId
-                                                    }
-                                                    value={
-                                                      stock.locationId
-                                                    }
-                                                  >
-                                                    {inventoryLocation
-                                                      ?.label ??
-                                                      stock.locationLabel}
-                                                    {` · ${stock.availableQuantity} disponibles`}
-                                                  </option>
-                                                );
-                                              },
-                                            )}
-                                        </select>
-                                      </label>
-
-                                      <label className="text-sm font-semibold text-slate-700">
-                                        Cantidad *
-
-                                        <input
-                                          type="number"
-                                          min="1"
-                                          step="1"
-                                          value={
-                                            draftItem.quantity
-                                          }
-                                          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                                          onChange={(
-                                            event,
-                                          ) =>
-                                            setReservationDraftItems(
-                                              (
-                                                currentItems,
-                                              ) =>
-                                                currentItems.map(
-                                                  (
-                                                    currentItem,
-                                                  ) =>
-                                                    currentItem.key ===
-                                                      draftItem.key
-                                                      ? {
-                                                        ...currentItem,
-
-                                                        quantity:
-                                                          event
-                                                            .target
-                                                            .value,
-                                                      }
-                                                      : currentItem,
-                                                ),
-                                            )
-                                          }
-                                        />
-                                      </label>
-                                    </div>
-
-                                    {selectedStock && (
-                                      <div className="flex flex-wrap gap-3 text-xs font-semibold">
-                                        <span className="rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200">
-                                          Existencia:{" "}
-                                          {
-                                            selectedStock.quantity
-                                          }
-                                        </span>
-
-                                        <span className="rounded-full bg-white px-3 py-1 text-violet-700 ring-1 ring-violet-200">
-                                          Reservado:{" "}
-                                          {
-                                            selectedStock.reservedQuantity
-                                          }
-                                        </span>
-
-                                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">
-                                          Disponible:{" "}
-                                          {
-                                            selectedStock.availableQuantity
-                                          }
-                                        </span>
-                                      </div>
-                                    )}
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      Cantidad solicitada en la oportunidad:{" "}
+                                      {draftItem.requestedQuantity}
+                                    </p>
                                   </div>
-                                </article>
-                              );
-                            },
-                          )
+
+                                  <div className="grid gap-4 sm:grid-cols-2">
+                                    <label className="text-sm font-semibold text-slate-700">
+                                      Ubicación *
+                                      <select
+                                        value={draftItem.locationId}
+                                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                                        onChange={(event) =>
+                                          setReservationDraftItems(
+                                            (currentItems) =>
+                                              currentItems.map((currentItem) =>
+                                                currentItem.key ===
+                                                draftItem.key
+                                                  ? {
+                                                      ...currentItem,
+
+                                                      locationId:
+                                                        event.target.value,
+                                                    }
+                                                  : currentItem,
+                                              ),
+                                          )
+                                        }
+                                      >
+                                        <option value="">
+                                          Selecciona una ubicación
+                                        </option>
+
+                                        {stocks
+                                          .filter(
+                                            (stock) =>
+                                              stock.initialized &&
+                                              stock.productId ===
+                                                draftItem.productId &&
+                                              stock.availableQuantity > 0 &&
+                                              activeLocations.some(
+                                                (inventoryLocation) =>
+                                                  inventoryLocation.value ===
+                                                  stock.locationId,
+                                              ),
+                                          )
+                                          .map((stock) => {
+                                            const inventoryLocation =
+                                              activeLocations.find(
+                                                (locationOption) =>
+                                                  locationOption.value ===
+                                                  stock.locationId,
+                                              );
+
+                                            return (
+                                              <option
+                                                key={stock.locationId}
+                                                value={stock.locationId}
+                                              >
+                                                {inventoryLocation?.label ??
+                                                  stock.locationLabel}
+                                                {` · ${stock.availableQuantity} disponibles`}
+                                              </option>
+                                            );
+                                          })}
+                                      </select>
+                                    </label>
+
+                                    <label className="text-sm font-semibold text-slate-700">
+                                      Cantidad *
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={draftItem.quantity}
+                                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                                        onChange={(event) =>
+                                          setReservationDraftItems(
+                                            (currentItems) =>
+                                              currentItems.map((currentItem) =>
+                                                currentItem.key ===
+                                                draftItem.key
+                                                  ? {
+                                                      ...currentItem,
+
+                                                      quantity:
+                                                        event.target.value,
+                                                    }
+                                                  : currentItem,
+                                              ),
+                                          )
+                                        }
+                                      />
+                                    </label>
+                                  </div>
+
+                                  {selectedStock && (
+                                    <div className="flex flex-wrap gap-3 text-xs font-semibold">
+                                      <span className="rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200">
+                                        Existencia: {selectedStock.quantity}
+                                      </span>
+
+                                      <span className="rounded-full bg-white px-3 py-1 text-violet-700 ring-1 ring-violet-200">
+                                        Reservado:{" "}
+                                        {selectedStock.reservedQuantity}
+                                      </span>
+
+                                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">
+                                        Disponible:{" "}
+                                        {selectedStock.availableQuantity}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </article>
+                            );
+                          })
                         )}
                       </div>
                     ) : (
                       <>
                         <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
                           Ubicación *
-
                           <select
-                            value={
-                              reservationLocationId
-                            }
+                            value={reservationLocationId}
                             className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                            onChange={(
-                              event,
-                            ) => {
-                              setReservationLocationId(
-                                event.target
-                                  .value,
-                              );
+                            onChange={(event) => {
+                              setReservationLocationId(event.target.value);
 
-                              setReservationProductId(
-                                "",
-                              );
+                              setReservationProductId("");
                             }}
                           >
-                            <option value="">
-                              Selecciona una ubicación
-                            </option>
+                            <option value="">Selecciona una ubicación</option>
 
-                            {activeLocations.map(
-                              (
-                                inventoryLocation,
-                              ) => (
-                                <option
-                                  key={
-                                    inventoryLocation.value
-                                  }
-                                  value={
-                                    inventoryLocation.value
-                                  }
-                                >
-                                  {
-                                    inventoryLocation.label
-                                  }
-                                  {inventoryLocation.branchLabel
-                                    ? ` · ${inventoryLocation.branchLabel}`
-                                    : " · Bodega independiente"}
-                                </option>
-                              ),
-                            )}
+                            {activeLocations.map((inventoryLocation) => (
+                              <option
+                                key={inventoryLocation.value}
+                                value={inventoryLocation.value}
+                              >
+                                {inventoryLocation.label}
+                                {inventoryLocation.branchLabel
+                                  ? ` · ${inventoryLocation.branchLabel}`
+                                  : " · Bodega independiente"}
+                              </option>
+                            ))}
                           </select>
                         </label>
 
                         <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
                           {productSingularLabel} *
-
                           <select
-                            value={
-                              reservationProductId
-                            }
-                            disabled={
-                              !reservationLocationId
-                            }
+                            value={reservationProductId}
+                            disabled={!reservationLocationId}
                             className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100 disabled:bg-slate-100 disabled:text-slate-400"
-                            onChange={(
-                              event,
-                            ) =>
-                              setReservationProductId(
-                                event.target
-                                  .value,
-                              )
+                            onChange={(event) =>
+                              setReservationProductId(event.target.value)
                             }
                           >
                             <option value="">
@@ -9243,56 +6265,39 @@ export default function InventariosPage() {
                               .filter(
                                 (stock) =>
                                   stock.initialized &&
-                                  stock.locationId ===
-                                  reservationLocationId &&
-                                  stock.availableQuantity >
-                                  0,
+                                  stock.locationId === reservationLocationId &&
+                                  stock.availableQuantity > 0,
                               )
-                              .sort(
-                                (
-                                  first,
-                                  second,
-                                ) =>
-                                  first.productName.localeCompare(
-                                    second.productName,
-                                    "es-MX",
-                                  ),
-                              )
-                              .map(
-                                (stock) => (
-                                  <option
-                                    key={
-                                      stock.productId
-                                    }
-                                    value={
-                                      stock.productId
-                                    }
-                                  >
-                                    {
-                                      stock.productName
-                                    }
-                                    {stock.productCode
-                                      ? ` (${stock.productCode})`
-                                      : ""}
-                                    {` · ${stock.availableQuantity} disponibles`}
-                                  </option>
+                              .sort((first, second) =>
+                                first.productName.localeCompare(
+                                  second.productName,
+                                  "es-MX",
                                 ),
-                              )}
+                              )
+                              .map((stock) => (
+                                <option
+                                  key={stock.productId}
+                                  value={stock.productId}
+                                >
+                                  {stock.productName}
+                                  {stock.productCode
+                                    ? ` (${stock.productCode})`
+                                    : ""}
+                                  {` · ${stock.availableQuantity} disponibles`}
+                                </option>
+                              ))}
                           </select>
                         </label>
 
                         {reservationLocationId &&
                           reservationProductId &&
                           (() => {
-                            const selectedStock =
-                              stocks.find(
-                                (stock) =>
-                                  stock.initialized &&
-                                  stock.locationId ===
-                                  reservationLocationId &&
-                                  stock.productId ===
-                                  reservationProductId,
-                              );
+                            const selectedStock = stocks.find(
+                              (stock) =>
+                                stock.initialized &&
+                                stock.locationId === reservationLocationId &&
+                                stock.productId === reservationProductId,
+                            );
 
                             return selectedStock ? (
                               <div className="grid gap-3 rounded-2xl bg-slate-950 p-4 text-white sm:col-span-2 sm:grid-cols-3">
@@ -9302,9 +6307,7 @@ export default function InventariosPage() {
                                   </p>
 
                                   <p className="mt-1 text-xl font-black">
-                                    {
-                                      selectedStock.quantity
-                                    }
+                                    {selectedStock.quantity}
                                   </p>
                                 </div>
 
@@ -9314,9 +6317,7 @@ export default function InventariosPage() {
                                   </p>
 
                                   <p className="mt-1 text-xl font-black text-violet-300">
-                                    {
-                                      selectedStock.reservedQuantity
-                                    }
+                                    {selectedStock.reservedQuantity}
                                   </p>
                                 </div>
 
@@ -9326,9 +6327,7 @@ export default function InventariosPage() {
                                   </p>
 
                                   <p className="mt-1 text-xl font-black text-emerald-300">
-                                    {
-                                      selectedStock.availableQuantity
-                                    }
+                                    {selectedStock.availableQuantity}
                                   </p>
                                 </div>
                               </div>
@@ -9337,23 +6336,15 @@ export default function InventariosPage() {
 
                         <label className="text-sm font-semibold text-slate-700">
                           Cantidad *
-
                           <input
                             type="number"
                             min="1"
                             step="1"
-                            value={
-                              reservationQuantity
-                            }
+                            value={reservationQuantity}
                             placeholder="Unidades"
                             className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                            onChange={(
-                              event,
-                            ) =>
-                              setReservationQuantity(
-                                event.target
-                                  .value,
-                              )
+                            onChange={(event) =>
+                              setReservationQuantity(event.target.value)
                             }
                           />
                         </label>
@@ -9362,21 +6353,13 @@ export default function InventariosPage() {
 
                     <label className="text-sm font-semibold text-slate-700">
                       Vencimiento *
-
                       <input
                         type="datetime-local"
                         required
-                        value={
-                          reservationExpiresAt
-                        }
+                        value={reservationExpiresAt}
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setReservationExpiresAt(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setReservationExpiresAt(event.target.value)
                         }
                       />
                     </label>
@@ -9393,61 +6376,37 @@ export default function InventariosPage() {
                   <div className="grid gap-5 p-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-slate-700">
                       Cliente
-
                       <input
-                        value={
-                          reservationCustomerName
-                        }
+                        value={reservationCustomerName}
                         placeholder="Nombre del cliente"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setReservationCustomerName(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setReservationCustomerName(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
                       Referencia
-
                       <input
-                        value={
-                          reservationReference
-                        }
+                        value={reservationReference}
                         placeholder="Cotización, apartado o folio"
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setReservationReference(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setReservationReference(event.target.value)
                         }
                       />
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
                       Notas
-
                       <textarea
                         rows={4}
-                        value={
-                          reservationNotes
-                        }
+                        value={reservationNotes}
                         placeholder="Información adicional de la reserva"
                         className="mt-2 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setReservationNotes(
-                            event.target
-                              .value,
-                          )
+                        onChange={(event) =>
+                          setReservationNotes(event.target.value)
                         }
                       />
                     </label>
@@ -9459,30 +6418,20 @@ export default function InventariosPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={
-                    isReservationSubmitting
-                  }
-                  onClick={
-                    closeReservationDrawer
-                  }
+                  disabled={isReservationSubmitting}
+                  onClick={closeReservationDrawer}
                 >
                   Cancelar
                 </Button>
 
-                <Button
-                  type="submit"
-                  disabled={
-                    isReservationSubmitting
-                  }
-                >
+                <Button type="submit" disabled={isReservationSubmitting}>
                   {isReservationSubmitting
                     ? "Reservando..."
                     : reservationDealId
-                      ? `Crear ${reservationDraftItems.filter(
-                        (item) =>
-                          item.selected,
-                      ).length
-                      } reserva(s)`
+                      ? `Crear ${
+                          reservationDraftItems.filter((item) => item.selected)
+                            .length
+                        } reserva(s)`
                       : "Crear reserva"}
                 </Button>
               </footer>
@@ -9497,17 +6446,13 @@ export default function InventariosPage() {
             type="button"
             aria-label="Cerrar extensión"
             className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
-            onClick={
-              closeExtensionDrawer
-            }
+            onClick={closeExtensionDrawer}
           />
 
           <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-slate-50 shadow-2xl">
             <form
               className="flex h-full flex-col"
-              onSubmit={
-                handleExtensionSubmit
-              }
+              onSubmit={handleExtensionSubmit}
             >
               <header className="border-b border-slate-200 bg-white px-6 py-5 sm:px-8">
                 <div className="flex items-start justify-between gap-5">
@@ -9521,7 +6466,8 @@ export default function InventariosPage() {
                     </h2>
 
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Modifica la fecha límite sin cambiar la existencia ni las unidades reservadas.
+                      Modifica la fecha límite sin cambiar la existencia ni las
+                      unidades reservadas.
                     </p>
                   </div>
 
@@ -9529,9 +6475,7 @@ export default function InventariosPage() {
                     type="button"
                     aria-label="Cerrar"
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-500 transition hover:border-blue-300 hover:text-blue-700"
-                    onClick={
-                      closeExtensionDrawer
-                    }
+                    onClick={closeExtensionDrawer}
                   >
                     ×
                   </button>
@@ -9545,27 +6489,20 @@ export default function InventariosPage() {
                   </p>
 
                   <p className="mt-2 text-lg font-black text-slate-950">
-                    {
-                      extensionReservation.productName
-                    }
+                    {extensionReservation.productName}
                   </p>
 
                   <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                     <div>
-                      <p className="text-slate-500">
-                        Cliente
-                      </p>
+                      <p className="text-slate-500">Cliente</p>
 
                       <p className="mt-1 font-semibold text-slate-900">
-                        {extensionReservation.customerName ??
-                          "Sin cliente"}
+                        {extensionReservation.customerName ?? "Sin cliente"}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-slate-500">
-                        Referencia
-                      </p>
+                      <p className="text-slate-500">Referencia</p>
 
                       <p className="mt-1 font-semibold text-slate-900">
                         {extensionReservation.sourceReference ??
@@ -9574,28 +6511,20 @@ export default function InventariosPage() {
                     </div>
 
                     <div>
-                      <p className="text-slate-500">
-                        Vencimiento actual
-                      </p>
+                      <p className="text-slate-500">Vencimiento actual</p>
 
                       <p className="mt-1 font-semibold text-slate-900">
                         {extensionReservation.expiresAt
-                          ? formatDate(
-                            extensionReservation.expiresAt,
-                          )
+                          ? formatDate(extensionReservation.expiresAt)
                           : "Sin vencimiento"}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-slate-500">
-                        Cantidad reservada
-                      </p>
+                      <p className="text-slate-500">Cantidad reservada</p>
 
                       <p className="mt-1 font-semibold text-violet-700">
-                        {
-                          extensionReservation.quantity
-                        }
+                        {extensionReservation.quantity}
                       </p>
                     </div>
                   </div>
@@ -9605,45 +6534,31 @@ export default function InventariosPage() {
                   <div className="space-y-5">
                     <label className="block text-sm font-semibold text-slate-700">
                       Nueva fecha y hora *
-
                       <input
                         type="datetime-local"
                         required
-                        value={
-                          extensionExpiresAt
-                        }
+                        value={extensionExpiresAt}
                         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setExtensionExpiresAt(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setExtensionExpiresAt(event.target.value)
                         }
                       />
-
                       <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">
-                        La nueva fecha debe ser posterior al vencimiento actual y respetar el máximo configurado.
+                        La nueva fecha debe ser posterior al vencimiento actual
+                        y respetar el máximo configurado.
                       </span>
                     </label>
 
                     <label className="block text-sm font-semibold text-slate-700">
                       Motivo de la extensión *
-
                       <textarea
                         rows={4}
                         required
-                        value={
-                          extensionReason
-                        }
+                        value={extensionReason}
                         placeholder="Explica por qué se amplía la reserva"
                         className="mt-2 w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                        onChange={(
-                          event,
-                        ) =>
-                          setExtensionReason(
-                            event.target.value,
-                          )
+                        onChange={(event) =>
+                          setExtensionReason(event.target.value)
                         }
                       />
                     </label>
@@ -9662,19 +6577,12 @@ export default function InventariosPage() {
                   type="button"
                   variant="secondary"
                   disabled={
-                    reservationBeingUpdated ===
-                      extensionReservation.id ||
-                    (
-                      Boolean(
-                        extensionReservationGroupId,
-                      ) &&
+                    reservationBeingUpdated === extensionReservation.id ||
+                    (Boolean(extensionReservationGroupId) &&
                       reservationGroupBeingUpdated ===
-                        extensionReservationGroupId
-                    )
+                        extensionReservationGroupId)
                   }
-                  onClick={
-                    closeExtensionDrawer
-                  }
+                  onClick={closeExtensionDrawer}
                 >
                   Cancelar
                 </Button>
@@ -9682,26 +6590,16 @@ export default function InventariosPage() {
                 <Button
                   type="submit"
                   disabled={
-                    reservationBeingUpdated ===
-                      extensionReservation.id ||
-                    (
-                      Boolean(
-                        extensionReservationGroupId,
-                      ) &&
+                    reservationBeingUpdated === extensionReservation.id ||
+                    (Boolean(extensionReservationGroupId) &&
                       reservationGroupBeingUpdated ===
-                        extensionReservationGroupId
-                    )
+                        extensionReservationGroupId)
                   }
                 >
-                  {reservationBeingUpdated ===
-                    extensionReservation.id ||
-                  (
-                    Boolean(
-                      extensionReservationGroupId,
-                    ) &&
+                  {reservationBeingUpdated === extensionReservation.id ||
+                  (Boolean(extensionReservationGroupId) &&
                     reservationGroupBeingUpdated ===
-                      extensionReservationGroupId
-                  )
+                      extensionReservationGroupId)
                     ? "Guardando..."
                     : extensionReservationGroupId
                       ? "Extender todas"

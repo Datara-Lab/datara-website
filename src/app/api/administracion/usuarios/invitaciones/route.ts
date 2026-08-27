@@ -1,16 +1,17 @@
 import {
-  auth,
   clerkClient,
 } from "@clerk/nextjs/server";
+
 import {
   and,
   eq,
+  gt,
 } from "drizzle-orm";
+
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import {
-  memberProductRoles,
   roles,
   tenantMembers,
   tenantProducts,
@@ -27,6 +28,10 @@ import {
   AdministrationAuthError,
   requireAdminContext,
 } from "@/lib/administration/require-admin-context";
+
+import {
+  getTenantCommercialCapacity,
+} from "@/lib/commercial/tenant-capacity";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +70,59 @@ async function getAdministratorContext() {
     clerkUserId,
   } = await requireAdminContext();
 
+    const [administratorRole] =
+    await db
+      .select({
+        key:
+          roles.key,
+        product:
+          roles.product,
+      })
+      .from(
+        tenantMembers,
+      )
+      .innerJoin(
+        roles,
+        and(
+          eq(
+            tenantMembers.roleId,
+            roles.id,
+          ),
+          eq(
+            roles.tenantId,
+            tenantId,
+          ),
+        ),
+      )
+      .where(
+        and(
+          eq(
+            tenantMembers.id,
+            memberId,
+          ),
+          eq(
+            tenantMembers.tenantId,
+            tenantId,
+          ),
+          eq(
+            tenantMembers.status,
+            "active",
+          ),
+        ),
+      )
+      .limit(1);
+
+  if (
+    !administratorRole ||
+    administratorRole.product !==
+      null
+  ) {
+    throw new ApiError(
+      "No fue posible validar tu rol global.",
+      403,
+    );
+  }
+
   const [tenant] = await db
     .select({
       name: tenants.name,
@@ -89,11 +147,18 @@ async function getAdministratorContext() {
 
   return {
     tenantId,
-    tenantName: tenant.name,
+    tenantName:
+      tenant.name,
     memberId,
+
     clerkOrganizationId:
       tenant.clerkOrganizationId,
-    inviterUserId: clerkUserId,
+
+    inviterUserId:
+      clerkUserId,
+
+    globalRoleKey:
+      administratorRole.key,
   };
 }
 
@@ -222,6 +287,7 @@ export async function POST(
         await db
           .select({
             id: roles.id,
+            key: roles.key,
             product: roles.product,
           })
           .from(roles)
@@ -246,6 +312,17 @@ export async function POST(
         throw new ApiError(
           "El rol global seleccionado no es válido.",
           400,
+        );
+      }
+            if (
+        selectedGlobalRole.key ===
+          "admin_cloud" &&
+        context.globalRoleKey !==
+          "owner"
+      ) {
+        throw new ApiError(
+          "Solo el propietario de Datara puede asignar el rol Admin Cloud.",
+          403,
         );
       }
     }
@@ -298,8 +375,12 @@ export async function POST(
       const [productRole] =
         await db
           .select({
-            id: roles.id,
-            product: roles.product,
+            id:
+              roles.id,
+            key:
+              roles.key,
+            product:
+              roles.product,
           })
           .from(roles)
           .where(
@@ -331,6 +412,75 @@ export async function POST(
         product: item.product,
         roleId: item.roleId,
       });
+    }
+
+    const crmCapacity =
+      await getTenantCommercialCapacity(
+        context.tenantId,
+        "crm",
+      );
+
+    const activeMembers =
+      await db
+        .select({
+          id:
+            tenantMembers.id,
+        })
+        .from(
+          tenantMembers,
+        )
+        .where(
+          and(
+            eq(
+              tenantMembers.tenantId,
+              context.tenantId,
+            ),
+            eq(
+              tenantMembers.status,
+              "active",
+            ),
+          ),
+        );
+
+    const pendingInvitations =
+      await db
+        .select({
+          id:
+            workspaceInvitations.id,
+        })
+        .from(
+          workspaceInvitations,
+        )
+        .where(
+          and(
+            eq(
+              workspaceInvitations.tenantId,
+              context.tenantId,
+            ),
+            eq(
+              workspaceInvitations.status,
+              "pending",
+            ),
+            gt(
+              workspaceInvitations.expiresAt,
+              new Date(),
+            ),
+          ),
+        );
+
+    const reservedUserSlots =
+      activeMembers.length +
+      pendingInvitations.length;
+
+    if (
+      crmCapacity.users > 0 &&
+      reservedUserSlots >=
+        crmCapacity.users
+    ) {
+      throw new ApiError(
+        "Tu plan alcanzó el límite de usuarios. Agrega capacidad para invitar más miembros.",
+        409,
+      );
     }
 
     const invitationToken =

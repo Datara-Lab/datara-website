@@ -1,8 +1,4 @@
-import {
-  and,
-  asc,
-  eq,
-} from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
@@ -19,12 +15,13 @@ import {
   requireAdminContext,
 } from "@/lib/administration/require-admin-context";
 
-export const dynamic =
-  "force-dynamic";
+import { getTenantCommercialCapacity } from "@/lib/commercial/tenant-capacity";
 
-type EntityType =
-  | "region"
-  | "branch";
+import { syncBranchInventoryLocations } from "@/lib/crm/sync-branch-inventory-locations";
+
+export const dynamic = "force-dynamic";
+
+type EntityType = "region" | "branch";
 
 type StructurePayload = {
   id?: unknown;
@@ -44,142 +41,70 @@ type StructurePayload = {
 class ApiError extends Error {
   status: number;
 
-  constructor(
-    message: string,
-    status: number,
-  ) {
+  constructor(message: string, status: number) {
     super(message);
     this.status = status;
   }
 }
 
-function isRecord(
-  value: unknown,
-): value is Record<
-  string,
-  unknown
-> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function getOptionalString(
-  value: unknown,
-): string | undefined {
-  if (
-    typeof value !== "string"
-  ) {
+function getOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
     return undefined;
   }
 
-  const normalized =
-    value.trim();
+  const normalized = value.trim();
 
-  return normalized ||
-    undefined;
+  return normalized || undefined;
 }
 
-function getNullableString(
-  value: unknown,
-): string | null {
-  return (
-    getOptionalString(value) ??
-    null
-  );
+function getNullableString(value: unknown): string | null {
+  return getOptionalString(value) ?? null;
 }
 
-function getBoolean(
-  value: unknown,
-  fallback = true,
-): boolean {
-  return typeof value ===
-    "boolean"
-    ? value
-    : fallback;
+function getBoolean(value: unknown, fallback = true): boolean {
+  return typeof value === "boolean" ? value : fallback;
 }
 
-function getEntityType(
-  value: unknown,
-): EntityType {
-  if (
-    value === "region" ||
-    value === "branch"
-  ) {
+function getEntityType(value: unknown): EntityType {
+  if (value === "region" || value === "branch") {
     return value;
   }
 
-  throw new ApiError(
-    "El tipo de registro no es válido.",
-    400,
-  );
+  throw new ApiError("El tipo de registro no es válido.", 400);
 }
 
-function getAddress(
-  value: unknown,
-) {
+function getAddress(value: unknown) {
   if (!isRecord(value)) {
     return {};
   }
 
   return {
-    country:
-      getOptionalString(
-        value.country,
-      ),
+    country: getOptionalString(value.country),
 
-    state:
-      getOptionalString(
-        value.state,
-      ),
+    state: getOptionalString(value.state),
 
-    city:
-      getOptionalString(
-        value.city,
-      ),
+    city: getOptionalString(value.city),
 
-    postalCode:
-      getOptionalString(
-        value.postalCode,
-      ),
+    postalCode: getOptionalString(value.postalCode),
 
-    street:
-      getOptionalString(
-        value.street,
-      ),
+    street: getOptionalString(value.street),
 
-    exteriorNumber:
-      getOptionalString(
-        value.exteriorNumber,
-      ),
+    exteriorNumber: getOptionalString(value.exteriorNumber),
 
-    interiorNumber:
-      getOptionalString(
-        value.interiorNumber,
-      ),
+    interiorNumber: getOptionalString(value.interiorNumber),
 
-    neighborhood:
-      getOptionalString(
-        value.neighborhood,
-      ),
+    neighborhood: getOptionalString(value.neighborhood),
 
-    reference:
-      getOptionalString(
-        value.reference,
-      ),
+    reference: getOptionalString(value.reference),
   };
 }
 
-function createErrorResponse(
-  error: unknown,
-) {
-  if (
-    error instanceof ApiError ||
-    error instanceof
-      AdministrationAuthError
-  ) {
+function createErrorResponse(error: unknown) {
+  if (error instanceof ApiError || error instanceof AdministrationAuthError) {
     return NextResponse.json(
       {
         success: false,
@@ -199,8 +124,7 @@ function createErrorResponse(
   return NextResponse.json(
     {
       success: false,
-      error:
-        "No fue posible administrar la estructura organizacional.",
+      error: "No fue posible administrar la estructura organizacional.",
     },
     {
       status: 500,
@@ -210,103 +134,73 @@ function createErrorResponse(
 
 export async function GET() {
   try {
-    const {
+    const { tenantId } = await requireAdminContext();
+
+    const regions = await db
+      .select()
+      .from(tenantRegions)
+      .where(eq(tenantRegions.tenantId, tenantId))
+      .orderBy(asc(tenantRegions.name));
+
+    const branches = await db
+      .select({
+        id: tenantBranches.id,
+
+        tenantId: tenantBranches.tenantId,
+
+        regionId: tenantBranches.regionId,
+
+        regionName: tenantRegions.name,
+
+        name: tenantBranches.name,
+
+        code: tenantBranches.code,
+
+        folioPrefix: tenantBranches.folioPrefix,
+
+        phone: tenantBranches.phone,
+
+        email: tenantBranches.email,
+
+        timezone: tenantBranches.timezone,
+
+        address: tenantBranches.address,
+
+        active: tenantBranches.active,
+
+        metadata: tenantBranches.metadata,
+
+        createdAt: tenantBranches.createdAt,
+
+        updatedAt: tenantBranches.updatedAt,
+      })
+      .from(tenantBranches)
+      .leftJoin(
+        tenantRegions,
+        and(
+          eq(tenantBranches.regionId, tenantRegions.id),
+          eq(tenantRegions.tenantId, tenantId),
+        ),
+      )
+      .where(eq(tenantBranches.tenantId, tenantId))
+      .orderBy(asc(tenantBranches.name));
+
+    const commercialCapacity = await getTenantCommercialCapacity(
       tenantId,
-    } = await requireAdminContext();
+      "crm",
+    );
 
-    const regions =
-      await db
-        .select()
-        .from(
-          tenantRegions,
-        )
-        .where(
-          eq(
-            tenantRegions.tenantId,
-            tenantId,
-          ),
-        )
-        .orderBy(
-          asc(
-            tenantRegions.name,
-          ),
-        );
+    const branchLimit = commercialCapacity.branches;
 
-    const branches =
-      await db
-        .select({
-          id:
-            tenantBranches.id,
+    const branchUsage = {
+      used: branches.length,
+      limit: branchLimit,
 
-          tenantId:
-            tenantBranches.tenantId,
+      available:
+        branchLimit > 0 ? Math.max(0, branchLimit - branches.length) : null,
 
-          regionId:
-            tenantBranches.regionId,
-
-          regionName:
-            tenantRegions.name,
-
-          name:
-            tenantBranches.name,
-
-          code:
-            tenantBranches.code,
-
-          folioPrefix:
-            tenantBranches.folioPrefix,
-
-          phone:
-            tenantBranches.phone,
-
-          email:
-            tenantBranches.email,
-
-          timezone:
-            tenantBranches.timezone,
-
-          address:
-            tenantBranches.address,
-
-          active:
-            tenantBranches.active,
-
-          metadata:
-            tenantBranches.metadata,
-
-          createdAt:
-            tenantBranches.createdAt,
-
-          updatedAt:
-            tenantBranches.updatedAt,
-        })
-        .from(
-          tenantBranches,
-        )
-        .leftJoin(
-          tenantRegions,
-          and(
-            eq(
-              tenantBranches.regionId,
-              tenantRegions.id,
-            ),
-            eq(
-              tenantRegions.tenantId,
-              tenantId,
-            ),
-          ),
-        )
-        .where(
-          eq(
-            tenantBranches.tenantId,
-            tenantId,
-          ),
-        )
-        .orderBy(
-          asc(
-            tenantBranches.name,
-          ),
-        );
+      atLimit: branchLimit > 0 && branches.length >= branchLimit,
+    };
 
     return NextResponse.json({
       success: true,
@@ -314,25 +208,19 @@ export async function GET() {
       data: {
         regions,
         branches,
+        branchUsage,
       },
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function POST(
-  request: Request,
-) {
+export async function POST(request: Request) {
   try {
-    const {
-      tenantId,
-    } = await requireAdminContext();
+    const { tenantId } = await requireAdminContext();
 
-    const requestBody: unknown =
-      await request.json();
+    const requestBody: unknown = await request.json();
 
     if (!isRecord(requestBody)) {
       throw new ApiError(
@@ -341,68 +229,41 @@ export async function POST(
       );
     }
 
-    const values =
-      requestBody as
-        StructurePayload;
+    const values = requestBody as StructurePayload;
 
-    const type =
-      getEntityType(
-        values.type,
-      );
+    const type = getEntityType(values.type);
 
-    const name =
-      getOptionalString(
-        values.name,
-      );
+    const name = getOptionalString(values.name);
 
-    const code =
-      getOptionalString(
-        values.code,
-      )?.toUpperCase();
+    const code = getOptionalString(values.code)?.toUpperCase();
 
     if (!name) {
-      throw new ApiError(
-        "El nombre es obligatorio.",
-        400,
-      );
+      throw new ApiError("El nombre es obligatorio.", 400);
     }
 
     if (!code) {
-      throw new ApiError(
-        "El código es obligatorio.",
-        400,
-      );
+      throw new ApiError("El código es obligatorio.", 400);
     }
 
     if (type === "region") {
-      const [region] =
-        await db
-          .insert(
-            tenantRegions,
-          )
-          .values({
-            tenantId,
-            name,
-            code,
+      const [region] = await db
+        .insert(tenantRegions)
+        .values({
+          tenantId,
+          name,
+          code,
 
-            description:
-              getNullableString(
-                values.description,
-              ),
+          description: getNullableString(values.description),
 
-            active:
-              getBoolean(
-                values.active,
-              ),
-          })
-          .returning();
+          active: getBoolean(values.active),
+        })
+        .returning();
 
       return NextResponse.json(
         {
           success: true,
 
-          message:
-            "La región fue creada correctamente.",
+          message: "La región fue creada correctamente.",
 
           data: region,
         },
@@ -412,93 +273,78 @@ export async function POST(
       );
     }
 
-    const regionId =
-      getNullableString(
-        values.regionId,
-      );
+    const regionId = getNullableString(values.regionId);
 
     if (regionId) {
-      const [region] =
-        await db
-          .select({
-            id:
-              tenantRegions.id,
-          })
-          .from(
-            tenantRegions,
-          )
-          .where(
-            and(
-              eq(
-                tenantRegions.id,
-                regionId,
-              ),
-              eq(
-                tenantRegions.tenantId,
-                tenantId,
-              ),
-            ),
-          )
-          .limit(1);
+      const [region] = await db
+        .select({
+          id: tenantRegions.id,
+        })
+        .from(tenantRegions)
+        .where(
+          and(
+            eq(tenantRegions.id, regionId),
+            eq(tenantRegions.tenantId, tenantId),
+          ),
+        )
+        .limit(1);
 
       if (!region) {
+        throw new ApiError("La región seleccionada no existe.", 400);
+      }
+    }
+
+    const commercialCapacity = await getTenantCommercialCapacity(
+      tenantId,
+      "crm",
+    );
+
+    if (commercialCapacity.branches > 0) {
+      const existingBranches = await db
+        .select({
+          id: tenantBranches.id,
+        })
+        .from(tenantBranches)
+        .where(eq(tenantBranches.tenantId, tenantId));
+
+      if (existingBranches.length >= commercialCapacity.branches) {
         throw new ApiError(
-          "La región seleccionada no existe.",
-          400,
+          "Tu plan alcanzó el límite de sucursales. Contrata una expansión para registrar otra.",
+          409,
         );
       }
     }
 
-    const [branch] =
-      await db
-        .insert(
-          tenantBranches,
-        )
-        .values({
-          tenantId,
-          regionId,
-          name,
-          code,
+    const [branch] = await db
+      .insert(tenantBranches)
+      .values({
+        tenantId,
+        regionId,
+        name,
+        code,
 
-          folioPrefix:
-            getNullableString(
-              values.folioPrefix,
-            )?.toUpperCase() ??
-            null,
+        folioPrefix:
+          getNullableString(values.folioPrefix)?.toUpperCase() ?? null,
 
-          phone:
-            getNullableString(
-              values.phone,
-            ),
+        phone: getNullableString(values.phone),
 
-          email:
-            getNullableString(
-              values.email,
-            ),
+        email: getNullableString(values.email),
 
-          timezone:
-            getNullableString(
-              values.timezone,
-            ),
+        timezone: getNullableString(values.timezone),
 
-          address:
-            getAddress(
-              values.address,
-            ),
+        address: getAddress(values.address),
 
-          active:
-            getBoolean(
-              values.active,
-            ),
-        })
-        .returning();
+        active: getBoolean(values.active),
+      })
+      .returning();
+
+    await syncBranchInventoryLocations(tenantId);
 
     return NextResponse.json(
       {
         success: true,
 
-        message:
-          "La sucursal fue creada correctamente.",
+        message: "La sucursal fue creada correctamente.",
 
         data: branch,
       },
@@ -507,22 +353,15 @@ export async function POST(
       },
     );
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function PATCH(
-  request: Request,
-) {
+export async function PATCH(request: Request) {
   try {
-    const {
-      tenantId,
-    } = await requireAdminContext();
+    const { tenantId } = await requireAdminContext();
 
-    const requestBody: unknown =
-      await request.json();
+    const requestBody: unknown = await request.json();
 
     if (!isRecord(requestBody)) {
       throw new ApiError(
@@ -531,225 +370,126 @@ export async function PATCH(
       );
     }
 
-    const values =
-      requestBody as
-        StructurePayload;
+    const values = requestBody as StructurePayload;
 
-    const id =
-      getOptionalString(
-        values.id,
-      );
+    const id = getOptionalString(values.id);
 
-    const type =
-      getEntityType(
-        values.type,
-      );
+    const type = getEntityType(values.type);
 
-    const name =
-      getOptionalString(
-        values.name,
-      );
+    const name = getOptionalString(values.name);
 
-    const code =
-      getOptionalString(
-        values.code,
-      )?.toUpperCase();
+    const code = getOptionalString(values.code)?.toUpperCase();
 
     if (!id) {
-      throw new ApiError(
-        "No fue posible identificar el registro.",
-        400,
-      );
+      throw new ApiError("No fue posible identificar el registro.", 400);
     }
 
     if (!name || !code) {
-      throw new ApiError(
-        "El nombre y el código son obligatorios.",
-        400,
-      );
+      throw new ApiError("El nombre y el código son obligatorios.", 400);
     }
 
     if (type === "region") {
-      const [region] =
-        await db
-          .update(
-            tenantRegions,
-          )
-          .set({
-            name,
-            code,
+      const [region] = await db
+        .update(tenantRegions)
+        .set({
+          name,
+          code,
 
-            description:
-              getNullableString(
-                values.description,
-              ),
+          description: getNullableString(values.description),
 
-            active:
-              getBoolean(
-                values.active,
-              ),
+          active: getBoolean(values.active),
 
-            updatedAt:
-              new Date(),
-          })
-          .where(
-            and(
-              eq(
-                tenantRegions.id,
-                id,
-              ),
-              eq(
-                tenantRegions.tenantId,
-                tenantId,
-              ),
-            ),
-          )
-          .returning();
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(tenantRegions.id, id), eq(tenantRegions.tenantId, tenantId)),
+        )
+        .returning();
 
       if (!region) {
-        throw new ApiError(
-          "La región no existe.",
-          404,
-        );
+        throw new ApiError("La región no existe.", 404);
       }
 
       return NextResponse.json({
         success: true,
 
-        message:
-          "La región fue actualizada correctamente.",
+        message: "La región fue actualizada correctamente.",
 
         data: region,
       });
     }
 
-    const regionId =
-      getNullableString(
-        values.regionId,
-      );
+    const regionId = getNullableString(values.regionId);
 
     if (regionId) {
-      const [region] =
-        await db
-          .select({
-            id:
-              tenantRegions.id,
-          })
-          .from(
-            tenantRegions,
-          )
-          .where(
-            and(
-              eq(
-                tenantRegions.id,
-                regionId,
-              ),
-              eq(
-                tenantRegions.tenantId,
-                tenantId,
-              ),
-            ),
-          )
-          .limit(1);
+      const [region] = await db
+        .select({
+          id: tenantRegions.id,
+        })
+        .from(tenantRegions)
+        .where(
+          and(
+            eq(tenantRegions.id, regionId),
+            eq(tenantRegions.tenantId, tenantId),
+          ),
+        )
+        .limit(1);
 
       if (!region) {
-        throw new ApiError(
-          "La región seleccionada no existe.",
-          400,
-        );
+        throw new ApiError("La región seleccionada no existe.", 400);
       }
     }
 
-    const [branch] =
-      await db
-        .update(
-          tenantBranches,
-        )
-        .set({
-          regionId,
-          name,
-          code,
+    const [branch] = await db
+      .update(tenantBranches)
+      .set({
+        regionId,
+        name,
+        code,
 
-          folioPrefix:
-            getNullableString(
-              values.folioPrefix,
-            )?.toUpperCase() ??
-            null,
+        folioPrefix:
+          getNullableString(values.folioPrefix)?.toUpperCase() ?? null,
 
-          phone:
-            getNullableString(
-              values.phone,
-            ),
+        phone: getNullableString(values.phone),
 
-          email:
-            getNullableString(
-              values.email,
-            ),
+        email: getNullableString(values.email),
 
-          timezone:
-            getNullableString(
-              values.timezone,
-            ),
+        timezone: getNullableString(values.timezone),
 
-          address:
-            getAddress(
-              values.address,
-            ),
+        address: getAddress(values.address),
 
-          active:
-            getBoolean(
-              values.active,
-            ),
+        active: getBoolean(values.active),
 
-          updatedAt:
-            new Date(),
-        })
-        .where(
-          and(
-            eq(
-              tenantBranches.id,
-              id,
-            ),
-            eq(
-              tenantBranches.tenantId,
-              tenantId,
-            ),
-          ),
-        )
-        .returning();
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(tenantBranches.id, id), eq(tenantBranches.tenantId, tenantId)),
+      )
+      .returning();
+
+    await syncBranchInventoryLocations(tenantId);
 
     if (!branch) {
-      throw new ApiError(
-        "La sucursal no existe.",
-        404,
-      );
+      throw new ApiError("La sucursal no existe.", 404);
     }
 
     return NextResponse.json({
       success: true,
 
-      message:
-        "La sucursal fue actualizada correctamente.",
+      message: "La sucursal fue actualizada correctamente.",
 
       data: branch,
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function DELETE(
-  request: Request,
-) {
+export async function DELETE(request: Request) {
   try {
-    const {
-      tenantId,
-    } = await requireAdminContext();
+    const { tenantId } = await requireAdminContext();
 
-    const requestBody: unknown =
-      await request.json();
+    const requestBody: unknown = await request.json();
 
     if (!isRecord(requestBody)) {
       throw new ApiError(
@@ -758,109 +498,58 @@ export async function DELETE(
       );
     }
 
-    const id =
-      getOptionalString(
-        requestBody.id,
-      );
+    const id = getOptionalString(requestBody.id);
 
-    const type =
-      getEntityType(
-        requestBody.type,
-      );
+    const type = getEntityType(requestBody.type);
 
     if (!id) {
-      throw new ApiError(
-        "No fue posible identificar el registro.",
-        400,
-      );
+      throw new ApiError("No fue posible identificar el registro.", 400);
     }
 
     if (type === "region") {
-      const [region] =
-        await db
-          .select({
-            id:
-              tenantRegions.id,
+      const [region] = await db
+        .select({
+          id: tenantRegions.id,
 
-            name:
-              tenantRegions.name,
-          })
-          .from(
-            tenantRegions,
-          )
-          .where(
-            and(
-              eq(
-                tenantRegions.id,
-                id,
-              ),
-              eq(
-                tenantRegions.tenantId,
-                tenantId,
-              ),
-            ),
-          )
-          .limit(1);
+          name: tenantRegions.name,
+        })
+        .from(tenantRegions)
+        .where(
+          and(eq(tenantRegions.id, id), eq(tenantRegions.tenantId, tenantId)),
+        )
+        .limit(1);
 
       if (!region) {
-        throw new ApiError(
-          "La región no existe.",
-          404,
-        );
+        throw new ApiError("La región no existe.", 404);
       }
 
-      const [
-        relatedBranch,
-      ] = await db
+      const [relatedBranch] = await db
         .select({
-          id:
-            tenantBranches.id,
+          id: tenantBranches.id,
         })
-        .from(
-          tenantBranches,
-        )
+        .from(tenantBranches)
         .where(
           and(
-            eq(
-              tenantBranches.tenantId,
-              tenantId,
-            ),
-            eq(
-              tenantBranches.regionId,
-              id,
-            ),
+            eq(tenantBranches.tenantId, tenantId),
+            eq(tenantBranches.regionId, id),
           ),
         )
         .limit(1);
 
-      const [
-        regionAssignment,
-      ] = await db
+      const [regionAssignment] = await db
         .select({
-          memberId:
-            memberRegionAccess.memberId,
+          memberId: memberRegionAccess.memberId,
         })
-        .from(
-          memberRegionAccess,
-        )
+        .from(memberRegionAccess)
         .where(
           and(
-            eq(
-              memberRegionAccess.tenantId,
-              tenantId,
-            ),
-            eq(
-              memberRegionAccess.regionId,
-              id,
-            ),
+            eq(memberRegionAccess.tenantId, tenantId),
+            eq(memberRegionAccess.regionId, id),
           ),
         )
         .limit(1);
 
-      if (
-        relatedBranch ||
-        regionAssignment
-      ) {
+      if (relatedBranch || regionAssignment) {
         throw new ApiError(
           "No puedes eliminar una región que tiene sucursales o usuarios asignados.",
           409,
@@ -868,83 +557,43 @@ export async function DELETE(
       }
 
       await db
-        .delete(
-          tenantRegions,
-        )
+        .delete(tenantRegions)
         .where(
-          and(
-            eq(
-              tenantRegions.id,
-              id,
-            ),
-            eq(
-              tenantRegions.tenantId,
-              tenantId,
-            ),
-          ),
+          and(eq(tenantRegions.id, id), eq(tenantRegions.tenantId, tenantId)),
         );
 
       return NextResponse.json({
         success: true,
 
-        message:
-          `La región "${region.name}" fue eliminada correctamente.`,
+        message: `La región "${region.name}" fue eliminada correctamente.`,
       });
     }
 
-    const [branch] =
-      await db
-        .select({
-          id:
-            tenantBranches.id,
+    const [branch] = await db
+      .select({
+        id: tenantBranches.id,
 
-          name:
-            tenantBranches.name,
-        })
-        .from(
-          tenantBranches,
-        )
-        .where(
-          and(
-            eq(
-              tenantBranches.id,
-              id,
-            ),
-            eq(
-              tenantBranches.tenantId,
-              tenantId,
-            ),
-          ),
-        )
-        .limit(1);
+        name: tenantBranches.name,
+      })
+      .from(tenantBranches)
+      .where(
+        and(eq(tenantBranches.id, id), eq(tenantBranches.tenantId, tenantId)),
+      )
+      .limit(1);
 
     if (!branch) {
-      throw new ApiError(
-        "La sucursal no existe.",
-        404,
-      );
+      throw new ApiError("La sucursal no existe.", 404);
     }
 
-    const [
-      branchAssignment,
-    ] = await db
+    const [branchAssignment] = await db
       .select({
-        memberId:
-          memberBranchAccess.memberId,
+        memberId: memberBranchAccess.memberId,
       })
-      .from(
-        memberBranchAccess,
-      )
+      .from(memberBranchAccess)
       .where(
         and(
-          eq(
-            memberBranchAccess.tenantId,
-            tenantId,
-          ),
-          eq(
-            memberBranchAccess.branchId,
-            id,
-          ),
+          eq(memberBranchAccess.tenantId, tenantId),
+          eq(memberBranchAccess.branchId, id),
         ),
       )
       .limit(1);
@@ -957,31 +606,17 @@ export async function DELETE(
     }
 
     await db
-      .delete(
-        tenantBranches,
-      )
+      .delete(tenantBranches)
       .where(
-        and(
-          eq(
-            tenantBranches.id,
-            id,
-          ),
-          eq(
-            tenantBranches.tenantId,
-            tenantId,
-          ),
-        ),
+        and(eq(tenantBranches.id, id), eq(tenantBranches.tenantId, tenantId)),
       );
 
     return NextResponse.json({
       success: true,
 
-      message:
-        `La sucursal "${branch.name}" fue eliminada correctamente.`,
+      message: `La sucursal "${branch.name}" fue eliminada correctamente.`,
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }

@@ -77,6 +77,13 @@ type StructureResponse = {
       RegionRecord[];
     branches:
       BranchRecord[];
+
+    branchUsage: {
+      used: number;
+      limit: number;
+      available: number | null;
+      atLimit: boolean;
+    };
   };
 };
 
@@ -307,6 +314,7 @@ export default function StructurePage() {
     );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadStructure();
   }, [loadStructure]);
 
@@ -570,6 +578,12 @@ export default function StructurePage() {
         }
 
         function openCreateBranch() {
+            if (data?.branchUsage.atLimit) {
+            setError(
+                "Tu plan alcanzó el límite de sucursales. Contrata una expansión para registrar otra.",
+            );
+            return;
+            }
             setEditingBranch(null);
 
             setBranchForm({
@@ -1133,13 +1147,40 @@ export default function StructurePage() {
                     </p>
                   </div>
 
-                  <Button
-                    onClick={
-                      openCreateBranch
-                    }
-                  >
-                    Nueva sucursal
-                  </Button>
+                  <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm">
+                      <p className="font-black text-blue-950">
+                        {data.branchUsage.limit > 0
+                          ? <>
+                              {data.branchUsage.used} de {data.branchUsage.limit} sucursales utilizadas
+                            </>
+                          : <>
+                              {data.branchUsage.used} sucursales registradas
+                            </>}
+                      </p>
+
+                      <p className="mt-1 text-xs font-semibold text-blue-700">
+                        {data.branchUsage.available !== null
+                          ? <>
+                              {data.branchUsage.available} disponibles
+                            </>
+                          : "Sin límite configurado"}
+                      </p>
+                    </div>
+
+                    <Button
+                      disabled={
+                        data.branchUsage.atLimit
+                      }
+                      onClick={
+                        openCreateBranch
+                      }
+                    >
+                      {data.branchUsage.atLimit
+                        ? "Límite alcanzado"
+                        : "Nueva sucursal"}
+                    </Button>
+                  </div>
                 </div>
 
                 {data.branches

@@ -41,6 +41,29 @@ function getModelPricing(
         new Date(),
 ): ModelPricing | null {
     if (
+        provider === "openai" &&
+        (
+            model === "gpt-5-mini" ||
+            model ===
+                "gpt-5-mini-2025-08-07"
+        )
+    ) {
+        return {
+            inputPerMillionUsd:
+                0.25,
+
+            cachedInputPerMillionUsd:
+                0.025,
+
+            outputPerMillionUsd:
+                2,
+
+            pricingVersion:
+                "openai-gpt-5-mini-2026-08",
+        };
+    }
+
+    if (
         provider === "gemini" &&
         model ===
             "gemini-3.6-flash"

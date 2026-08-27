@@ -1,8 +1,12 @@
-import { auth } from "@clerk/nextjs/server";
+import {
+    clerkClient,
+} from "@clerk/nextjs/server";
+
 import {
     and,
     asc,
     eq,
+    gt,
     inArray,
     ne,
 } from "drizzle-orm";
@@ -19,12 +23,17 @@ import {
     tenantProducts,
     tenantRegions,
     tenants,
+    workspaceInvitations,
 } from "@/db/schema";
 
 import {
   AdministrationAuthError,
   requireAdminContext,
 } from "@/lib/administration/require-admin-context";
+
+import {
+    getTenantCommercialCapacity,
+} from "@/lib/commercial/tenant-capacity";
 
 export const dynamic = "force-dynamic";
 
@@ -38,54 +47,6 @@ class ApiError extends Error {
         super(message);
         this.status = status;
     }
-}
-
-async function getTenantContext() {
-    const {
-        userId,
-        orgId,
-    } = await auth();
-
-    if (!userId) {
-        throw new ApiError(
-            "No autenticado.",
-            401,
-        );
-    }
-
-    if (!orgId) {
-        throw new ApiError(
-            "No hay una organización activa.",
-            400,
-        );
-    }
-
-    const [tenant] = await db
-        .select({
-            id: tenants.id,
-            name: tenants.name,
-        })
-        .from(tenants)
-        .where(
-            eq(
-                tenants.clerkOrganizationId,
-                orgId,
-            ),
-        )
-        .limit(1);
-
-    if (!tenant) {
-        throw new ApiError(
-            "La empresa aún no está sincronizada.",
-            404,
-        );
-    }
-
-    return {
-        tenantId: tenant.id,
-        tenantName: tenant.name,
-        currentUserId: userId,
-    };
 }
 
 function createErrorResponse(
@@ -139,10 +100,13 @@ export async function GET() {
         const {
             tenantId,
             clerkUserId: currentUserId,
-            } = await requireAdminContext();
+        } = await requireAdminContext();
         const [tenantInfo] = await db
             .select({
                 name: tenants.name,
+
+                clerkOrganizationId:
+                    tenants.clerkOrganizationId,
             })
             .from(tenants)
             .where(
@@ -153,8 +117,183 @@ export async function GET() {
             )
             .limit(1);
 
-            const tenantName =
+        const tenantName =
             tenantInfo?.name ?? "";
+
+        if (
+            tenantInfo?.clerkOrganizationId
+        ) {
+            const clerk =
+                await clerkClient();
+
+            const memberships =
+                await clerk.organizations
+                    .getOrganizationMembershipList({
+                        organizationId:
+                            tenantInfo
+                                .clerkOrganizationId,
+
+                        limit: 100,
+                    });
+
+            const activeMemberEmails =
+                new Set(
+                    memberships.data
+                        .map(
+                            (
+                                membership,
+                            ) =>
+                                membership
+                                    .publicUserData
+                                    ?.identifier
+                                    ?.trim()
+                                    .toLowerCase(),
+                        )
+                        .filter(
+                            (
+                                email,
+                            ): email is string =>
+                                Boolean(
+                                    email,
+                                ),
+                        ),
+                );
+
+            if (
+                activeMemberEmails.size >
+                0
+            ) {
+                const pendingInvitations =
+                    await db
+                        .select({
+                            id:
+                                workspaceInvitations.id,
+
+                            email:
+                                workspaceInvitations.email,
+                        })
+                        .from(
+                            workspaceInvitations,
+                        )
+                        .where(
+                            and(
+                                eq(
+                                    workspaceInvitations
+                                        .tenantId,
+                                    tenantId,
+                                ),
+                                eq(
+                                    workspaceInvitations
+                                        .status,
+                                    "pending",
+                                ),
+                            ),
+                        );
+
+                for (
+                    const invitation of
+                    pendingInvitations
+                ) {
+                    const normalizedEmail =
+                        invitation.email
+                            .trim()
+                            .toLowerCase();
+
+                    if (
+                        !activeMemberEmails.has(
+                            normalizedEmail,
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    const matchingMember =
+                        memberships.data.find(
+                            (
+                                membership,
+                            ) =>
+                                membership
+                                    .publicUserData
+                                    ?.identifier
+                                    ?.trim()
+                                    .toLowerCase() ===
+                                normalizedEmail,
+                        );
+
+                    if (
+                        !matchingMember
+                            ?.publicUserData
+                            ?.userId
+                    ) {
+                        continue;
+                    }
+
+                    const [localMember] =
+                        await db
+                            .select({
+                                id:
+                                    tenantMembers.id,
+                            })
+                            .from(
+                                tenantMembers,
+                            )
+                            .where(
+                                and(
+                                    eq(
+                                        tenantMembers.tenantId,
+                                        tenantId,
+                                    ),
+                                    eq(
+                                        tenantMembers.clerkUserId,
+                                        matchingMember
+                                            .publicUserData
+                                            .userId,
+                                    ),
+                                ),
+                            )
+                            .limit(1);
+
+                    if (
+                        !localMember
+                    ) {
+                        continue;
+                    }
+
+                    const now =
+                        new Date();
+
+                    await db
+                        .update(
+                            workspaceInvitations,
+                        )
+                        .set({
+                            status:
+                                "accepted",
+
+                            acceptedByMemberId:
+                                localMember.id,
+
+                            acceptedAt:
+                                now,
+
+                            updatedAt:
+                                now,
+                        })
+                        .where(
+                            and(
+                                eq(
+                                    workspaceInvitations.id,
+                                    invitation.id,
+                                ),
+                                eq(
+                                    workspaceInvitations.status,
+                                    "pending",
+                                ),
+                            ),
+                        );
+                }
+            }
+        }
 
         const members = await db
             .select({
@@ -193,6 +332,61 @@ export async function GET() {
                 asc(tenantMembers.lastName),
                 asc(tenantMembers.email),
             );
+
+        const commercialCapacity =
+            await getTenantCommercialCapacity(
+                tenantId,
+                "crm",
+            );
+
+        const activeUsers =
+            members.filter(
+                (member) =>
+                    member.status ===
+                    "active",
+            ).length;
+
+        const pendingInvitations =
+            await db
+                .select({
+                    id:
+                        workspaceInvitations.id,
+                })
+                .from(
+                    workspaceInvitations,
+                )
+                .where(
+                    and(
+                        eq(
+                            workspaceInvitations.tenantId,
+                            tenantId,
+                        ),
+                        eq(
+                            workspaceInvitations.status,
+                            "pending",
+                        ),
+                        gt(
+                            workspaceInvitations.expiresAt,
+                            new Date(),
+                        ),
+                    ),
+                );
+
+        const reservedSlots =
+            activeUsers +
+            pendingInvitations.length;
+
+        const userLimit =
+            commercialCapacity.users;
+
+        const availableSlots =
+            userLimit > 0
+                ? Math.max(
+                    0,
+                    userLimit -
+                        reservedSlots,
+                )
+                : null;
 
         const enabledProducts =
             await db
@@ -592,6 +786,19 @@ export async function GET() {
                     availableBranches,
 
                 users: data,
+
+                usage: {
+                    activeUsers,
+
+                    pendingInvitations:
+                        pendingInvitations.length,
+
+                    userLimit,
+
+                    reservedSlots,
+
+                    availableSlots,
+                },
             },
         });
     } catch (error) {

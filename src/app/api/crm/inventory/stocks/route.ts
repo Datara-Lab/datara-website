@@ -1,19 +1,8 @@
-import {
-  auth,
-  currentUser,
-} from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
-import {
-  and,
-  asc,
-  eq,
-  inArray,
-  sql,
-} from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
-import {
-  NextResponse,
-} from "next/server";
+import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 
@@ -31,17 +20,16 @@ import {
   getCRMBranchAccess,
 } from "@/lib/crm/branch-access";
 
-import {
-  createInventoryAuditQuery,
-} from "@/lib/crm/inventory-audit";
+import { createInventoryAuditQuery } from "@/lib/crm/inventory-audit";
 
 import {
   CRMPermissionError,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
 
-export const dynamic =
-  "force-dynamic";
+import { syncBranchInventoryLocations } from "@/lib/crm/sync-branch-inventory-locations";
+
+export const dynamic = "force-dynamic";
 
 type StockConfigurationPayload = {
   stockId?: unknown;
@@ -51,93 +39,48 @@ type StockConfigurationPayload = {
   binLocation?: unknown;
 };
 
-function isRecord(
-  value: unknown,
-): value is Record<
-  string,
-  unknown
-> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function getOptionalInteger(
-  value: unknown,
-): number | undefined {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+function getOptionalInteger(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === "") {
     return undefined;
   }
 
-  const numberValue =
-    Number(value);
+  const numberValue = Number(value);
 
-  return Number.isInteger(
-    numberValue,
-  )
-    ? numberValue
-    : undefined;
+  return Number.isInteger(numberValue) ? numberValue : undefined;
 }
 
-function getOptionalString(
-  value: unknown,
-): string | undefined {
-  if (
-    typeof value !== "string"
-  ) {
+function getOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
     return undefined;
   }
 
-  return (
-    value.trim() ||
-    undefined
-  );
+  return value.trim() || undefined;
 }
 
 class ApiError extends Error {
   status: number;
 
-  constructor(
-    message: string,
-    status: number,
-  ) {
+  constructor(message: string, status: number) {
     super(message);
     this.status = status;
   }
 }
 
-function toNumber(
-  value:
-    | string
-    | number
-    | null
-    | undefined,
-): number {
-  const numberValue =
-    Number(value ?? 0);
+function toNumber(value: string | number | null | undefined): number {
+  const numberValue = Number(value ?? 0);
 
-  return Number.isFinite(
-    numberValue,
-  )
-    ? numberValue
-    : 0;
+  return Number.isFinite(numberValue) ? numberValue : 0;
 }
 
-function createErrorResponse(
-  error: unknown,
-) {
+function createErrorResponse(error: unknown) {
   if (
     error instanceof ApiError ||
-    error instanceof
-      CRMBranchAccessError ||
-    error instanceof
-      CRMPermissionError
+    error instanceof CRMBranchAccessError ||
+    error instanceof CRMPermissionError
   ) {
     return NextResponse.json(
       {
@@ -150,16 +93,12 @@ function createErrorResponse(
     );
   }
 
-  console.error(
-    "No fue posible cargar el inventario:",
-    error,
-  );
+  console.error("No fue posible cargar el inventario:", error);
 
   return NextResponse.json(
     {
       success: false,
-      error:
-        "No fue posible cargar el inventario.",
+      error: "No fue posible cargar el inventario.",
     },
     {
       status: 500,
@@ -169,599 +108,346 @@ function createErrorResponse(
 
 export async function GET() {
   try {
-    const {
-      userId,
-      orgId,
-    } = await auth();
+    const { userId, orgId } = await auth();
 
     if (!userId) {
-      throw new ApiError(
-        "No autenticado.",
-        401,
-      );
+      throw new ApiError("No autenticado.", 401);
     }
 
     if (!orgId) {
-      throw new ApiError(
-        "No hay una organización activa.",
-        400,
-      );
+      throw new ApiError("No hay una organización activa.", 400);
     }
 
-    const [tenant] =
-      await db
-        .select({
-          id: tenants.id,
-        })
-        .from(tenants)
-        .where(
-          eq(
-            tenants
-              .clerkOrganizationId,
-            orgId,
-          ),
-        )
-        .limit(1);
+    const [tenant] = await db
+      .select({
+        id: tenants.id,
+      })
+      .from(tenants)
+      .where(eq(tenants.clerkOrganizationId, orgId))
+      .limit(1);
 
     if (!tenant) {
-      throw new ApiError(
-        "La empresa aún no está sincronizada.",
-        404,
-      );
+      throw new ApiError("La empresa aún no está sincronizada.", 404);
     }
 
-    const [
-      branchAccess,
-      permissions,
-    ] = await Promise.all([
-      getCRMBranchAccess(
-        tenant.id,
-        userId,
-      ),
+    const [branchAccess, permissions] = await Promise.all([
+      getCRMBranchAccess(tenant.id, userId),
 
-      requireCRMModulePermission(
-        tenant.id,
-        userId,
-        "inventory",
-        "view",
-      ),
+      requireCRMModulePermission(tenant.id, userId, "inventory", "view"),
     ]);
 
-    const locations =
-      await db
-        .select({
-          id:
-            inventoryLocations.id,
+    await syncBranchInventoryLocations(tenant.id);
 
-          branchId:
-            inventoryLocations
-              .branchId,
+    const locations = await db
+      .select({
+        id: inventoryLocations.id,
 
-          name:
-            inventoryLocations.name,
+        branchId: inventoryLocations.branchId,
 
-          code:
-            inventoryLocations.code,
+        name: inventoryLocations.name,
 
-          type:
-            inventoryLocations.type,
+        code: inventoryLocations.code,
 
-          isDefault:
-            inventoryLocations
-              .isDefault,
+        type: inventoryLocations.type,
 
-          branchName:
-            tenantBranches.name,
+        isDefault: inventoryLocations.isDefault,
 
-          branchCode:
-            tenantBranches.code,
+        branchName: tenantBranches.name,
 
-          regionId:
-            tenantBranches.regionId,
-        })
-        .from(
-          inventoryLocations,
-        )
-        .leftJoin(
-          tenantBranches,
-          and(
-            eq(
-              inventoryLocations
-                .branchId,
-              tenantBranches.id,
-            ),
-            eq(
-              tenantBranches.tenantId,
-              tenant.id,
-            ),
-          ),
-        )
-        .where(
-          and(
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenant.id,
-            ),
+        branchCode: tenantBranches.code,
 
-            eq(
-              inventoryLocations
-                .active,
-              true,
-            ),
+        regionId: tenantBranches.regionId,
+      })
+      .from(inventoryLocations)
+      .leftJoin(
+        tenantBranches,
+        and(
+          eq(inventoryLocations.branchId, tenantBranches.id),
+          eq(tenantBranches.tenantId, tenant.id),
+        ),
+      )
+      .where(
+        and(
+          eq(inventoryLocations.tenantId, tenant.id),
 
-            branchAccess.allBranches
-              ? sql<boolean>`true`
-              : branchAccess
-                    .branchIds
-                    .length > 0
-                ? inArray(
-                    inventoryLocations
-                      .branchId,
-                    branchAccess
-                      .branchIds,
-                  )
-                : sql<boolean>`false`,
-          ),
-        )
-        .orderBy(
-          asc(
-            inventoryLocations.name,
-          ),
-        );
+          eq(inventoryLocations.active, true),
 
-    const products =
-      await db
-        .select({
-          id: crmProducts.id,
-          name: crmProducts.name,
-          code: crmProducts.code,
-          productTypeId:
-            crmProductTypes.id,
-          productTypeName:
-            crmProductTypes.name,
-          category:
-            crmProducts.category,
-          unitPrice:
-            crmProducts.unitPrice,
-          currency:
-            crmProducts.currency,
-        })
-        .from(crmProducts)
-        .innerJoin(
-          crmProductTypes,
-          and(
-            eq(
-              crmProductTypes.id,
-              crmProducts.productTypeId,
-            ),
+          branchAccess.allBranches
+            ? sql<boolean>`true`
+            : branchAccess.branchIds.length > 0
+              ? inArray(inventoryLocations.branchId, branchAccess.branchIds)
+              : sql<boolean>`false`,
+        ),
+      )
+      .orderBy(asc(inventoryLocations.name));
 
-            eq(
-              crmProductTypes.tenantId,
-              tenant.id,
-            ),
-          ),
-        )
-        .where(
-          and(
-            eq(
-              crmProducts.tenantId,
-              tenant.id,
-            ),
+    const products = await db
+      .select({
+        id: crmProducts.id,
+        name: crmProducts.name,
+        code: crmProducts.code,
+        productTypeId: crmProductTypes.id,
+        productTypeName: crmProductTypes.name,
+        category: crmProducts.category,
+        unitPrice: crmProducts.unitPrice,
+        currency: crmProducts.currency,
+      })
+      .from(crmProducts)
+      .innerJoin(
+        crmProductTypes,
+        and(
+          eq(crmProductTypes.id, crmProducts.productTypeId),
 
-            eq(
-              crmProducts.active,
-              true,
-            ),
+          eq(crmProductTypes.tenantId, tenant.id),
+        ),
+      )
+      .where(
+        and(
+          eq(crmProducts.tenantId, tenant.id),
 
-            eq(
-              crmProductTypes.inventoryTracked,
-              true,
-            ),
-          ),
-        )
-        .orderBy(
-          asc(
-            crmProducts.name,
-          ),
-        );
+          eq(crmProducts.active, true),
 
-    const locationIds =
-      locations.map(
-        (location) =>
-          location.id,
-      );
+          eq(crmProductTypes.inventoryTracked, true),
+        ),
+      )
+      .orderBy(asc(crmProducts.name));
+
+    const locationIds = locations.map((location) => location.id);
 
     const stocks =
       locationIds.length > 0
         ? await db
             .select()
-            .from(
-              inventoryStocks,
-            )
+            .from(inventoryStocks)
             .where(
               and(
-                eq(
-                  inventoryStocks
-                    .tenantId,
-                  tenant.id,
-                ),
-                inArray(
-                  inventoryStocks
-                    .locationId,
-                  locationIds,
-                ),
+                eq(inventoryStocks.tenantId, tenant.id),
+                inArray(inventoryStocks.locationId, locationIds),
               ),
             )
         : [];
 
-    const stockByKey =
-      new Map(
-        stocks.map(
-          (stock) => [
-            `${stock.locationId}:${stock.productId}`,
-            stock,
-          ],
-        ),
-      );
+    const stockByKey = new Map(
+      stocks.map((stock) => [`${stock.locationId}:${stock.productId}`, stock]),
+    );
 
-    const data =
-      locations.flatMap(
-        (location) =>
-          products.map(
-            (product) => {
-              const stock =
-                stockByKey.get(
-                  `${location.id}:${product.id}`,
-                );
+    const data = locations.flatMap((location) =>
+      products.map((product) => {
+        const stock = stockByKey.get(`${location.id}:${product.id}`);
 
-              const quantity =
-                stock?.quantity ??
-                0;
+        const quantity = stock?.quantity ?? 0;
 
-              const reservedQuantity =
-                stock
-                  ?.reservedQuantity ??
-                0;
+        const reservedQuantity = stock?.reservedQuantity ?? 0;
 
-              const availableQuantity =
-                quantity -
-                reservedQuantity;
+        const availableQuantity = quantity - reservedQuantity;
 
-              const minimumQuantity =
-                stock
-                  ?.minimumQuantity ??
-                0;
+        const minimumQuantity = stock?.minimumQuantity ?? 0;
 
-              const averageUnitCost =
-                toNumber(
-                  stock
-                    ?.averageUnitCost,
-                );
+        const averageUnitCost = toNumber(stock?.averageUnitCost);
 
-              const unitPrice =
-                toNumber(
-                  product.unitPrice,
-                );
+        const unitPrice = toNumber(product.unitPrice);
 
-              const status =
-                !stock
-                  ? "Sin inicializar"
-                  : availableQuantity <=
-                      0
-                    ? "Agotado"
-                    : minimumQuantity >
-                          0 &&
-                        availableQuantity <=
-                          minimumQuantity
-                      ? "Bajo"
-                      : "Disponible";
+        const status = !stock
+          ? "Sin inicializar"
+          : availableQuantity <= 0
+            ? "Agotado"
+            : minimumQuantity > 0 && availableQuantity <= minimumQuantity
+              ? "Bajo"
+              : "Disponible";
 
-              const branchLabel =
-                location.branchName
-                  ? location.branchCode
-                    ? `${location.branchName} (${location.branchCode})`
-                    : location.branchName
-                  : null;
+        const branchLabel = location.branchName
+          ? location.branchCode
+            ? `${location.branchName} (${location.branchCode})`
+            : location.branchName
+          : null;
 
-              const locationLabel =
-                location.code
-                  ? `${location.name} (${location.code})`
-                  : location.name;
+        const locationLabel = location.code
+          ? `${location.name} (${location.code})`
+          : location.name;
 
-              return {
-                id:
-                  stock?.id ??
-                  `${location.id}:${product.id}`,
+        return {
+          id: stock?.id ?? `${location.id}:${product.id}`,
 
-                stockId:
-                  stock?.id ??
-                  null,
+          stockId: stock?.id ?? null,
 
-                initialized:
-                  Boolean(stock),
+          initialized: Boolean(stock),
 
-                branchId:
-                  location.branchId,
+          branchId: location.branchId,
 
-                branchName:
-                  branchLabel ??
-                  "Ubicación independiente",
+          branchName: branchLabel ?? "Ubicación independiente",
 
-                regionId:
-                  location.regionId,
+          regionId: location.regionId,
 
-                locationId:
-                  location.id,
+          locationId: location.id,
 
-                locationName:
-                  location.name,
+          locationName: location.name,
 
-                locationLabel,
+          locationLabel,
 
-                locationType:
-                  location.type,
+          locationType: location.type,
 
-                isDefaultLocation:
-                  location.isDefault,
+          isDefaultLocation: location.isDefault,
 
-                productId:
-                  product.id,
+          productId: product.id,
 
-                productName:
-                  product.name,
+          productName: product.name,
 
-                productCode:
-                  product.code,
+          productCode: product.code,
 
-                productTypeId:
-                  product.productTypeId,
+          productTypeId: product.productTypeId,
 
-                productTypeName:
-                  product.productTypeName,
+          productTypeName: product.productTypeName,
 
-                category:
-                  product.category,
+          category: product.category,
 
-                quantity,
+          quantity,
 
-                reservedQuantity,
+          reservedQuantity,
 
-                availableQuantity,
+          availableQuantity,
 
-                minimumQuantity,
+          minimumQuantity,
 
-                maximumQuantity:
-                  stock
-                    ?.maximumQuantity ??
-                  null,
+          maximumQuantity: stock?.maximumQuantity ?? null,
 
-                reorderPoint:
-                  stock
-                    ?.reorderPoint ??
-                  null,
+          reorderPoint: stock?.reorderPoint ?? null,
 
-                binLocation:
-                  stock?.location ??
-                  null,
+          binLocation: stock?.location ?? null,
 
-                currency:
-                  product.currency,
+          currency: product.currency,
 
-                averageUnitCost:
-                  permissions.canManage
-                    ? averageUnitCost
-                    : null,
+          averageUnitCost: permissions.canManage ? averageUnitCost : null,
 
-                lastUnitCost:
-                  permissions.canManage
-                    ? toNumber(
-                        stock
-                          ?.lastUnitCost,
-                      )
-                    : null,
+          lastUnitCost: permissions.canManage
+            ? toNumber(stock?.lastUnitCost)
+            : null,
 
-                inventoryValue:
-                  permissions.canManage
-                    ? quantity *
-                      averageUnitCost
-                    : null,
+          inventoryValue: permissions.canManage
+            ? quantity * averageUnitCost
+            : null,
 
-                unitPrice,
+          unitPrice,
 
-                commercialValue:
-                  quantity *
-                  unitPrice,
+          commercialValue: quantity * unitPrice,
 
-                status,
+          status,
 
-                updatedAt:
-                  stock?.updatedAt
-                    ?.toISOString() ??
-                  null,
-              };
-            },
-          ),
-      );
+          updatedAt: stock?.updatedAt?.toISOString() ?? null,
+        };
+      }),
+    );
 
-    const calculatedSummary =
-      data.reduce(
-        (
-          totals,
-          item,
-        ) => {
-          totals.totalUnits +=
-            item.quantity;
+    const calculatedSummary = data.reduce(
+      (totals, item) => {
+        totals.totalUnits += item.quantity;
 
-          totals.availableUnits +=
-            item.availableQuantity;
+        totals.availableUnits += item.availableQuantity;
 
-          totals.reservedUnits +=
-            item.reservedQuantity;
+        totals.reservedUnits += item.reservedQuantity;
 
-          totals.commercialValue +=
-            item.commercialValue;
+        totals.commercialValue += item.commercialValue;
 
-          if (
-            item.inventoryValue !==
-            null
-          ) {
-            totals.inventoryValue +=
-              item.inventoryValue;
-          }
-
-          if (
-            item.status ===
-            "Agotado"
-          ) {
-            totals.outOfStock +=
-              1;
-          }
-
-          if (
-            item.status ===
-            "Bajo"
-          ) {
-            totals.lowStock +=
-              1;
-          }
-
-          if (
-            item.status ===
-            "Sin inicializar"
-          ) {
-            totals.uninitialized +=
-              1;
-          }
-
-          return totals;
-        },
-        {
-          totalUnits: 0,
-          availableUnits: 0,
-          reservedUnits: 0,
-          inventoryValue: 0,
-          commercialValue: 0,
-          lowStock: 0,
-          outOfStock: 0,
-          uninitialized: 0,
-        },
-      );
-
-    const alertsByProduct =
-      new Map<
-        string,
-        {
-          initialized: boolean;
-          availableQuantity:
-            number;
-          minimumQuantity:
-            number;
+        if (item.inventoryValue !== null) {
+          totals.inventoryValue += item.inventoryValue;
         }
-      >();
+
+        if (item.status === "Agotado") {
+          totals.outOfStock += 1;
+        }
+
+        if (item.status === "Bajo") {
+          totals.lowStock += 1;
+        }
+
+        if (item.status === "Sin inicializar") {
+          totals.uninitialized += 1;
+        }
+
+        return totals;
+      },
+      {
+        totalUnits: 0,
+        availableUnits: 0,
+        reservedUnits: 0,
+        inventoryValue: 0,
+        commercialValue: 0,
+        lowStock: 0,
+        outOfStock: 0,
+        uninitialized: 0,
+      },
+    );
+
+    const alertsByProduct = new Map<
+      string,
+      {
+        initialized: boolean;
+        availableQuantity: number;
+        minimumQuantity: number;
+      }
+    >();
 
     for (const item of data) {
-      const current =
-        alertsByProduct.get(
-          item.productId,
-        ) ?? {
-          initialized: false,
-          availableQuantity: 0,
-          minimumQuantity: 0,
-        };
+      const current = alertsByProduct.get(item.productId) ?? {
+        initialized: false,
+        availableQuantity: 0,
+        minimumQuantity: 0,
+      };
 
       if (item.initialized) {
-        current.initialized =
-          true;
+        current.initialized = true;
 
-        current.availableQuantity +=
-          item.availableQuantity;
+        current.availableQuantity += item.availableQuantity;
 
-        current.minimumQuantity +=
-          item.minimumQuantity;
+        current.minimumQuantity += item.minimumQuantity;
       }
 
-      alertsByProduct.set(
-        item.productId,
-        current,
-      );
+      alertsByProduct.set(item.productId, current);
     }
 
-    calculatedSummary.lowStock =
-      0;
+    calculatedSummary.lowStock = 0;
 
-    calculatedSummary.outOfStock =
-      0;
+    calculatedSummary.outOfStock = 0;
 
-    calculatedSummary.uninitialized =
-      0;
+    calculatedSummary.uninitialized = 0;
 
-    for (
-      const productAlert of
-        alertsByProduct.values()
-    ) {
-      if (
-        !productAlert.initialized
-      ) {
-        calculatedSummary
-          .uninitialized += 1;
+    for (const productAlert of alertsByProduct.values()) {
+      if (!productAlert.initialized) {
+        calculatedSummary.uninitialized += 1;
 
         continue;
       }
 
-      if (
-        productAlert
-          .availableQuantity <= 0
-      ) {
-        calculatedSummary
-          .outOfStock += 1;
+      if (productAlert.availableQuantity <= 0) {
+        calculatedSummary.outOfStock += 1;
 
         continue;
       }
 
-      if (
-        productAlert
-          .availableQuantity <=
-        productAlert
-          .minimumQuantity
-      ) {
-        calculatedSummary
-          .lowStock += 1;
+      if (productAlert.availableQuantity <= productAlert.minimumQuantity) {
+        calculatedSummary.lowStock += 1;
       }
     }
 
-    const branchesById =
-      new Map<
-        string,
-        {
-          value: string;
-          label: string;
-        }
-      >();
+    const branchesById = new Map<
+      string,
+      {
+        value: string;
+        label: string;
+      }
+    >();
 
-    for (
-      const location of
-      locations
-    ) {
-      if (
-        !location.branchId ||
-        !location.branchName
-      ) {
+    for (const location of locations) {
+      if (!location.branchId || !location.branchName) {
         continue;
       }
 
-      branchesById.set(
-        location.branchId,
-        {
-          value:
-            location.branchId,
+      branchesById.set(location.branchId, {
+        value: location.branchId,
 
-          label:
-            location.branchCode
-              ? `${location.branchName} (${location.branchCode})`
-              : location.branchName,
-        },
-      );
+        label: location.branchCode
+          ? `${location.branchName} (${location.branchCode})`
+          : location.branchName,
+      });
     }
 
     return NextResponse.json({
@@ -772,131 +458,77 @@ export async function GET() {
       summary: {
         ...calculatedSummary,
 
-        inventoryValue:
-          permissions.canManage
-            ? calculatedSummary
-                .inventoryValue
-            : null,
+        inventoryValue: permissions.canManage
+          ? calculatedSummary.inventoryValue
+          : null,
       },
 
-      locations:
-        locations.map(
-          (location) => ({
-            value:
-              location.id,
+      locations: locations.map((location) => ({
+        value: location.id,
 
-            label:
-              location.code
-                ? `${location.name} (${location.code})`
-                : location.name,
+        label: location.code
+          ? `${location.name} (${location.code})`
+          : location.name,
 
-            branchId:
-              location.branchId,
+        branchId: location.branchId,
 
-            type:
-              location.type,
+        type: location.type,
 
-            isDefault:
-              location.isDefault,
-          }),
-        ),
+        isDefault: location.isDefault,
+      })),
 
-      branches:
-        Array.from(
-          branchesById.values(),
-        ),
+      branches: Array.from(branchesById.values()),
 
-      primaryBranchId:
-        branchAccess
-          .primaryBranchId,
+      primaryBranchId: branchAccess.primaryBranchId,
 
       permissions: {
-        canView:
-          permissions.canView,
+        canView: permissions.canView,
 
-        canCreate:
-          permissions.canCreate,
+        canCreate: permissions.canCreate,
 
-        canEdit:
-          permissions.canEdit,
+        canEdit: permissions.canEdit,
 
-        canManage:
-          permissions.canManage,
+        canManage: permissions.canManage,
 
-        canViewCost:
-          permissions.canManage,
+        canViewCost: permissions.canManage,
       },
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function PATCH(
-  request: Request,
-) {
+export async function PATCH(request: Request) {
   try {
-    const {
-      userId,
-      orgId,
-    } = await auth();
+    const { userId, orgId } = await auth();
 
     if (!userId) {
-      throw new ApiError(
-        "No autenticado.",
-        401,
-      );
+      throw new ApiError("No autenticado.", 401);
     }
 
     if (!orgId) {
-      throw new ApiError(
-        "No hay una organización activa.",
-        400,
-      );
+      throw new ApiError("No hay una organización activa.", 400);
     }
 
-    const [tenant] =
-      await db
-        .select({
-          id: tenants.id,
-        })
-        .from(tenants)
-        .where(
-          eq(
-            tenants
-              .clerkOrganizationId,
-            orgId,
-          ),
-        )
-        .limit(1);
+    const [tenant] = await db
+      .select({
+        id: tenants.id,
+      })
+      .from(tenants)
+      .where(eq(tenants.clerkOrganizationId, orgId))
+      .limit(1);
 
     if (!tenant) {
-      throw new ApiError(
-        "La empresa aún no está sincronizada.",
-        404,
-      );
+      throw new ApiError("La empresa aún no está sincronizada.", 404);
     }
 
-    const [
-      branchAccess,
-    ] = await Promise.all([
-      getCRMBranchAccess(
-        tenant.id,
-        userId,
-      ),
+    const [branchAccess] = await Promise.all([
+      getCRMBranchAccess(tenant.id, userId),
 
-      requireCRMModulePermission(
-        tenant.id,
-        userId,
-        "inventory",
-        "edit",
-      ),
+      requireCRMModulePermission(tenant.id, userId, "inventory", "edit"),
     ]);
 
-    const body: unknown =
-      await request.json();
+    const body: unknown = await request.json();
 
     if (!isRecord(body)) {
       throw new ApiError(
@@ -905,76 +537,42 @@ export async function PATCH(
       );
     }
 
-    const values =
-      body as
-        StockConfigurationPayload;
+    const values = body as StockConfigurationPayload;
 
-    const stockId =
-      getOptionalString(
-        values.stockId,
-      );
+    const stockId = getOptionalString(values.stockId);
 
     if (!stockId) {
-      throw new ApiError(
-        "No fue posible identificar la existencia.",
-        400,
-      );
+      throw new ApiError("No fue posible identificar la existencia.", 400);
     }
 
-    const minimumQuantity =
-      getOptionalInteger(
-        values.minimumQuantity,
-      );
+    const minimumQuantity = getOptionalInteger(values.minimumQuantity);
 
-    const maximumQuantity =
-      getOptionalInteger(
-        values.maximumQuantity,
-      );
+    const maximumQuantity = getOptionalInteger(values.maximumQuantity);
 
-    const reorderPoint =
-      getOptionalInteger(
-        values.reorderPoint,
-      );
+    const reorderPoint = getOptionalInteger(values.reorderPoint);
 
-    if (
-      minimumQuantity ===
-        undefined ||
-      minimumQuantity < 0
-    ) {
+    if (minimumQuantity === undefined || minimumQuantity < 0) {
       throw new ApiError(
         "La existencia mínima debe ser un entero igual o mayor que cero.",
         400,
       );
     }
 
-    if (
-      maximumQuantity !==
-        undefined &&
-      maximumQuantity < 0
-    ) {
+    if (maximumQuantity !== undefined && maximumQuantity < 0) {
       throw new ApiError(
         "La existencia máxima debe ser un entero igual o mayor que cero.",
         400,
       );
     }
 
-    if (
-      maximumQuantity !==
-        undefined &&
-      maximumQuantity <
-        minimumQuantity
-    ) {
+    if (maximumQuantity !== undefined && maximumQuantity < minimumQuantity) {
       throw new ApiError(
         "La existencia máxima no puede ser menor que la mínima.",
         400,
       );
     }
 
-    if (
-      reorderPoint !==
-        undefined &&
-      reorderPoint < 0
-    ) {
+    if (reorderPoint !== undefined && reorderPoint < 0) {
       throw new ApiError(
         "El punto de reorden debe ser un entero igual o mayor que cero.",
         400,
@@ -982,12 +580,9 @@ export async function PATCH(
     }
 
     if (
-      maximumQuantity !==
-        undefined &&
-      reorderPoint !==
-        undefined &&
-      reorderPoint >
-        maximumQuantity
+      maximumQuantity !== undefined &&
+      reorderPoint !== undefined &&
+      reorderPoint > maximumQuantity
     ) {
       throw new ApiError(
         "El punto de reorden no puede superar la existencia máxima.",
@@ -995,88 +590,48 @@ export async function PATCH(
       );
     }
 
-    const [existingStock] =
-      await db
-        .select({
-          id:
-            inventoryStocks.id,
+    const [existingStock] = await db
+      .select({
+        id: inventoryStocks.id,
 
-          branchId:
-            inventoryLocations
-              .branchId,
+        branchId: inventoryLocations.branchId,
 
-          locationId:
-            inventoryStocks
-              .locationId,
+        locationId: inventoryStocks.locationId,
 
-          productId:
-            inventoryStocks
-              .productId,
+        productId: inventoryStocks.productId,
 
-          minimumQuantity:
-            inventoryStocks
-              .minimumQuantity,
+        minimumQuantity: inventoryStocks.minimumQuantity,
 
-          maximumQuantity:
-            inventoryStocks
-              .maximumQuantity,
+        maximumQuantity: inventoryStocks.maximumQuantity,
 
-          reorderPoint:
-            inventoryStocks
-              .reorderPoint,
+        reorderPoint: inventoryStocks.reorderPoint,
 
-          binLocation:
-            inventoryStocks
-              .location,
-        })
-        .from(
-          inventoryStocks,
-        )
-        .innerJoin(
-          inventoryLocations,
-          and(
-            eq(
-              inventoryStocks
-                .locationId,
-              inventoryLocations.id,
-            ),
-            eq(
-              inventoryLocations
-                .tenantId,
-              tenant.id,
-            ),
-          ),
-        )
-        .where(
-          and(
-            eq(
-              inventoryStocks.id,
-              stockId,
-            ),
-            eq(
-              inventoryStocks
-                .tenantId,
-              tenant.id,
-            ),
-          ),
-        )
-        .limit(1);
+        binLocation: inventoryStocks.location,
+      })
+      .from(inventoryStocks)
+      .innerJoin(
+        inventoryLocations,
+        and(
+          eq(inventoryStocks.locationId, inventoryLocations.id),
+          eq(inventoryLocations.tenantId, tenant.id),
+        ),
+      )
+      .where(
+        and(
+          eq(inventoryStocks.id, stockId),
+          eq(inventoryStocks.tenantId, tenant.id),
+        ),
+      )
+      .limit(1);
 
     if (!existingStock) {
-      throw new ApiError(
-        "La existencia no existe.",
-        404,
-      );
+      throw new ApiError("La existencia no existe.", 404);
     }
 
     if (
       !branchAccess.allBranches &&
-      (
-        !existingStock.branchId ||
-        !branchAccess.branchIds.includes(
-          existingStock.branchId,
-        )
-      )
+      (!existingStock.branchId ||
+        !branchAccess.branchIds.includes(existingStock.branchId))
     ) {
       throw new ApiError(
         "No tienes acceso a esta ubicación de inventario.",
@@ -1084,165 +639,101 @@ export async function PATCH(
       );
     }
 
-    const normalizedBinLocation =
-      getOptionalString(
-        values.binLocation,
-      ) ?? null;
+    const normalizedBinLocation = getOptionalString(values.binLocation) ?? null;
 
-    const user =
-      await currentUser();
+    const user = await currentUser();
 
     const actorName =
-      [
-        user?.firstName,
-        user?.lastName,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      user?.emailAddresses[0]
-        ?.emailAddress ||
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+      user?.emailAddresses[0]?.emailAddress ||
       "Usuario";
 
-    const now =
-      new Date();
+    const now = new Date();
 
-    const stockQuery =
-      db
-        .update(
-          inventoryStocks,
-        )
-        .set({
-          minimumQuantity,
+    const stockQuery = db
+      .update(inventoryStocks)
+      .set({
+        minimumQuantity,
 
-          maximumQuantity:
-            maximumQuantity ??
-            null,
+        maximumQuantity: maximumQuantity ?? null,
 
-          reorderPoint:
-            reorderPoint ??
-            null,
+        reorderPoint: reorderPoint ?? null,
 
-          location:
-            normalizedBinLocation,
+        location: normalizedBinLocation,
 
-          updatedAt:
-            now,
-        })
-        .where(
-          and(
-            eq(
-              inventoryStocks.id,
-              stockId,
-            ),
-            eq(
-              inventoryStocks
-                .tenantId,
-              tenant.id,
-            ),
-          ),
-        );
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(inventoryStocks.id, stockId),
+          eq(inventoryStocks.tenantId, tenant.id),
+        ),
+      );
 
-    const auditQuery =
-      createInventoryAuditQuery({
-        tenantId:
-          tenant.id,
+    const auditQuery = createInventoryAuditQuery({
+      tenantId: tenant.id,
 
-        branchId:
-          existingStock.branchId,
+      branchId: existingStock.branchId,
 
-        locationId:
-          existingStock.locationId,
+      locationId: existingStock.locationId,
 
-        productId:
-          existingStock.productId,
+      productId: existingStock.productId,
 
-        entityType:
-          "Configuración de stock",
+      entityType: "Configuración de stock",
 
-        entityId:
-          stockId,
+      entityId: stockId,
 
-        action:
-          "Actualizar parámetros",
+      action: "Actualizar parámetros",
 
-        summary:
-          "Se actualizó la configuración operativa del inventario.",
+      summary: "Se actualizó la configuración operativa del inventario.",
 
-        actorClerkUserId:
-          userId,
+      actorClerkUserId: userId,
 
-        actorName,
+      actorName,
 
-        before: {
-          minimumQuantity:
-            existingStock
-              .minimumQuantity,
+      before: {
+        minimumQuantity: existingStock.minimumQuantity,
 
-          maximumQuantity:
-            existingStock
-              .maximumQuantity,
+        maximumQuantity: existingStock.maximumQuantity,
 
-          reorderPoint:
-            existingStock
-              .reorderPoint,
+        reorderPoint: existingStock.reorderPoint,
 
-          binLocation:
-            existingStock
-              .binLocation,
-        },
+        binLocation: existingStock.binLocation,
+      },
 
-        after: {
-          minimumQuantity,
+      after: {
+        minimumQuantity,
 
-          maximumQuantity:
-            maximumQuantity ??
-            null,
+        maximumQuantity: maximumQuantity ?? null,
 
-          reorderPoint:
-            reorderPoint ??
-            null,
+        reorderPoint: reorderPoint ?? null,
 
-          binLocation:
-            normalizedBinLocation,
-        },
-      });
+        binLocation: normalizedBinLocation,
+      },
+    });
 
-    await db.batch([
-      stockQuery,
-      auditQuery,
-    ]);
+    await db.batch([stockQuery, auditQuery]);
 
     const updatedStock = {
-      id:
-        stockId,
+      id: stockId,
 
       minimumQuantity,
 
-      maximumQuantity:
-        maximumQuantity ??
-        null,
+      maximumQuantity: maximumQuantity ?? null,
 
-      reorderPoint:
-        reorderPoint ??
-        null,
+      reorderPoint: reorderPoint ?? null,
 
-      binLocation:
-        normalizedBinLocation,
+      binLocation: normalizedBinLocation,
     };
 
     return NextResponse.json({
       success: true,
 
-      message:
-        "La configuración de inventario fue actualizada correctamente.",
+      message: "La configuración de inventario fue actualizada correctamente.",
 
-      data:
-        updatedStock,
+      data: updatedStock,
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }

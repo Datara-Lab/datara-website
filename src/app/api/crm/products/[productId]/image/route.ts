@@ -1,22 +1,12 @@
-import {
-  getCloudflareContext,
-} from "@opennextjs/cloudflare";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-import {
-  auth,
-} from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
-import {
-  and,
-  eq,
-} from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 
-import {
-  crmProducts,
-  tenants,
-} from "@/db/schema";
+import { crmProducts, tenants } from "@/db/schema";
 
 import {
   CRMPermissionError,
@@ -24,8 +14,14 @@ import {
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
 
-export const dynamic =
-  "force-dynamic";
+import {
+  CommercialStorageLimitError,
+  finalizeStorageReplacement,
+  releaseTenantCommercialStorage,
+  reserveStorageReplacement,
+} from "@/lib/commercial/storage-usage";
+
+export const dynamic = "force-dynamic";
 
 type RouteContext = {
   params: Promise<{
@@ -36,87 +32,47 @@ type RouteContext = {
 class ApiError extends Error {
   status: number;
 
-  constructor(
-    message: string,
-    status: number,
-  ) {
+  constructor(message: string, status: number) {
     super(message);
     this.status = status;
   }
 }
 
-const allowedMimeTypes =
-  new Set([
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ]);
+const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const maximumFileSize =
-  8 * 1024 * 1024;
+const maximumFileSize = 8 * 1024 * 1024;
 
-async function getTenantId(
-  permission:
-    CRMModulePermission,
-) {
-  const {
-    userId,
-    orgId,
-  } = await auth();
+async function getTenantId(permission: CRMModulePermission) {
+  const { userId, orgId } = await auth();
 
   if (!userId) {
-    throw new ApiError(
-      "No autenticado.",
-      401,
-    );
+    throw new ApiError("No autenticado.", 401);
   }
 
   if (!orgId) {
-    throw new ApiError(
-      "No hay una organización activa.",
-      400,
-    );
+    throw new ApiError("No hay una organización activa.", 400);
   }
 
-  const [tenant] =
-    await db
-      .select({
-        id: tenants.id,
-      })
-      .from(tenants)
-      .where(
-        eq(
-          tenants
-            .clerkOrganizationId,
-          orgId,
-        ),
-      )
-      .limit(1);
+  const [tenant] = await db
+    .select({
+      id: tenants.id,
+    })
+    .from(tenants)
+    .where(eq(tenants.clerkOrganizationId, orgId))
+    .limit(1);
 
   if (!tenant) {
-    throw new ApiError(
-      "La empresa aún no está sincronizada.",
-      404,
-    );
+    throw new ApiError("La empresa aún no está sincronizada.", 404);
   }
 
-  await requireCRMModulePermission(
-    tenant.id,
-    userId,
-    "products",
-    permission,
-  );
+  await requireCRMModulePermission(tenant.id, userId, "products", permission);
 
   return tenant.id;
 }
 function getBucket(): R2Bucket {
-  const {
-    env,
-  } =
-    getCloudflareContext();
+  const { env } = getCloudflareContext();
 
-  const bucket =
-    env.datara_crm_documents;
+  const bucket = env.datara_crm_documents;
 
   if (!bucket) {
     throw new ApiError(
@@ -128,51 +84,35 @@ function getBucket(): R2Bucket {
   return bucket;
 }
 
-async function getProduct(
-  tenantId: string,
-  productId: string,
-) {
-  const [product] =
-    await db
-      .select({
-        id: crmProducts.id,
+async function getProduct(tenantId: string, productId: string) {
+  const [product] = await db
+    .select({
+      id: crmProducts.id,
 
-        name:
-          crmProducts.name,
+      name: crmProducts.name,
 
-        imageObjectKey:
-          crmProducts
-            .imageObjectKey,
-      })
-      .from(crmProducts)
-      .where(
-        and(
-          eq(
-            crmProducts.id,
-            productId,
-          ),
+      imageObjectKey: crmProducts.imageObjectKey,
 
-          eq(
-            crmProducts.tenantId,
-            tenantId,
-          ),
-        ),
-      )
-      .limit(1);
+      imageSizeBytes: crmProducts.imageSizeBytes,
+    })
+    .from(crmProducts)
+    .where(
+      and(
+        eq(crmProducts.id, productId),
+
+        eq(crmProducts.tenantId, tenantId),
+      ),
+    )
+    .limit(1);
 
   if (!product) {
-    throw new ApiError(
-      "El producto no existe.",
-      404,
-    );
+    throw new ApiError("El producto no existe.", 404);
   }
 
   return product;
 }
 
-function getExtension(
-  mimeType: string,
-): string {
+function getExtension(mimeType: string): string {
   switch (mimeType) {
     case "image/jpeg":
       return "jpg";
@@ -184,27 +124,19 @@ function getExtension(
       return "webp";
 
     default:
-      throw new ApiError(
-        "El formato de imagen no es válido.",
-        400,
-      );
+      throw new ApiError("El formato de imagen no es válido.", 400);
   }
 }
 
-function createErrorResponse(
-  error: unknown,
-) {
+function createErrorResponse(error: unknown) {
   const status =
     error instanceof ApiError ||
-    error instanceof
-      CRMPermissionError
+    error instanceof CommercialStorageLimitError ||
+    error instanceof CRMPermissionError
       ? error.status
       : 500;
 
-  console.error(
-    "Error de imagen de producto:",
-    error,
-  );
+  console.error("Error de imagen de producto:", error);
 
   return Response.json(
     {
@@ -221,167 +153,95 @@ function createErrorResponse(
   );
 }
 
-export async function GET(
-  _request: Request,
-  context: RouteContext,
-) {
+export async function GET(_request: Request, context: RouteContext) {
   try {
-    const tenantId =
-      await getTenantId(
-        "view",
-      );
+    const tenantId = await getTenantId("view");
 
-    const {
-      productId,
-    } = await context.params;
+    const { productId } = await context.params;
 
-    const product =
-      await getProduct(
-        tenantId,
-        productId,
-      );
+    const product = await getProduct(tenantId, productId);
 
-    if (
-      !product.imageObjectKey
-    ) {
-      throw new ApiError(
-        "El producto no tiene imagen.",
-        404,
-      );
+    if (!product.imageObjectKey) {
+      throw new ApiError("El producto no tiene imagen.", 404);
     }
 
-    const object =
-      await getBucket().get(
-        product.imageObjectKey,
-      );
+    const object = await getBucket().get(product.imageObjectKey);
 
     if (!object) {
-      throw new ApiError(
-        "La imagen del producto no está disponible.",
-        404,
-      );
+      throw new ApiError("La imagen del producto no está disponible.", 404);
     }
 
-    const headers =
-      new Headers();
+    const headers = new Headers();
 
     headers.set(
       "Content-Type",
-      object.httpMetadata
-        ?.contentType ??
-        "application/octet-stream",
+      object.httpMetadata?.contentType ?? "application/octet-stream",
     );
 
-    if (
-      object.httpMetadata
-        ?.contentDisposition
-    ) {
+    if (object.httpMetadata?.contentDisposition) {
       headers.set(
         "Content-Disposition",
-        object.httpMetadata
-          .contentDisposition,
+        object.httpMetadata.contentDisposition,
       );
     }
 
-    headers.set(
-      "ETag",
-      object.httpEtag,
-    );
+    headers.set("ETag", object.httpEtag);
 
-    headers.set(
-      "Cache-Control",
-      "private, max-age=3600",
-    );
+    headers.set("Cache-Control", "private, max-age=3600");
 
-    const imageBytes =
-      await object.arrayBuffer();
+    const imageBytes = await object.arrayBuffer();
 
-    headers.set(
-      "Content-Length",
-      String(imageBytes.byteLength),
-    );
+    headers.set("Content-Length", String(imageBytes.byteLength));
 
-    return new Response(
-      imageBytes,
-      {
-        headers,
-      },
-    );
-
+    return new Response(imageBytes, {
+      headers,
+    });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-) {
+export async function POST(request: Request, context: RouteContext) {
+  let reservedStorageBytes = 0;
+
+  let storageTenantId: string | null = null;
+
   try {
-    const tenantId =
-      await getTenantId(
-        "edit",
-      );
+    const tenantId = await getTenantId("edit");
 
-    const {
-      productId,
-    } = await context.params;
+    storageTenantId = tenantId;
 
-    const product =
-      await getProduct(
-        tenantId,
-        productId,
-      );
+    const { productId } = await context.params;
 
-    const formData =
-      await request.formData();
+    const product = await getProduct(tenantId, productId);
 
-    const file =
-      formData.get("file");
+    const formData = await request.formData();
 
-    if (
-      !(file instanceof File)
-    ) {
-      throw new ApiError(
-        "Selecciona una imagen.",
-        400,
-      );
+    const file = formData.get("file");
+
+    if (!(file instanceof File)) {
+      throw new ApiError("Selecciona una imagen.", 400);
     }
 
     if (file.size === 0) {
-      throw new ApiError(
-        "La imagen está vacía.",
-        400,
-      );
+      throw new ApiError("La imagen está vacía.", 400);
     }
 
-    if (
-      file.size >
-      maximumFileSize
-    ) {
-      throw new ApiError(
-        "La imagen no puede superar 8 MB.",
-        400,
-      );
+    if (file.size > maximumFileSize) {
+      throw new ApiError("La imagen no puede superar 8 MB.", 400);
     }
 
-    if (
-      !allowedMimeTypes.has(
-        file.type,
-      )
-    ) {
-      throw new ApiError(
-        "Usa una imagen JPG, PNG o WEBP.",
-        400,
-      );
+    if (!allowedMimeTypes.has(file.type)) {
+      throw new ApiError("Usa una imagen JPG, PNG o WEBP.", 400);
     }
 
-    const extension =
-      getExtension(
-        file.type,
-      );
+    reservedStorageBytes = await reserveStorageReplacement(
+      tenantId,
+      product.imageSizeBytes,
+      file.size,
+    );
+
+    const extension = getExtension(file.type);
 
     const objectKey = [
       "tenants",
@@ -391,133 +251,103 @@ export async function POST(
       `${crypto.randomUUID()}.${extension}`,
     ].join("/");
 
-    const bucket =
-      getBucket();
+    const bucket = getBucket();
 
-    const fileBytes =
-      await file.arrayBuffer();
+    const fileBytes = await file.arrayBuffer();
 
-    await bucket.put(
-      objectKey,
-      fileBytes,
-      {
-        httpMetadata: {
-          contentType: file.type,
-        },
+    await bucket.put(objectKey, fileBytes, {
+      httpMetadata: {
+        contentType: file.type,
       },
-    );
+    });
 
     await db
       .update(crmProducts)
       .set({
-        imageObjectKey:
-          objectKey,
+        imageObjectKey: objectKey,
 
-        updatedAt:
-          new Date(),
+        imageSizeBytes: file.size,
+
+        updatedAt: new Date(),
       })
       .where(
         and(
-          eq(
-            crmProducts.id,
-            productId,
-          ),
+          eq(crmProducts.id, productId),
 
-          eq(
-            crmProducts.tenantId,
-            tenantId,
-          ),
+          eq(crmProducts.tenantId, tenantId),
         ),
       );
 
-    if (
-      product.imageObjectKey &&
-      product.imageObjectKey !==
-        objectKey
-    ) {
-      await bucket.delete(
-        product.imageObjectKey,
-      );
+    if (product.imageObjectKey && product.imageObjectKey !== objectKey) {
+      await bucket.delete(product.imageObjectKey);
     }
+
+    await finalizeStorageReplacement(
+      tenantId,
+      product.imageSizeBytes,
+      file.size,
+    );
+
+    reservedStorageBytes = 0;
 
     return Response.json({
       success: true,
 
       data: {
-        imageUrl:
-          `/api/crm/products/${productId}/image`,
+        imageUrl: `/api/crm/products/${productId}/image`,
       },
 
-      message:
-        "Imagen del producto actualizada.",
+      message: "Imagen del producto actualizada.",
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    if (storageTenantId && reservedStorageBytes > 0) {
+      await releaseTenantCommercialStorage(
+        storageTenantId,
+        reservedStorageBytes,
+      );
+    }
+
+    return createErrorResponse(error);
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  context: RouteContext,
-) {
+export async function DELETE(_request: Request, context: RouteContext) {
   try {
-    const tenantId =
-      await getTenantId(
-        "delete",
-      );
+    const tenantId = await getTenantId("delete");
 
-    const {
-      productId,
-    } = await context.params;
+    const { productId } = await context.params;
 
-    const product =
-      await getProduct(
-        tenantId,
-        productId,
-      );
+    const product = await getProduct(tenantId, productId);
 
-    if (
-      product.imageObjectKey
-    ) {
-      await getBucket().delete(
-        product.imageObjectKey,
-      );
+    if (product.imageObjectKey) {
+      await getBucket().delete(product.imageObjectKey);
     }
 
     await db
       .update(crmProducts)
       .set({
-        imageObjectKey:
-          null,
+        imageObjectKey: null,
 
-        updatedAt:
-          new Date(),
+        imageSizeBytes: 0,
+
+        updatedAt: new Date(),
       })
       .where(
         and(
-          eq(
-            crmProducts.id,
-            productId,
-          ),
+          eq(crmProducts.id, productId),
 
-          eq(
-            crmProducts.tenantId,
-            tenantId,
-          ),
+          eq(crmProducts.tenantId, tenantId),
         ),
       );
+
+    await releaseTenantCommercialStorage(tenantId, product.imageSizeBytes);
 
     return Response.json({
       success: true,
 
-      message:
-        "Imagen del producto eliminada.",
+      message: "Imagen del producto eliminada.",
     });
   } catch (error) {
-    return createErrorResponse(
-      error,
-    );
+    return createErrorResponse(error);
   }
 }
