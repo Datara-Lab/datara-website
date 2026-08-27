@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 
-import type {
-  ReactNode,
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
 } from "react";
 
 import {
@@ -11,192 +16,268 @@ import {
   FaWhatsapp,
 } from "react-icons/fa";
 
+type SettingsResponse = {
+  success: boolean;
+  data?: {
+    settings: {
+      facebook: {
+        enabled: boolean;
+        pageId: string;
+        pageName: string;
+      };
+    };
+  };
+};
+
 type IntegrationCard = {
   key: string;
   name: string;
   description: string;
-  status: "available" | "coming_soon";
+  availability:
+    | "available"
+    | "coming_soon";
   href?: string;
-  accentClass: string;
-  iconClass: string;
   icon: ReactNode;
+  iconClassName: string;
 };
 
-const integrations:
-  IntegrationCard[] = [
+const integrations: IntegrationCard[] = [
   {
     key: "facebook",
     name: "Facebook",
     description:
-      "Prepara tu página y la captura de prospectos provenientes de Lead Ads.",
-    status: "available",
+      "Recibe automáticamente prospectos generados por formularios de Lead Ads.",
+    availability: "available",
     href:
-      "/crm/configuracion/integraciones/configurar#facebook",
-    accentClass:
-      "border-blue-200 hover:border-blue-400 hover:shadow-blue-100",
-    iconClass:
+      "/crm/configuracion/integraciones/configurar",
+    icon:
+      <FaFacebookF aria-hidden="true" />,
+    iconClassName:
       "bg-[#1877F2] text-white",
-    icon: <FaFacebookF />,
   },
   {
     key: "instagram",
     name: "Instagram",
     description:
-      "Prepara tu cuenta profesional y la futura recepción de conversaciones.",
-    status: "available",
-    href:
-      "/crm/configuracion/integraciones/configurar#instagram",
-    accentClass:
-      "border-fuchsia-200 hover:border-fuchsia-400 hover:shadow-fuchsia-100",
-    iconClass:
+      "Centraliza conversaciones y oportunidades provenientes de tu cuenta profesional.",
+    availability: "coming_soon",
+    icon:
+      <FaInstagram aria-hidden="true" />,
+    iconClassName:
       "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#FCAF45] text-white",
-    icon: <FaInstagram />,
   },
   {
     key: "whatsapp",
     name: "WhatsApp Business",
     description:
-      "Conversaciones, plantillas y seguimiento comercial desde WhatsApp Cloud API.",
-    status: "coming_soon",
-    accentClass:
-      "border-emerald-200",
-    iconClass:
+      "Gestiona conversaciones, plantillas y seguimiento comercial desde Datara.",
+    availability: "coming_soon",
+    icon:
+      <FaWhatsapp aria-hidden="true" />,
+    iconClassName:
       "bg-[#25D366] text-white",
-    icon: <FaWhatsapp />,
   },
   {
     key: "messenger",
     name: "Messenger",
     description:
-      "Atención de mensajes de Facebook y creación de prospectos desde conversaciones.",
-    status: "coming_soon",
-    accentClass:
-      "border-violet-200",
-    iconClass:
-      "bg-gradient-to-br from-[#00B2FF] to-[#7B2FF7] text-white",
-    icon: <FaFacebookMessenger />,
+      "Convierte conversaciones de tu página en prospectos y actividades del CRM.",
+    availability: "coming_soon",
+    icon:
+      <FaFacebookMessenger aria-hidden="true" />,
+    iconClassName:
+      "bg-[#168AFF] text-white",
   },
 ];
 
-function IntegrationContent({
-  integration,
-}: {
-  integration: IntegrationCard;
-}) {
-  const available =
-    integration.status ===
-    "available";
-
-  return (
-    <>
-      <div className="flex items-start justify-between gap-4">
-        <div
-          className={[
-            "flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-lg",
-            integration.iconClass,
-          ].join(" ")}
-          aria-hidden="true"
-        >
-          {integration.icon}
-        </div>
-
-        <span
-          className={[
-            "rounded-full px-3 py-1 text-xs font-black",
-            available
-              ? "bg-amber-100 text-amber-800"
-              : "bg-slate-100 text-slate-600",
-          ].join(" ")}
-        >
-          {available
-            ? "Disponible para preparar"
-            : "Próximamente"}
-        </span>
-      </div>
-
-      <h2 className="mt-6 text-2xl font-black text-slate-950">
-        {integration.name}
-      </h2>
-
-      <p className="mt-3 min-h-16 text-sm leading-6 text-slate-600">
-        {integration.description}
-      </p>
-
-      <p
-        className={[
-          "mt-6 text-sm font-black",
-          available
-            ? "text-blue-700"
-            : "text-slate-400",
-        ].join(" ")}
-      >
-        {available
-          ? "Abrir configuración →"
-          : "Se habilitará en una próxima versión"}
-      </p>
-    </>
-  );
-}
-
 export default function IntegrationsPage() {
+  const [facebookConnection, setFacebookConnection] =
+    useState<{
+      connected: boolean;
+      pageName: string;
+    }>({
+      connected: false,
+      pageName: "",
+    });
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const loadConnection =
+    useCallback(async () => {
+      try {
+        const response = await fetch(
+          "/api/crm/settings/social-integrations",
+          {
+            cache: "no-store",
+          },
+        );
+
+        const result =
+          (await response.json()) as
+            SettingsResponse;
+
+        const facebook =
+          result.data?.settings.facebook;
+
+        setFacebookConnection({
+          connected: Boolean(
+            response.ok &&
+              result.success &&
+              facebook?.enabled &&
+              facebook.pageId,
+          ),
+          pageName:
+            facebook?.pageName ?? "",
+        });
+      } catch {
+        setFacebookConnection({
+          connected: false,
+          pageName: "",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }, []);
+
+  useEffect(() => {
+    const timeoutId =
+      window.setTimeout(
+        () => {
+          void loadConnection();
+        },
+        0,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
+  }, [loadConnection]);
+
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="rounded-3xl bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600 p-7 text-white shadow-xl sm:p-10">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-cyan-200">
-            Datara CRM
+        <header className="border-b border-slate-200 pb-8">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+            Configuración
           </p>
 
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-            Centro de integraciones
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            Integraciones
           </h1>
 
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-50">
-            Conecta los canales donde conversas y captas prospectos. Cada integración conserva su propia configuración y estado por empresa.
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
+            Conecta las herramientas que utiliza tu empresa para reunir conversaciones, prospectos y oportunidades en Datara CRM.
           </p>
-        </div>
+        </header>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <section className="mt-8 grid gap-5 md:grid-cols-2">
           {integrations.map(
-            (integration) =>
-              integration.href ? (
+            (integration) => {
+              const isFacebook =
+                integration.key ===
+                "facebook";
+              const connected =
+                isFacebook &&
+                facebookConnection.connected;
+              const available =
+                integration.availability ===
+                "available";
+
+              const content = (
+                <>
+                  <div className="flex items-start justify-between gap-5">
+                    <div
+                      className={[
+                        "flex h-14 w-14 items-center justify-center rounded-2xl text-2xl shadow-sm",
+                        integration.iconClassName,
+                      ].join(" ")}
+                    >
+                      {integration.icon}
+                    </div>
+
+                    <span
+                      className={[
+                        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black",
+                        connected
+                          ? "bg-emerald-50 text-emerald-700"
+                          : available
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-slate-100 text-slate-500",
+                      ].join(" ")}
+                    >
+                      {connected && (
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      )}
+                      {isLoading &&
+                      isFacebook
+                        ? "Consultando"
+                        : connected
+                          ? "Conectado"
+                          : available
+                            ? "Disponible"
+                            : "Próximamente"}
+                    </span>
+                  </div>
+
+                  <h2 className="mt-6 text-xl font-black text-slate-950">
+                    {integration.name}
+                  </h2>
+
+                  <p className="mt-3 min-h-12 text-sm leading-6 text-slate-600">
+                    {integration.description}
+                  </p>
+
+                  {connected &&
+                    facebookConnection.pageName && (
+                      <p className="mt-5 truncate border-t border-slate-100 pt-5 text-sm font-bold text-slate-800">
+                        {facebookConnection.pageName}
+                      </p>
+                    )}
+
+                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+                    <span className="text-sm font-black text-slate-900">
+                      {available
+                        ? connected
+                          ? "Administrar conexión"
+                          : "Configurar"
+                        : "En desarrollo"}
+                    </span>
+
+                    {available && (
+                      <span className="text-lg text-blue-600 transition-transform group-hover:translate-x-1">
+                        →
+                      </span>
+                    )}
+                  </div>
+                </>
+              );
+
+              return available &&
+                integration.href ? (
                 <Link
                   key={integration.key}
                   href={integration.href}
-                  className={[
-                    "rounded-3xl border bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    integration.accentClass,
-                  ].join(" ")}
+                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                 >
-                  <IntegrationContent
-                    integration={integration}
-                  />
+                  {content}
                 </Link>
               ) : (
                 <article
                   key={integration.key}
-                  className={[
-                    "rounded-3xl border bg-white p-7 opacity-75 shadow-sm",
-                    integration.accentClass,
-                  ].join(" ")}
+                  className="rounded-3xl border border-slate-200 bg-white p-6 opacity-75 shadow-sm"
                 >
-                  <IntegrationContent
-                    integration={integration}
-                  />
+                  {content}
                 </article>
-              ),
+              );
+            },
           )}
-        </div>
-
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-xl font-black text-slate-950">
-            Arquitectura preparada para crecer
-          </h2>
-
-          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-600">
-            Los próximos conectores podrán agregarse aquí sin mezclar configuraciones. Las credenciales sensibles se autorizarán mediante OAuth y nunca se solicitarán dentro de formularios de Datara.
-          </p>
         </section>
+
+        <p className="mt-8 text-center text-xs leading-6 text-slate-500">
+          Las conexiones son independientes por empresa y solo pueden ser administradas por usuarios autorizados.
+        </p>
       </div>
     </main>
   );

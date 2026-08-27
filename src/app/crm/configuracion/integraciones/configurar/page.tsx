@@ -3,146 +3,73 @@
 import Link from "next/link";
 
 import {
-  type FormEvent,
   useCallback,
   useEffect,
   useState,
 } from "react";
 
+import {
+  FaCheckCircle,
+  FaFacebookF,
+  FaShieldAlt,
+} from "react-icons/fa";
+
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 
 type SocialIntegrationSettings = {
-  metaBusinessAccountId: string;
-
   facebook: {
     enabled: boolean;
     pageId: string;
     pageName: string;
     leadAdsEnabled: boolean;
   };
-
-  instagram: {
-    enabled: boolean;
-    businessAccountId: string;
-    username: string;
-    messagesEnabled: boolean;
-  };
 };
 
 type SettingsResponse = {
   success: boolean;
-  message?: string;
   error?: string;
-
   data?: {
-    settings:
-      SocialIntegrationSettings;
+    settings: SocialIntegrationSettings;
     canManage: boolean;
   };
 };
 
-const defaultSettings:
-  SocialIntegrationSettings = {
-  metaBusinessAccountId: "",
+function getMetaResult() {
+  if (typeof window === "undefined") {
+    return null;
+  }
 
-  facebook: {
-    enabled: false,
-    pageId: "",
-    pageName: "",
-    leadAdsEnabled: true,
-  },
-
-  instagram: {
-    enabled: false,
-    businessAccountId: "",
-    username: "",
-    messagesEnabled: true,
-  },
-};
-
-function Toggle({
-  checked,
-  disabled,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  disabled: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <span className="text-sm font-bold text-slate-700">
-        {label}
-      </span>
-
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(event) =>
-          onChange(
-            event.target.checked,
-          )
-        }
-        className="h-5 w-5 accent-blue-600"
-      />
-    </label>
-  );
+  return new URLSearchParams(
+    window.location.search,
+  ).get("meta");
 }
 
-function StatusBadge({
-  enabled,
-  ready,
-}: {
-  enabled: boolean;
-  ready: boolean;
-}) {
-  const label = !enabled
-    ? "Desactivada"
-    : ready
-      ? "Lista para conectar"
-      : "Configuración incompleta";
-
-  return (
-    <span
-      className={[
-        "rounded-full px-3 py-1 text-xs font-black",
-        !enabled
-          ? "bg-slate-100 text-slate-600"
-          : ready
-            ? "bg-amber-100 text-amber-800"
-            : "bg-red-100 text-red-700",
-      ].join(" ")}
-    >
-      {label}
-    </span>
-  );
-}
-
-export default function SocialIntegrationsPage() {
+export default function FacebookIntegrationPage() {
   const [settings, setSettings] =
-    useState({
-      ...defaultSettings,
-    });
+    useState<SocialIntegrationSettings | null>(null);
   const [canManage, setCanManage] =
     useState(false);
   const [isLoading, setIsLoading] =
     useState(true);
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [metaResult] =
+    useState(getMetaResult);
   const [error, setError] =
-    useState<string | null>(null);
-  const [message, setMessage] =
-    useState<string | null>(null);
+    useState<string | null>(
+      metaResult === "error"
+        ? "No fue posible completar la conexión con Facebook. Inténtalo nuevamente."
+        : null,
+    );
+  const [message] =
+    useState<string | null>(
+      metaResult === "connected"
+        ? "Facebook se conectó correctamente."
+        : null,
+    );
 
   const loadSettings =
     useCallback(async () => {
       try {
         setIsLoading(true);
-        setError(null);
 
         const response = await fetch(
           "/api/crm/settings/social-integrations",
@@ -162,7 +89,7 @@ export default function SocialIntegrationsPage() {
         ) {
           throw new Error(
             result.error ??
-              "No fue posible cargar las integraciones.",
+              "No fue posible consultar la conexión con Facebook.",
           );
         }
 
@@ -176,7 +103,7 @@ export default function SocialIntegrationsPage() {
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "No fue posible cargar las integraciones.",
+            : "No fue posible consultar la conexión con Facebook.",
         );
       } finally {
         setIsLoading(false);
@@ -184,6 +111,15 @@ export default function SocialIntegrationsPage() {
     }, []);
 
   useEffect(() => {
+    if (metaResult) {
+      window.history.replaceState(
+        {},
+        "",
+        window.location.pathname +
+          window.location.hash,
+      );
+    }
+
     const timeoutId =
       window.setTimeout(
         () => {
@@ -197,133 +133,83 @@ export default function SocialIntegrationsPage() {
         timeoutId,
       );
     };
-  }, [loadSettings]);
+  }, [loadSettings, metaResult]);
 
-  async function handleSubmit(
-    event:
-      FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-    setError(null);
-    setMessage(null);
+  const connected = Boolean(
+    settings?.facebook.enabled &&
+      settings.facebook.pageId,
+  );
 
-    try {
-      setIsSaving(true);
-
-      const response = await fetch(
-        "/api/crm/settings/social-integrations",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify(
-            settings,
-          ),
-        },
-      );
-
-      const result =
-        (await response.json()) as
-          SettingsResponse;
-
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.error ??
-            "No fue posible guardar las integraciones.",
-        );
-      }
-
-      setMessage(
-        result.message ??
-          "Configuración guardada.",
-      );
-    } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "No fue posible guardar las integraciones.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+  function connectFacebook() {
+    window.location.assign(
+      "/api/integrations/meta/connect",
+    );
   }
-
-  const facebookReady =
-    Boolean(
-      settings.metaBusinessAccountId &&
-        settings.facebook.pageId,
-    );
-
-  const instagramReady =
-    Boolean(
-      settings.metaBusinessAccountId &&
-        settings.instagram
-          .businessAccountId,
-    );
 
   if (isLoading) {
     return (
       <main className="min-h-screen bg-slate-50 px-5 py-10 sm:px-8">
-        <p className="mx-auto max-w-6xl text-sm font-bold text-slate-600">
-          Cargando integraciones...
-        </p>
+        <div className="mx-auto max-w-5xl animate-pulse rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="h-5 w-40 rounded bg-slate-200" />
+          <div className="mt-5 h-10 w-72 rounded bg-slate-200" />
+          <div className="mt-5 h-20 rounded bg-slate-100" />
+        </div>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:px-8">
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto max-w-6xl"
-      >
+      <div className="mx-auto max-w-5xl">
         <Link
           href="/crm/configuracion/integraciones"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-black text-blue-700 transition hover:text-blue-900"
+          className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 transition hover:text-blue-700"
         >
           ← Volver a integraciones
         </Link>
 
-        <div className="rounded-3xl bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600 p-7 text-white shadow-xl sm:p-10">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-cyan-200">
-            Datara CRM · Meta
-          </p>
+        <header className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-7 p-7 sm:flex-row sm:items-center sm:p-10">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-[#1877F2] text-4xl text-white shadow-lg shadow-blue-200">
+              <FaFacebookF aria-hidden="true" />
+            </div>
 
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-            Facebook e Instagram
-          </h1>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+                Integración oficial
+              </p>
 
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-50">
-            Prepara las cuentas que se conectarán con Datara. En esta etapa no solicitamos contraseñas ni tokens; la autorización final se realizará mediante Meta cuando el conector OAuth esté habilitado.
-          </p>
-        </div>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                Facebook
+              </h1>
 
-        <section className="mt-8 rounded-3xl border border-blue-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-black text-slate-950">
-                Conexión segura con Meta
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Autoriza Datara desde Meta para seleccionar tu página y recibir prospectos de Lead Ads. Las credenciales se cifran y quedan aisladas por empresa.
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                Recibe automáticamente en Datara los prospectos generados por tus formularios de Facebook Lead Ads.
               </p>
             </div>
 
-            {canManage && (
-              <a
-                href="/api/integrations/meta/connect"
-                className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#1877F2] px-5 py-3 text-sm font-black text-white shadow-lg transition hover:bg-[#0f65d8]"
-              >
-                Conectar con Meta
-              </a>
-            )}
+            <span
+              className={[
+                "inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs font-black",
+                connected
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-slate-100 text-slate-600",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "h-2 w-2 rounded-full",
+                  connected
+                    ? "bg-emerald-500"
+                    : "bg-slate-400",
+                ].join(" ")}
+              />
+              {connected
+                ? "Conectado"
+                : "Sin conectar"}
+            </span>
           </div>
-        </section>
+        </header>
 
         {error && (
           <p className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
@@ -337,274 +223,102 @@ export default function SocialIntegrationsPage() {
           </p>
         )}
 
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <label className="block text-sm font-black text-slate-900">
-            Identificador de Meta Business
-          </label>
-
-          <Input
-            value={
-              settings.metaBusinessAccountId
-            }
-            disabled={!canManage}
-            onChange={(event) =>
-              setSettings((current) => ({
-                ...current,
-                metaBusinessAccountId:
-                  event.target.value,
-              }))
-            }
-            placeholder="Ej. 123456789012345"
-            className="mt-3"
-          />
-
-          <p className="mt-3 text-xs leading-5 text-slate-500">
-            Se encuentra en Configuración del negocio dentro de Meta Business Suite.
-          </p>
-        </section>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <section
-            id="facebook"
-            className="scroll-mt-8 rounded-3xl border border-blue-200 bg-white p-6 shadow-sm sm:p-8"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-9">
+          {connected ? (
+            <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.16em] text-blue-600">
-                  Facebook
+                <div className="flex items-center gap-3 text-emerald-700">
+                  <FaCheckCircle className="text-xl" aria-hidden="true" />
+                  <h2 className="text-lg font-black">
+                    Página conectada
+                  </h2>
+                </div>
+
+                <p className="mt-4 text-2xl font-black text-slate-950">
+                  {settings?.facebook.pageName ||
+                    "Página de Facebook"}
                 </p>
-                <h2 className="mt-2 text-2xl font-black text-slate-950">
-                  Página y Lead Ads
-                </h2>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Lead Ads está activo y listo para recibir prospectos.
+                </p>
               </div>
 
-              <StatusBadge
-                enabled={
-                  settings.facebook.enabled
-                }
-                ready={facebookReady}
-              />
+              {canManage && (
+                <Button
+                  type="button"
+                  onClick={connectFacebook}
+                >
+                  Reconectar Facebook
+                </Button>
+              )}
             </div>
-
-            <div className="mt-6 space-y-4">
-              <Toggle
-                checked={
-                  settings.facebook.enabled
-                }
-                disabled={!canManage}
-                label="Preparar integración"
-                onChange={(enabled) =>
-                  setSettings((current) => ({
-                    ...current,
-                    facebook: {
-                      ...current.facebook,
-                      enabled,
-                    },
-                  }))
-                }
-              />
-
-              <label className="block text-sm font-bold text-slate-700">
-                ID de la página
-                <Input
-                  value={
-                    settings.facebook.pageId
-                  }
-                  disabled={!canManage}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      facebook: {
-                        ...current.facebook,
-                        pageId:
-                          event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="Identificador numérico"
-                  className="mt-2"
-                />
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                Nombre de la página
-                <Input
-                  value={
-                    settings.facebook.pageName
-                  }
-                  disabled={!canManage}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      facebook: {
-                        ...current.facebook,
-                        pageName:
-                          event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="Nombre visible en Facebook"
-                  className="mt-2"
-                />
-              </label>
-
-              <Toggle
-                checked={
-                  settings.facebook
-                    .leadAdsEnabled
-                }
-                disabled={!canManage}
-                label="Capturar prospectos de Lead Ads"
-                onChange={(leadAdsEnabled) =>
-                  setSettings((current) => ({
-                    ...current,
-                    facebook: {
-                      ...current.facebook,
-                      leadAdsEnabled,
-                    },
-                  }))
-                }
-              />
-            </div>
-          </section>
-
-          <section
-            id="instagram"
-            className="scroll-mt-8 rounded-3xl border border-fuchsia-200 bg-white p-6 shadow-sm sm:p-8"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          ) : (
+            <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.16em] text-fuchsia-600">
-                  Instagram
-                </p>
-                <h2 className="mt-2 text-2xl font-black text-slate-950">
-                  Cuenta profesional
+                <h2 className="text-xl font-black text-slate-950">
+                  Conecta tu página de Facebook
                 </h2>
+
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                  Inicia sesión en Facebook, elige la página que administra tu empresa y autoriza la recepción de prospectos. Datara nunca solicita tu contraseña.
+                </p>
               </div>
 
-              <StatusBadge
-                enabled={
-                  settings.instagram.enabled
-                }
-                ready={instagramReady}
-              />
+              {canManage && (
+                <Button
+                  type="button"
+                  onClick={connectFacebook}
+                >
+                  Conectar Facebook
+                </Button>
+              )}
             </div>
+          )}
 
-            <div className="mt-6 space-y-4">
-              <Toggle
-                checked={
-                  settings.instagram.enabled
-                }
-                disabled={!canManage}
-                label="Preparar integración"
-                onChange={(enabled) =>
-                  setSettings((current) => ({
-                    ...current,
-                    instagram: {
-                      ...current.instagram,
-                      enabled,
-                    },
-                  }))
-                }
-              />
-
-              <label className="block text-sm font-bold text-slate-700">
-                ID de Instagram Business
-                <Input
-                  value={
-                    settings.instagram
-                      .businessAccountId
-                  }
-                  disabled={!canManage}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      instagram: {
-                        ...current.instagram,
-                        businessAccountId:
-                          event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="Identificador numérico"
-                  className="mt-2"
-                />
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                Usuario de Instagram
-                <Input
-                  value={
-                    settings.instagram.username
-                  }
-                  disabled={!canManage}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      instagram: {
-                        ...current.instagram,
-                        username:
-                          event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="@tuempresa"
-                  className="mt-2"
-                />
-              </label>
-
-              <Toggle
-                checked={
-                  settings.instagram
-                    .messagesEnabled
-                }
-                disabled={!canManage}
-                label="Preparar captura de mensajes"
-                onChange={(messagesEnabled) =>
-                  setSettings((current) => ({
-                    ...current,
-                    instagram: {
-                      ...current.instagram,
-                      messagesEnabled,
-                    },
-                  }))
-                }
-              />
-            </div>
-          </section>
-        </div>
-
-        <section className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 sm:p-8">
-          <h2 className="text-xl font-black text-amber-950">
-            Pasos para completar la conexión
-          </h2>
-
-          <ol className="mt-4 grid gap-3 text-sm leading-6 text-amber-900 md:grid-cols-2">
-            <li>1. Verificar la empresa en Meta Business Suite.</li>
-            <li>2. Agregar la página de Facebook al negocio.</li>
-            <li>3. Vincular una cuenta profesional de Instagram.</li>
-            <li>4. Autorizar Datara cuando habilitemos el botón OAuth.</li>
-          </ol>
-
-          <p className="mt-5 text-xs font-bold text-amber-800">
-            Nunca pegues aquí contraseñas, tokens de acceso ni secretos de la aplicación de Meta.
-          </p>
+          {!canManage && (
+            <p className="mt-6 rounded-2xl bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-600">
+              Solo un administrador puede modificar esta integración.
+            </p>
+          )}
         </section>
 
-        <div className="mt-8 flex justify-end">
-          <Button
-            type="submit"
-            disabled={
-              !canManage ||
-              isSaving
-            }
-          >
-            {isSaving
-              ? "Guardando..."
-              : "Guardar preparación"}
-          </Button>
-        </div>
-      </form>
+        <section className="mt-6 grid gap-4 md:grid-cols-3">
+          {[
+            {
+              title: "Autorización segura",
+              description:
+                "La conexión se realiza directamente en Facebook mediante OAuth.",
+            },
+            {
+              title: "Prospectos automáticos",
+              description:
+                "Los registros de Lead Ads llegan al CRM sin capturas manuales.",
+            },
+            {
+              title: "Datos protegidos",
+              description:
+                "Las credenciales se cifran y permanecen aisladas por empresa.",
+            },
+          ].map((item) => (
+            <article
+              key={item.title}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <FaShieldAlt
+                className="text-xl text-blue-600"
+                aria-hidden="true"
+              />
+              <h2 className="mt-4 text-base font-black text-slate-950">
+                {item.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {item.description}
+              </p>
+            </article>
+          ))}
+        </section>
+      </div>
     </main>
   );
 }
