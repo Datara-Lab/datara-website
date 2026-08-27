@@ -3,6 +3,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 type MetaEnvironment = {
   META_APP_ID?: string;
   META_APP_SECRET?: string;
+  META_LOGIN_CONFIG_ID?: string;
   META_TOKEN_ENCRYPTION_KEY?: string;
   META_WEBHOOK_VERIFY_TOKEN?: string;
   DATARA_PUBLIC_URL?: string;
@@ -11,6 +12,7 @@ type MetaEnvironment = {
 export type MetaConfiguration = {
   appId: string;
   appSecret: string;
+  loginConfigId: string;
   encryptionKey: string;
   webhookVerifyToken: string;
   publicUrl: string;
@@ -30,6 +32,11 @@ export async function getMetaConfiguration(): Promise<MetaConfiguration> {
     appSecret: required(
       environment.META_APP_SECRET ?? process.env.META_APP_SECRET,
       "META_APP_SECRET",
+    ),
+    loginConfigId: required(
+      environment.META_LOGIN_CONFIG_ID ??
+        process.env.META_LOGIN_CONFIG_ID,
+      "META_LOGIN_CONFIG_ID",
     ),
     encryptionKey: required(
       environment.META_TOKEN_ENCRYPTION_KEY ??

@@ -7,16 +7,6 @@ import { createMetaState } from "@/lib/meta/state";
 
 export const dynamic = "force-dynamic";
 
-const permissions = [
-  "business_management",
-  "pages_show_list",
-  "pages_read_engagement",
-  "pages_manage_metadata",
-  "leads_retrieval",
-  "instagram_basic",
-  "instagram_manage_messages",
-].join(",");
-
 export async function GET() {
   try {
     const context = await getAuthorizationContext();
@@ -39,10 +29,17 @@ export async function GET() {
       "https://www.facebook.com/v26.0/dialog/oauth",
     );
     authorizationUrl.searchParams.set("client_id", configuration.appId);
+    authorizationUrl.searchParams.set(
+      "config_id",
+      configuration.loginConfigId,
+    );
     authorizationUrl.searchParams.set("redirect_uri", redirectUri);
     authorizationUrl.searchParams.set("state", state);
-    authorizationUrl.searchParams.set("scope", permissions);
     authorizationUrl.searchParams.set("response_type", "code");
+    authorizationUrl.searchParams.set(
+      "override_default_response_type",
+      "true",
+    );
     return NextResponse.redirect(authorizationUrl);
   } catch (error) {
     console.error("No fue posible iniciar OAuth con Meta:", error);
