@@ -9,7 +9,7 @@ export const professionalServicesTemplate:
     name: "Servicios profesionales",
 
     description:
-        "Configuración para empresas que venden software, consultoría, implementación y servicios especializados.",
+        "Configuración para consultoras, despachos, agencias, firmas técnicas y empresas que comercializan proyectos, servicios especializados o contratos recurrentes.",
 
     defaultModules: [
         "products",
@@ -83,6 +83,8 @@ export const professionalServicesTemplate:
                 {
                     moduleId: "sales-orders",
                     canView: true,
+                    canCreate: true,
+                    canEdit: true,
                 },
                 {
                     moduleId: "automations",
@@ -156,12 +158,13 @@ export const professionalServicesTemplate:
             technicalProfile: null,
             sortOrder: 10,
             categories: [
-                "Implementación",
+                "Asesoría",
                 "Consultoría",
-                "Integración",
+                "Implementación",
+                "Proyecto",
+                "Servicio técnico",
                 "Capacitación",
                 "Soporte",
-                "Proyecto de analítica",
             ],
         },
         {
@@ -171,8 +174,10 @@ export const professionalServicesTemplate:
             technicalProfile: null,
             sortOrder: 20,
             categories: [
-                "Suscripción de software",
-                "Almacenamiento",
+                "Iguala mensual",
+                "Suscripción",
+                "Soporte recurrente",
+                "Servicio administrado",
             ],
         },
         {
@@ -189,81 +194,32 @@ export const professionalServicesTemplate:
 
     defaultCatalogs: {
         "products.category": [
-            {
-                label: "Suscripción de software",
-                value: "Suscripción de software",
-            },
-            {
-                label: "Implementación",
-                value: "Implementación",
-            },
-            {
-                label: "Consultoría",
-                value: "Consultoría",
-            },
-            {
-                label: "Integración",
-                value: "Integración",
-            },
-            {
-                label: "Capacitación",
-                value: "Capacitación",
-            },
-            {
-                label: "Soporte",
-                value: "Soporte",
-            },
-            {
-                label: "Proyecto de analítica",
-                value: "Proyecto de analítica",
-            },
-            {
-                label: "Almacenamiento",
-                value: "Almacenamiento",
-            },
-            {
-                label: "Otro",
-                value: "Otro",
-            },
+            { label: "Asesoría", value: "Asesoría" },
+            { label: "Consultoría", value: "Consultoría" },
+            { label: "Implementación", value: "Implementación" },
+            { label: "Proyecto", value: "Proyecto" },
+            { label: "Servicio técnico", value: "Servicio técnico" },
+            { label: "Capacitación", value: "Capacitación" },
+            { label: "Soporte", value: "Soporte" },
+            { label: "Iguala mensual", value: "Iguala mensual" },
+            { label: "Suscripción", value: "Suscripción" },
+            { label: "Soporte recurrente", value: "Soporte recurrente" },
+            { label: "Servicio administrado", value: "Servicio administrado" },
+            { label: "Producto", value: "Producto" },
+            { label: "Otro", value: "Otro" },
         ],
 
         "deals.stage": [
-            {
-                label: "Nuevo prospecto",
-                value: "Nuevo prospecto",
-            },
-            {
-                label: "Descubrimiento",
-                value: "Descubrimiento",
-            },
-            {
-                label: "Demo agendado",
-                value: "Demo agendado",
-            },
-            {
-                label: "Demo realizado",
-                value: "Demo realizado",
-            },
-            {
-                label: "Propuesta enviada",
-                value: "Propuesta enviada",
-            },
-            {
-                label: "Negociación",
-                value: "Negociación",
-            },
-            {
-                label: "Pago pendiente",
-                value: "Pago pendiente",
-            },
-            {
-                label: "Venta ganada",
-                value: "Venta ganada",
-            },
-            {
-                label: "Venta perdida",
-                value: "Venta perdida",
-            },
+            { label: "Diagnóstico", value: "Diagnóstico" },
+            { label: "Alcance definido", value: "Alcance definido" },
+            { label: "Propuesta en preparación", value: "Propuesta en preparación" },
+            { label: "Propuesta enviada", value: "Propuesta enviada" },
+            { label: "Negociación", value: "Negociación" },
+            { label: "Aprobación o contrato", value: "Aprobación o contrato" },
+            { label: "Orden de servicio", value: "Orden de servicio" },
+            { label: "Servicio activo", value: "Servicio activo" },
+            { label: "Cerrada ganada", value: "Cerrada ganada" },
+            { label: "Cerrada perdida", value: "Cerrada perdida" },
         ],
 
         "deals.acquisitionChannel": [
@@ -339,21 +295,21 @@ export const professionalServicesTemplate:
                 singular: "Producto o servicio",
                 plural: "Productos y servicios",
                 description:
-                    "Catálogo de suscripciones, implementaciones y servicios profesionales.",
+                    "Catálogo de servicios, proyectos, paquetes y contratos recurrentes.",
             },
 
             leads: {
                 singular: "Prospecto",
                 plural: "Prospectos",
                 description:
-                    "Personas y empresas interesadas en las soluciones de Datara.",
+                    "Personas y empresas interesadas en contratar los servicios de la organización.",
             },
 
             contacts: {
                 singular: "Cliente",
                 plural: "Clientes",
                 description:
-                    "Empresas y personas que mantienen una relación comercial con Datara.",
+                    "Empresas y personas que mantienen una relación comercial activa con la organización.",
             },
 
             deals: {

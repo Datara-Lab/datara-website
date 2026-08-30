@@ -340,6 +340,13 @@ export default function ActivityFormDrawer({
       return;
     }
 
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
     const now = new Date();
 
     const oneHourLater =
@@ -497,6 +504,12 @@ export default function ActivityFormDrawer({
     setParticipantName("");
     setParticipantEmail("");
     setFormError(null);
+
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     callMode,
     isOpen,

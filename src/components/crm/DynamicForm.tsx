@@ -807,7 +807,7 @@ export default function DynamicForm({
       ),
     [
       module,
-      user?.id,
+      user,
     ],
   );
 
@@ -844,8 +844,18 @@ export default function DynamicForm({
     useState<CRMFormErrors>({});
 
   useEffect(() => {
-    setValues(initialValues);
-    setErrors({});
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setValues(initialValues);
+        setErrors({});
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [initialValues]);
 
   function handleFieldChange(

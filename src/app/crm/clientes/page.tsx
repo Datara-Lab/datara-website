@@ -13,9 +13,16 @@ import CRMRecordDrawer from "@/components/crm/CRMRecordDrawer";
 import type { CRMFormValues } from "@/components/crm/DynamicForm";
 import PageHeader from "@/components/shared/PageHeader";
 import { useCRMConfig } from "@/hooks/useCRMConfig";
+import { SAT_CFDI_USES, SAT_TAX_REGIMES } from "@/lib/fiscal/catalogs";
 import type {
+  CRMFieldConfig,
   CRMFieldOption,
 } from "@/types/crm-config";
+
+const CUSTOMER_FISCAL_FIELDS: CRMFieldConfig[] = [
+  { key: "fiscalTaxRegime", label: "Régimen fiscal", type: "select", options: SAT_TAX_REGIMES.map((item) => ({ ...item })), showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 1, formColumn: 1 },
+  { key: "cfdiUse", label: "Uso CFDI predeterminado", type: "select", options: SAT_CFDI_USES.map((item) => ({ ...item })), showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 1, formColumn: 2 },
+];
 
 type DrawerMode =
   | "view"
@@ -213,9 +220,14 @@ export default function ClientesPage() {
       return {
         ...configuredCustomersModule,
 
+        formSections: [
+          ...(configuredCustomersModule.formSections ?? []).filter((section) => section.id !== "fiscal"),
+          { id: "fiscal", title: "Datos fiscales", description: "Información del receptor utilizada para CFDI 4.0.", order: 90, columns: 2 as const },
+        ],
+
         fields:
-          configuredCustomersModule
-            .fields.map((field) => {
+          [...configuredCustomersModule.fields, ...CUSTOMER_FISCAL_FIELDS.filter((fiscalField) => !configuredCustomersModule.fields.some((field) => field.key === fiscalField.key))]
+            .map((field) => {
               if (
                 field.key ===
                 "branchId"

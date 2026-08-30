@@ -7,6 +7,13 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { tenants } from "@/db/schema";
+import {
+  isSatCatalogValue,
+  isValidMexicanPostalCode,
+  isValidMexicanTaxId,
+  normalizeMexicanTaxId,
+  SAT_TAX_REGIMES,
+} from "@/lib/fiscal/catalogs";
 
 export const dynamic =
   "force-dynamic";
@@ -15,6 +22,8 @@ type CompanyProfilePayload = {
   name?: unknown;
   legalName?: unknown;
   taxId?: unknown;
+  fiscalTaxRegime?: unknown;
+  fiscalPostalCode?: unknown;
   tagline?: unknown;
   country?: unknown;
   timezone?: unknown;
@@ -132,6 +141,12 @@ function serializeCompany(
 
     taxId:
       tenant.taxId ?? "",
+
+    fiscalTaxRegime:
+      tenant.fiscalTaxRegime ?? "",
+
+    fiscalPostalCode:
+      tenant.fiscalPostalCode ?? "",
 
     tagline:
       tenant.tagline ?? "",
@@ -313,6 +328,30 @@ export async function PATCH(
         tenant.country
       ).toUpperCase();
 
+    const taxId = normalizeMexicanTaxId(getString(payload.taxId));
+    const fiscalTaxRegime = getString(payload.fiscalTaxRegime);
+    const fiscalPostalCode = getString(payload.fiscalPostalCode);
+
+    if (country === "MX" && taxId && !isValidMexicanTaxId(taxId)) {
+      throw new ApiError("El RFC fiscal no tiene un formato válido.", 400);
+    }
+
+    if (!isSatCatalogValue(SAT_TAX_REGIMES, fiscalTaxRegime || undefined)) {
+      throw new ApiError("El régimen fiscal seleccionado no es válido.", 400);
+    }
+
+    if (country === "MX" && fiscalPostalCode && !isValidMexicanPostalCode(fiscalPostalCode)) {
+      throw new ApiError("El código postal fiscal debe contener 5 dígitos.", 400);
+    }
+
+    const fiscalFields = [taxId, fiscalTaxRegime, fiscalPostalCode];
+    if (fiscalFields.some(Boolean) && !fiscalFields.every(Boolean)) {
+      throw new ApiError(
+        "Para habilitar el timbrado captura RFC, régimen fiscal y código postal fiscal.",
+        400,
+      );
+    }
+
     const metadata = {
       ...(
         tenant.metadata ??
@@ -349,9 +388,13 @@ export async function PATCH(
             ) || null,
 
           taxId:
-            getString(
-              payload.taxId,
-            ) || null,
+            taxId || null,
+
+          fiscalTaxRegime:
+            fiscalTaxRegime || null,
+
+          fiscalPostalCode:
+            fiscalPostalCode || null,
 
           tagline:
             getString(

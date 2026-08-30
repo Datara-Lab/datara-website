@@ -1,0 +1,1 @@
+ALTER TABLE "commercial_purchases" ALTER COLUMN "industry" DROP NOT NULL;

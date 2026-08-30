@@ -34,6 +34,11 @@ import {
 import {
     commercialCatalogItems,
     commercialPurchases,
+    crmCustomers,
+    crmDeals,
+    crmQuotes,
+    crmSalesOrderItems,
+    crmSalesOrders,
     subscriptions,
     tenantProducts,
     tenants,
@@ -50,6 +55,10 @@ import {
 import {
     provisionCRMModuleEntitlements,
 } from "@/lib/crm/provision-module-entitlements";
+
+import {
+    convertCommercialLeadToCustomer,
+} from "@/lib/crm/commercial-intake";
 
 export const dynamic =
     "force-dynamic";
@@ -136,6 +145,10 @@ async function handleCompletedCheckout(
                     commercialPurchases
                         .catalogItemIds,
 
+                lineItems:
+                    commercialPurchases
+                        .lineItems,
+
                 currency:
                     commercialPurchases
                         .currency,
@@ -190,6 +203,550 @@ async function handleCompletedCheckout(
 
     const now =
         new Date();
+
+    const tenantId =
+        purchase.tenantId;
+
+    if (!tenantId) {
+        throw new Error(
+            `La compra ${purchaseId} no tiene tenantId asociado.`,
+        );
+    }
+
+    if (
+        purchase.purchaseType ===
+        "cloud_purchase"
+    ) {
+        const dealId =
+            session.metadata
+                ?.dealId ??
+            null;
+
+        const quoteId =
+            session.metadata
+                ?.quoteId ??
+            null;
+
+        if (!dealId) {
+            throw new Error(
+                `La compra Cloud ${purchaseId} no contiene dealId.`,
+            );
+        }
+
+        if (!quoteId) {
+            throw new Error(
+                `La compra Cloud ${purchaseId} no contiene quoteId.`,
+            );
+        }
+
+        const [deal] =
+            await db
+                .select({
+                    id:
+                        crmDeals.id,
+
+                    customerId:
+                        crmDeals.customerId,
+
+                    sourceLeadId:
+                        crmDeals.sourceLeadId,
+
+                    status:
+                        crmDeals.status,
+                })
+                .from(
+                    crmDeals,
+                )
+                .where(
+                    and(
+                        eq(
+                            crmDeals.id,
+                            dealId,
+                        ),
+                        eq(
+                            crmDeals.tenantId,
+                            tenantId,
+                        ),
+                    ),
+                )
+                .limit(1);
+
+        if (!deal) {
+            throw new Error(
+                `No encontramos la oportunidad ${dealId} de la compra Cloud ${purchaseId}.`,
+            );
+        }
+
+        let customerId =
+            deal.customerId;
+
+        if (
+            !customerId &&
+            deal.sourceLeadId
+        ) {
+            const converted =
+                await convertCommercialLeadToCustomer({
+                    tenantId:
+                        tenantId,
+
+                    leadId:
+                        deal.sourceLeadId,
+                });
+
+            customerId =
+                converted.customerId;
+        }
+
+        if (!customerId) {
+            throw new Error(
+                `La compra Cloud ${purchaseId} no pudo asociarse con un cliente.`,
+            );
+        }
+
+        await db
+            .update(
+                crmDeals,
+            )
+            .set({
+                customerId,
+
+                status:
+                    "Ganada",
+
+                probability:
+                    100,
+
+                closedAt:
+                    now,
+
+                nextStep:
+                    null,
+
+                updatedAt:
+                    now,
+            })
+            .where(
+                and(
+                    eq(
+                        crmDeals.id,
+                        dealId,
+                    ),
+                    eq(
+                        crmDeals.tenantId,
+                        tenantId,
+                    ),
+                ),
+            );
+
+        await db
+            .update(
+                crmQuotes,
+            )
+            .set({
+                customerId,
+
+                updatedAt:
+                    now,
+            })
+            .where(
+                and(
+                    eq(
+                        crmQuotes.id,
+                        quoteId,
+                    ),
+                    eq(
+                        crmQuotes.tenantId,
+                        tenantId,
+                    ),
+                ),
+            );
+
+        const [customer] =
+            await db
+                .select({
+                    id:
+                        crmCustomers.id,
+
+                    name:
+                        crmCustomers.name,
+
+                    lastName:
+                        crmCustomers.lastName,
+
+                    email:
+                        crmCustomers.email,
+
+                    phone:
+                        crmCustomers.phone,
+
+                    mobile:
+                        crmCustomers.mobile,
+                })
+                .from(
+                    crmCustomers,
+                )
+                .where(
+                    and(
+                        eq(
+                            crmCustomers.id,
+                            customerId,
+                        ),
+                        eq(
+                            crmCustomers.tenantId,
+                            tenantId,
+                        ),
+                    ),
+                )
+                .limit(1);
+
+        if (!customer) {
+            throw new Error(
+                `No encontramos el cliente ${customerId} de la compra Cloud ${purchaseId}.`,
+            );
+        }
+
+        const [quote] =
+            await db
+                .select({
+                    id:
+                        crmQuotes.id,
+
+                    ownerClerkUserId:
+                        crmQuotes.ownerClerkUserId,
+
+                    ownerName:
+                        crmQuotes.ownerName,
+
+                    ownerEmail:
+                        crmQuotes.ownerEmail,
+
+                    currency:
+                        crmQuotes.currency,
+
+                    baseAmount:
+                        crmQuotes.baseAmount,
+
+                    discountAmount:
+                        crmQuotes.discountAmount,
+
+                    totalAmount:
+                        crmQuotes.totalAmount,
+                })
+                .from(
+                    crmQuotes,
+                )
+                .where(
+                    and(
+                        eq(
+                            crmQuotes.id,
+                            quoteId,
+                        ),
+                        eq(
+                            crmQuotes.tenantId,
+                            tenantId,
+                        ),
+                    ),
+                )
+                .limit(1);
+
+        if (!quote) {
+            throw new Error(
+                `No encontramos la cotización ${quoteId} de la compra Cloud ${purchaseId}.`,
+            );
+        }
+
+        const [existingSalesOrder] =
+            await db
+                .select({
+                    id:
+                        crmSalesOrders.id,
+                })
+                .from(
+                    crmSalesOrders,
+                )
+                .where(
+                    and(
+                        eq(
+                            crmSalesOrders.tenantId,
+                            tenantId,
+                        ),
+                        eq(
+                            crmSalesOrders.quoteId,
+                            quoteId,
+                        ),
+                    ),
+                )
+                .limit(1);
+
+        let salesOrderId =
+            existingSalesOrder?.id ??
+            null;
+
+        if (!salesOrderId) {
+            salesOrderId =
+                purchaseId;
+
+            const reference =
+                `OV-${now
+                    .toISOString()
+                    .slice(0, 10)
+                    .replaceAll("-", "")}-${salesOrderId
+                    .slice(0, 8)
+                    .toUpperCase()}`;
+
+            const customerName =
+                [
+                    customer.name,
+                    customer.lastName,
+                ]
+                    .filter(
+                        Boolean,
+                    )
+                    .join(" ")
+                    .trim() ||
+                customer.email ||
+                "Cliente";
+
+            await db
+                .insert(
+                    crmSalesOrders,
+                )
+                .values({
+                    id:
+                        salesOrderId,
+
+                    tenantId,
+
+                    customerId,
+
+                    dealId,
+
+                    quoteId,
+
+                    reference,
+
+                    status:
+                        "Confirmada",
+
+                    customerName,
+
+                    customerEmail:
+                        customer.email,
+
+                    customerPhone:
+                        customer.mobile ??
+                        customer.phone,
+
+                    ownerClerkUserId:
+                        quote.ownerClerkUserId,
+
+                    ownerName:
+                        quote.ownerName,
+
+                    ownerEmail:
+                        quote.ownerEmail,
+
+                    currency:
+                        quote.currency,
+
+                    baseAmount:
+                        quote.baseAmount,
+
+                    discountAmount:
+                        quote.discountAmount,
+
+                    totalAmount:
+                        quote.totalAmount,
+
+                    paymentMethod:
+                        "Stripe",
+
+                    notes:
+                        null,
+
+                    createdByClerkUserId:
+                        quote.ownerClerkUserId,
+
+                    createdByName:
+                        quote.ownerName ??
+                        quote.ownerEmail ??
+                        "Datara",
+
+                    confirmedByClerkUserId:
+                        quote.ownerClerkUserId,
+
+                    confirmedByName:
+                        quote.ownerName ??
+                        quote.ownerEmail ??
+                        "Datara",
+
+                    confirmedAt:
+                        now,
+
+                    metadata: {
+                        sourceType:
+                            "cloud_purchase",
+
+                        purchaseId,
+
+                        stripeCheckoutSessionId:
+                            session.id,
+                    },
+
+                    createdAt:
+                        now,
+
+                    updatedAt:
+                        now,
+                });
+        }
+
+        const [existingSalesOrderItem] =
+            await db
+                .select({
+                    id:
+                        crmSalesOrderItems.id,
+                })
+                .from(
+                    crmSalesOrderItems,
+                )
+                .where(
+                    and(
+                        eq(
+                            crmSalesOrderItems.tenantId,
+                            tenantId,
+                        ),
+                        eq(
+                            crmSalesOrderItems.salesOrderId,
+                            salesOrderId,
+                        ),
+                    ),
+                )
+                .limit(1);
+
+        if (
+            !existingSalesOrderItem &&
+            purchase.lineItems.length >
+                0
+        ) {
+            const salesOrderItems =
+                purchase.lineItems.map(
+                    (
+                        lineItem,
+                        position,
+                    ) => {
+                        const unitPrice =
+                            (
+                                lineItem.unitAmount /
+                                100
+                            ).toFixed(
+                                2,
+                            );
+
+                        const totalAmount =
+                            (
+                                (
+                                    lineItem.unitAmount /
+                                    100
+                                ) *
+                                lineItem.quantity
+                            ).toFixed(
+                                2,
+                            );
+
+                        return {
+                            tenantId,
+
+                            salesOrderId,
+
+                            productId:
+                                null,
+
+                            name:
+                                lineItem.name,
+
+                            description:
+                                null,
+
+                            quantity:
+                                lineItem.quantity,
+
+                            unitPrice,
+
+                            discountAmount:
+                                "0.00",
+
+                            totalAmount,
+
+                            position,
+
+                            metadata: {
+                                catalogItemId:
+                                    lineItem.catalogItemId,
+
+                                itemKey:
+                                    lineItem.itemKey,
+
+                                sourceType:
+                                    "cloud_purchase",
+
+                                purchaseId,
+                            },
+
+                            createdAt:
+                                now,
+
+                            updatedAt:
+                                now,
+                        };
+                    },
+                );
+
+            await db
+                .insert(
+                    crmSalesOrderItems,
+                )
+                .values(
+                    salesOrderItems,
+                );
+        }
+
+        await db
+            .update(
+                commercialPurchases,
+            )
+            .set({
+                ownerEmail,
+
+                stripeCheckoutSessionId:
+                    session.id,
+
+                stripeCustomerId,
+
+                stripeSubscriptionId,
+
+                status:
+                    "provisioned",
+
+                paidAt:
+                    now,
+
+                provisionedAt:
+                    now,
+
+                updatedAt:
+                    now,
+            })
+            .where(
+                eq(
+                    commercialPurchases.id,
+                    purchaseId,
+                ),
+            );
+
+        return;
+
+    }
 
     if (
         purchase.purchaseType !==

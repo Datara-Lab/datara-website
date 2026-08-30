@@ -186,6 +186,25 @@ export function createProfessionalServicesCRMConfig({
             createQuotesModule(),
         ],
 
-        pipelines: [],
+        pipelines: [
+            {
+                id: "professional-services-sales",
+                label: "Venta de servicios profesionales",
+                moduleId: "deals",
+                stageFieldKey: "stage",
+                stages: [
+                    { id: "diagnosis", label: "Diagnóstico", order: 10, probability: 10, color: "slate" },
+                    { id: "scope", label: "Alcance definido", order: 20, probability: 20, color: "blue" },
+                    { id: "proposal-draft", label: "Propuesta en preparación", order: 30, probability: 35, color: "cyan" },
+                    { id: "proposal-sent", label: "Propuesta enviada", order: 40, probability: 50, color: "indigo" },
+                    { id: "negotiation", label: "Negociación", order: 50, probability: 65, color: "violet" },
+                    { id: "approval", label: "Aprobación o contrato", order: 60, probability: 80, color: "amber" },
+                    { id: "service-order", label: "Orden de servicio", order: 70, probability: 90, color: "orange" },
+                    { id: "active-service", label: "Servicio activo", order: 80, probability: 100, color: "emerald" },
+                    { id: "won", label: "Cerrada ganada", order: 90, probability: 100, color: "green", isWon: true },
+                    { id: "lost", label: "Cerrada perdida", order: 100, probability: 0, color: "red", isLost: true },
+                ],
+            },
+        ],
     };
 }

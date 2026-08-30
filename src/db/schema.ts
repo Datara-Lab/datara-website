@@ -72,6 +72,10 @@ export const tenants = pgTable(
     legalName: text("legal_name"),
     taxId: text("tax_id"),
 
+    fiscalTaxRegime: text("fiscal_tax_regime"),
+
+    fiscalPostalCode: text("fiscal_postal_code"),
+
     logoObjectKey: text("logo_object_key"),
 
     logoSizeBytes: integer("logo_size_bytes").notNull().default(0),
@@ -347,6 +351,22 @@ export const crmProducts = pgTable(
 
     description: text("description"),
 
+    productServiceCode: text("product_service_code"),
+
+    unitCode: text("unit_code"),
+
+    taxObject: text("tax_object"),
+
+    transferredTaxCode: text("transferred_tax_code"),
+
+    transferredFactorType: text("transferred_factor_type")
+      .$type<"Tasa" | "Cuota" | "Exento">(),
+
+    transferredTaxRate: numeric("transferred_tax_rate", {
+      precision: 8,
+      scale: 6,
+    }),
+
     imageObjectKey: text("image_object_key"),
 
     imageSizeBytes: integer("image_size_bytes").notNull().default(0),
@@ -414,6 +434,30 @@ export const crmProducts = pgTable(
     ),
 
     index("crm_products_tenant_name_idx").on(table.tenantId, table.name),
+
+    check(
+      "crm_products_tax_object_check",
+      sql`
+        ${table.taxObject} IS NULL OR
+        ${table.taxObject} IN ('01', '02', '03', '04', '05', '06', '07', '08')
+      `,
+    ),
+
+    check(
+      "crm_products_transferred_factor_check",
+      sql`
+        ${table.transferredFactorType} IS NULL OR
+        ${table.transferredFactorType} IN ('Tasa', 'Cuota', 'Exento')
+      `,
+    ),
+
+    check(
+      "crm_products_transferred_rate_check",
+      sql`
+        ${table.transferredTaxRate} IS NULL OR
+        ${table.transferredTaxRate} >= 0
+      `,
+    ),
   ],
 );
 
@@ -1327,6 +1371,307 @@ export const inventoryReplenishmentRequestItems = pgTable(
   ],
 );
 
+export const commercialPipelineDefinitions = pgTable(
+  "commercial_pipeline_definitions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    industry: text("industry"),
+
+    operationType: text("operation_type"),
+
+    active: boolean("active").notNull().default(true),
+
+    isDefault: boolean("is_default").notNull().default(false),
+
+    sortOrder: integer("sort_order").notNull().default(0),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("commercial_pipeline_definitions_tenant_name_unique").on(
+      table.tenantId,
+      table.name,
+    ),
+
+    index("commercial_pipeline_definitions_tenant_active_idx").on(
+      table.tenantId,
+      table.active,
+      table.sortOrder,
+    ),
+
+    check(
+      "commercial_pipeline_definitions_operation_type_check",
+      sql`
+        ${table.operationType} IS NULL OR
+        ${table.operationType} IN ('cash', 'financed', 'mixed')
+      `,
+    ),
+  ],
+);
+
+export const commercialPipelineStages = pgTable(
+  "commercial_pipeline_stages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    pipelineDefinitionId: uuid("pipeline_definition_id")
+      .notNull()
+      .references(() => commercialPipelineDefinitions.id, {
+        onDelete: "cascade",
+      }),
+
+    stageKey: text("stage_key").notNull(),
+
+    name: text("name").notNull(),
+
+    category: text("category").notNull().default("open"),
+
+    position: integer("position").notNull(),
+
+    probability: integer("probability"),
+
+    terminal: boolean("terminal").notNull().default(false),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("commercial_pipeline_stages_definition_key_unique").on(
+      table.pipelineDefinitionId,
+      table.stageKey,
+    ),
+
+    uniqueIndex("commercial_pipeline_stages_definition_position_unique").on(
+      table.pipelineDefinitionId,
+      table.position,
+    ),
+
+    index("commercial_pipeline_stages_tenant_idx").on(
+      table.tenantId,
+      table.pipelineDefinitionId,
+      table.position,
+    ),
+
+    check(
+      "commercial_pipeline_stages_category_check",
+      sql`
+        ${table.category} IN ('open', 'won', 'lost', 'cancelled')
+      `,
+    ),
+
+    check(
+      "commercial_pipeline_stages_position_check",
+      sql`${table.position} >= 0`,
+    ),
+
+    check(
+      "commercial_pipeline_stages_probability_check",
+      sql`
+        ${table.probability} IS NULL OR
+        ${table.probability} BETWEEN 0 AND 100
+      `,
+    ),
+  ],
+);
+
+export const inventoryUnits = pgTable(
+  "inventory_units",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    branchId: uuid("branch_id").references(() => tenantBranches.id, {
+      onDelete: "set null",
+    }),
+
+    locationId: uuid("location_id")
+      .notNull()
+      .references(() => inventoryLocations.id, {
+        onDelete: "restrict",
+      }),
+
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => crmProducts.id, {
+        onDelete: "restrict",
+      }),
+
+    stockId: uuid("stock_id")
+      .notNull()
+      .references(() => inventoryStocks.id, {
+        onDelete: "restrict",
+      }),
+
+    vin: text("vin"),
+
+    serialNumber: text("serial_number"),
+
+    modelYear: integer("model_year"),
+
+    color: text("color"),
+
+    status: text("status").notNull().default("available"),
+
+    receivedAt: timestamp("received_at", {
+      withTimezone: true,
+    }),
+
+    unitCost: numeric("unit_cost", {
+      precision: 14,
+      scale: 2,
+    }),
+
+    listPrice: numeric("list_price", {
+      precision: 14,
+      scale: 2,
+    }),
+
+    soldAt: timestamp("sold_at", {
+      withTimezone: true,
+    }),
+
+    deliveredAt: timestamp("delivered_at", {
+      withTimezone: true,
+    }),
+
+    externalSystem: text("external_system"),
+
+    externalId: text("external_id"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("inventory_units_tenant_vin_unique").on(
+      table.tenantId,
+      table.vin,
+    ),
+
+    uniqueIndex("inventory_units_tenant_serial_unique").on(
+      table.tenantId,
+      table.serialNumber,
+    ),
+
+    uniqueIndex("inventory_units_tenant_external_unique").on(
+      table.tenantId,
+      table.externalSystem,
+      table.externalId,
+    ),
+
+    index("inventory_units_tenant_status_idx").on(
+      table.tenantId,
+      table.status,
+      table.receivedAt,
+    ),
+
+    index("inventory_units_tenant_location_idx").on(
+      table.tenantId,
+      table.locationId,
+      table.status,
+    ),
+
+    index("inventory_units_tenant_product_idx").on(
+      table.tenantId,
+      table.productId,
+      table.status,
+    ),
+
+    index("inventory_units_stock_idx").on(
+      table.stockId,
+      table.status,
+    ),
+
+    check(
+      "inventory_units_status_check",
+      sql`
+        ${table.status} IN
+          ('available', 'reserved', 'sold', 'delivered', 'unavailable')
+      `,
+    ),
+
+    check(
+      "inventory_units_model_year_check",
+      sql`
+        ${table.modelYear} IS NULL OR
+        ${table.modelYear} BETWEEN 1900 AND 2200
+      `,
+    ),
+
+    check(
+      "inventory_units_cost_check",
+      sql`${table.unitCost} IS NULL OR ${table.unitCost} >= 0`,
+    ),
+
+    check(
+      "inventory_units_price_check",
+      sql`${table.listPrice} IS NULL OR ${table.listPrice} >= 0`,
+    ),
+  ],
+);
+
 export const crmLeads = pgTable(
   "crm_leads",
   {
@@ -1433,6 +1778,10 @@ export const crmCustomers = pgTable(
     legalName: text("legal_name"),
 
     taxId: text("tax_id"),
+
+    fiscalTaxRegime: text("fiscal_tax_regime"),
+
+    cfdiUse: text("cfdi_use"),
 
     email: text("email"),
 
@@ -1548,6 +1897,24 @@ export const crmDeals = pgTable(
       onDelete: "set null",
     }),
 
+    operationType: text("operation_type")
+      .notNull()
+      .default("unspecified"),
+
+    pipelineDefinitionId: uuid("pipeline_definition_id").references(
+      () => commercialPipelineDefinitions.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    pipelineStageId: uuid("pipeline_stage_id").references(
+      () => commercialPipelineStages.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
     ownerClerkUserId: text("owner_clerk_user_id"),
 
     ownerName: text("owner_name"),
@@ -1648,6 +2015,17 @@ export const crmDeals = pgTable(
 
     index("crm_deals_tenant_stage_idx").on(table.tenantId, table.stage),
 
+    index("crm_deals_tenant_pipeline_idx").on(
+      table.tenantId,
+      table.pipelineDefinitionId,
+      table.pipelineStageId,
+    ),
+
+    index("crm_deals_tenant_operation_type_idx").on(
+      table.tenantId,
+      table.operationType,
+    ),
+
     index("crm_deals_tenant_status_idx").on(table.tenantId, table.status),
 
     index("crm_deals_tenant_customer_idx").on(table.tenantId, table.customerId),
@@ -1665,6 +2043,14 @@ export const crmDeals = pgTable(
     ),
 
     index("crm_deals_tenant_created_idx").on(table.tenantId, table.createdAt),
+
+    check(
+      "crm_deals_operation_type_check",
+      sql`
+        ${table.operationType} IN
+          ('unspecified', 'cash', 'financed', 'mixed')
+      `,
+    ),
   ],
 );
 
@@ -2640,6 +3026,988 @@ export const crmServiceOrderItems = pgTable(
     index("crm_service_order_items_order_position_idx").on(
       table.serviceOrderId,
       table.position,
+    ),
+  ],
+);
+
+export const financingProviders = pgTable(
+  "financing_providers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    code: text("code").notNull(),
+
+    active: boolean("active").notNull().default(true),
+
+    contactName: text("contact_name"),
+
+    contactEmail: text("contact_email"),
+
+    contactPhone: text("contact_phone"),
+
+    externalSystem: text("external_system"),
+
+    externalId: text("external_id"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financing_providers_tenant_code_unique").on(
+      table.tenantId,
+      table.code,
+    ),
+
+    index("financing_providers_tenant_active_idx").on(
+      table.tenantId,
+      table.active,
+      table.name,
+    ),
+  ],
+);
+
+export const financingProducts = pgTable(
+  "financing_products",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => financingProviders.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    code: text("code").notNull(),
+
+    active: boolean("active").notNull().default(true),
+
+    minimumDownPaymentPercent: numeric("minimum_down_payment_percent", {
+      precision: 7,
+      scale: 4,
+    }),
+
+    minimumDownPaymentAmount: numeric("minimum_down_payment_amount", {
+      precision: 14,
+      scale: 2,
+    }),
+
+    minimumTermMonths: integer("minimum_term_months"),
+
+    maximumTermMonths: integer("maximum_term_months"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financing_products_provider_code_unique").on(
+      table.providerId,
+      table.code,
+    ),
+
+    index("financing_products_tenant_active_idx").on(
+      table.tenantId,
+      table.active,
+      table.name,
+    ),
+
+    check(
+      "financing_products_down_payment_percent_check",
+      sql`
+        ${table.minimumDownPaymentPercent} IS NULL OR
+        ${table.minimumDownPaymentPercent} BETWEEN 0 AND 100
+      `,
+    ),
+
+    check(
+      "financing_products_down_payment_amount_check",
+      sql`
+        ${table.minimumDownPaymentAmount} IS NULL OR
+        ${table.minimumDownPaymentAmount} >= 0
+      `,
+    ),
+
+    check(
+      "financing_products_terms_check",
+      sql`
+        (${table.minimumTermMonths} IS NULL OR ${table.minimumTermMonths} > 0) AND
+        (${table.maximumTermMonths} IS NULL OR ${table.maximumTermMonths} > 0) AND
+        (${table.minimumTermMonths} IS NULL OR ${table.maximumTermMonths} IS NULL OR
+          ${table.minimumTermMonths} <= ${table.maximumTermMonths})
+      `,
+    ),
+  ],
+);
+
+export const financingApplications = pgTable(
+  "financing_applications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    branchId: uuid("branch_id").references(() => tenantBranches.id, {
+      onDelete: "set null",
+    }),
+
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => crmDeals.id, {
+        onDelete: "cascade",
+      }),
+
+    customerId: uuid("customer_id").references(() => crmCustomers.id, {
+      onDelete: "set null",
+    }),
+
+    quoteId: uuid("quote_id").references(() => crmQuotes.id, {
+      onDelete: "set null",
+    }),
+
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => financingProviders.id, {
+        onDelete: "restrict",
+      }),
+
+    productId: uuid("product_id").references(() => financingProducts.id, {
+      onDelete: "set null",
+    }),
+
+    folio: text("folio"),
+
+    status: text("status").notNull().default("draft"),
+
+    currency: text("currency").notNull().default("mxn"),
+
+    unitPrice: numeric("unit_price", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    requiredDownPaymentPercent: numeric("required_down_payment_percent", {
+      precision: 7,
+      scale: 4,
+    }),
+
+    requiredDownPaymentAmount: numeric("required_down_payment_amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    requestedAmount: numeric("requested_amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    approvedAmount: numeric("approved_amount", {
+      precision: 14,
+      scale: 2,
+    }),
+
+    termMonths: integer("term_months"),
+
+    monthlyPayment: numeric("monthly_payment", {
+      precision: 14,
+      scale: 2,
+    }),
+
+    requestedAt: timestamp("requested_at", {
+      withTimezone: true,
+    }),
+
+    approvedAt: timestamp("approved_at", {
+      withTimezone: true,
+    }),
+
+    rejectedAt: timestamp("rejected_at", {
+      withTimezone: true,
+    }),
+
+    rejectionReason: text("rejection_reason"),
+
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+    }),
+
+    createdByClerkUserId: text("created_by_clerk_user_id").notNull(),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financing_applications_tenant_folio_unique").on(
+      table.tenantId,
+      table.providerId,
+      table.folio,
+    ),
+
+    index("financing_applications_tenant_deal_idx").on(
+      table.tenantId,
+      table.dealId,
+      table.createdAt,
+    ),
+
+    index("financing_applications_tenant_status_idx").on(
+      table.tenantId,
+      table.status,
+      table.updatedAt,
+    ),
+
+    index("financing_applications_provider_status_idx").on(
+      table.providerId,
+      table.status,
+      table.updatedAt,
+    ),
+
+    check(
+      "financing_applications_status_check",
+      sql`
+        ${table.status} IN
+          ('draft', 'submitted', 'under_review', 'approved', 'rejected', 'cancelled')
+      `,
+    ),
+
+    check(
+      "financing_applications_amounts_check",
+      sql`
+        ${table.unitPrice} >= 0 AND
+        ${table.requiredDownPaymentAmount} >= 0 AND
+        ${table.requestedAmount} >= 0 AND
+        (${table.approvedAmount} IS NULL OR ${table.approvedAmount} >= 0) AND
+        (${table.monthlyPayment} IS NULL OR ${table.monthlyPayment} >= 0)
+      `,
+    ),
+
+    check(
+      "financing_applications_percent_check",
+      sql`
+        ${table.requiredDownPaymentPercent} IS NULL OR
+        ${table.requiredDownPaymentPercent} BETWEEN 0 AND 100
+      `,
+    ),
+
+    check(
+      "financing_applications_term_check",
+      sql`${table.termMonths} IS NULL OR ${table.termMonths} > 0`,
+    ),
+  ],
+);
+
+export const commercialPayments = pgTable(
+  "commercial_payments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    branchId: uuid("branch_id").references(() => tenantBranches.id, {
+      onDelete: "set null",
+    }),
+
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => crmDeals.id, {
+        onDelete: "cascade",
+      }),
+
+    customerId: uuid("customer_id").references(() => crmCustomers.id, {
+      onDelete: "set null",
+    }),
+
+    quoteId: uuid("quote_id").references(() => crmQuotes.id, {
+      onDelete: "set null",
+    }),
+
+    salesOrderId: uuid("sales_order_id").references(() => crmSalesOrders.id, {
+      onDelete: "set null",
+    }),
+
+    financingApplicationId: uuid("financing_application_id").references(
+      () => financingApplications.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    paymentType: text("payment_type").notNull().default("down_payment"),
+
+    status: text("status").notNull().default("received"),
+
+    amount: numeric("amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    currency: text("currency").notNull().default("mxn"),
+
+    paymentMethod: text("payment_method"),
+
+    reference: text("reference"),
+
+    receivedAt: timestamp("received_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+    }),
+
+    cancellationReason: text("cancellation_reason"),
+
+    receivedByClerkUserId: text("received_by_clerk_user_id").notNull(),
+
+    externalSystem: text("external_system"),
+
+    externalId: text("external_id"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("commercial_payments_tenant_deal_idx").on(
+      table.tenantId,
+      table.dealId,
+      table.receivedAt,
+    ),
+
+    index("commercial_payments_tenant_status_idx").on(
+      table.tenantId,
+      table.status,
+      table.receivedAt,
+    ),
+
+    uniqueIndex("commercial_payments_tenant_external_unique").on(
+      table.tenantId,
+      table.externalSystem,
+      table.externalId,
+    ),
+
+    check(
+      "commercial_payments_amount_check",
+      sql`${table.amount} > 0`,
+    ),
+
+    check(
+      "commercial_payments_type_check",
+      sql`
+        ${table.paymentType} IN
+          ('down_payment', 'payment', 'refund', 'adjustment')
+      `,
+    ),
+
+    check(
+      "commercial_payments_status_check",
+      sql`
+        ${table.status} IN ('pending', 'received', 'cancelled', 'refunded')
+      `,
+    ),
+  ],
+);
+
+export const commercialReservationRules = pgTable(
+  "commercial_reservation_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    name: text("name").notNull(),
+
+    operationType: text("operation_type"),
+
+    financingProviderId: uuid("financing_provider_id").references(
+      () => financingProviders.id,
+      {
+        onDelete: "cascade",
+      },
+    ),
+
+    financingProductId: uuid("financing_product_id").references(
+      () => financingProducts.id,
+      {
+        onDelete: "cascade",
+      },
+    ),
+
+    minimumDownPaymentPercent: numeric("minimum_down_payment_percent", {
+      precision: 7,
+      scale: 4,
+    }),
+
+    minimumDownPaymentAmount: numeric("minimum_down_payment_amount", {
+      precision: 14,
+      scale: 2,
+    }),
+
+    financingApprovalRequired: boolean("financing_approval_required")
+      .notNull()
+      .default(false),
+
+    active: boolean("active").notNull().default(true),
+
+    priority: integer("priority").notNull().default(100),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("commercial_reservation_rules_tenant_name_unique").on(
+      table.tenantId,
+      table.name,
+    ),
+
+    index("commercial_reservation_rules_tenant_active_idx").on(
+      table.tenantId,
+      table.active,
+      table.priority,
+    ),
+
+    check(
+      "commercial_reservation_rules_operation_type_check",
+      sql`
+        ${table.operationType} IS NULL OR
+        ${table.operationType} IN ('cash', 'financed', 'mixed')
+      `,
+    ),
+
+    check(
+      "commercial_reservation_rules_percent_check",
+      sql`
+        ${table.minimumDownPaymentPercent} IS NULL OR
+        ${table.minimumDownPaymentPercent} BETWEEN 0 AND 100
+      `,
+    ),
+
+    check(
+      "commercial_reservation_rules_amount_check",
+      sql`
+        ${table.minimumDownPaymentAmount} IS NULL OR
+        ${table.minimumDownPaymentAmount} >= 0
+      `,
+    ),
+  ],
+);
+
+export const inventoryUnitReservations = pgTable(
+  "inventory_unit_reservations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => crmDeals.id, {
+        onDelete: "cascade",
+      }),
+
+    customerId: uuid("customer_id").references(() => crmCustomers.id, {
+      onDelete: "set null",
+    }),
+
+    salesOrderId: uuid("sales_order_id").references(() => crmSalesOrders.id, {
+      onDelete: "set null",
+    }),
+
+    inventoryUnitId: uuid("inventory_unit_id")
+      .notNull()
+      .references(() => inventoryUnits.id, {
+        onDelete: "restrict",
+      }),
+
+    ruleId: uuid("rule_id").references(() => commercialReservationRules.id, {
+      onDelete: "set null",
+    }),
+
+    status: text("status").notNull().default("active"),
+
+    requiredDownPaymentAmount: numeric("required_down_payment_amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    eligiblePaymentAmount: numeric("eligible_payment_amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    ruleSnapshot: jsonb("rule_snapshot")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    reservedByClerkUserId: text("reserved_by_clerk_user_id").notNull(),
+
+    reservedByName: text("reserved_by_name"),
+
+    reservedAt: timestamp("reserved_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    releasedByClerkUserId: text("released_by_clerk_user_id"),
+
+    releasedAt: timestamp("released_at", {
+      withTimezone: true,
+    }),
+
+    releaseReason: text("release_reason"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("inventory_unit_reservations_active_unit_unique")
+      .on(table.tenantId, table.inventoryUnitId)
+      .where(sql`${table.status} = 'active'`),
+
+    index("inventory_unit_reservations_tenant_deal_idx").on(
+      table.tenantId,
+      table.dealId,
+      table.status,
+    ),
+
+    index("inventory_unit_reservations_tenant_status_idx").on(
+      table.tenantId,
+      table.status,
+      table.reservedAt,
+    ),
+
+    check(
+      "inventory_unit_reservations_status_check",
+      sql`
+        ${table.status} IN ('active', 'released', 'converted', 'cancelled')
+      `,
+    ),
+
+    check(
+      "inventory_unit_reservations_amounts_check",
+      sql`
+        ${table.requiredDownPaymentAmount} >= 0 AND
+        ${table.eligiblePaymentAmount} >= 0
+      `,
+    ),
+  ],
+);
+
+export const inventoryUnitReservationPayments = pgTable(
+  "inventory_unit_reservation_payments",
+  {
+    reservationId: uuid("reservation_id")
+      .notNull()
+      .references(() => inventoryUnitReservations.id, {
+        onDelete: "cascade",
+      }),
+
+    paymentId: uuid("payment_id")
+      .notNull()
+      .references(() => commercialPayments.id, {
+        onDelete: "restrict",
+      }),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    appliedAmount: numeric("applied_amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.reservationId,
+        table.paymentId,
+      ],
+    }),
+
+    index("inventory_unit_reservation_payments_tenant_idx").on(
+      table.tenantId,
+      table.reservationId,
+    ),
+
+    check(
+      "inventory_unit_reservation_payments_amount_check",
+      sql`${table.appliedAmount} > 0`,
+    ),
+  ],
+);
+
+export const salesInvoices = pgTable(
+  "sales_invoices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    branchId: uuid("branch_id").references(() => tenantBranches.id, {
+      onDelete: "set null",
+    }),
+
+    salesOrderId: uuid("sales_order_id")
+      .notNull()
+      .references(() => crmSalesOrders.id, {
+        onDelete: "cascade",
+      }),
+
+    dealId: uuid("deal_id").references(() => crmDeals.id, {
+      onDelete: "set null",
+    }),
+
+    customerId: uuid("customer_id").references(() => crmCustomers.id, {
+      onDelete: "set null",
+    }),
+
+    status: text("status").notNull().default("pending"),
+
+    invoiceNumber: text("invoice_number"),
+
+    invoiceDate: timestamp("invoice_date", {
+      withTimezone: true,
+    }),
+
+    amount: numeric("amount", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+
+    currency: text("currency").notNull().default("mxn"),
+
+    series: text("series"),
+
+    folio: text("folio"),
+
+    paymentForm: text("payment_form"),
+
+    paymentMethod: text("payment_method"),
+
+    cfdiType: text("cfdi_type").notNull().default("I"),
+
+    fiscalProvider: text("fiscal_provider"),
+
+    fiscalEnvironment: text("fiscal_environment")
+      .$type<"test" | "live">(),
+
+    fiscalUuid: text("fiscal_uuid"),
+
+    stampedAt: timestamp("stamped_at", {
+      withTimezone: true,
+    }),
+
+    cancellationRequestedAt: timestamp("cancellation_requested_at", {
+      withTimezone: true,
+    }),
+
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+    }),
+
+    cancellationReasonCode: text("cancellation_reason_code"),
+
+    replacementUuid: text("replacement_uuid"),
+
+    xmlObjectKey: text("xml_object_key"),
+
+    pdfObjectKey: text("pdf_object_key"),
+
+    documentReference: text("document_reference"),
+
+    externalSystem: text("external_system"),
+
+    externalId: text("external_id"),
+
+    externalReference: text("external_reference"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("sales_invoices_tenant_number_unique").on(
+      table.tenantId,
+      table.invoiceNumber,
+    ),
+
+    uniqueIndex("sales_invoices_tenant_external_unique").on(
+      table.tenantId,
+      table.externalSystem,
+      table.externalId,
+    ),
+
+    uniqueIndex("sales_invoices_fiscal_uuid_unique")
+      .on(
+        table.fiscalProvider,
+        table.fiscalEnvironment,
+        table.fiscalUuid,
+      )
+      .where(sql`${table.fiscalUuid} IS NOT NULL`),
+
+    index("sales_invoices_tenant_order_idx").on(
+      table.tenantId,
+      table.salesOrderId,
+      table.createdAt,
+    ),
+
+    index("sales_invoices_tenant_status_idx").on(
+      table.tenantId,
+      table.status,
+      table.createdAt,
+    ),
+
+    check(
+      "sales_invoices_status_check",
+      sql`
+        ${table.status} IN
+          ('pending', 'requested', 'issued', 'cancelled', 'error')
+      `,
+    ),
+
+    check(
+      "sales_invoices_amount_check",
+      sql`${table.amount} >= 0`,
+    ),
+
+    check(
+      "sales_invoices_fiscal_environment_check",
+      sql`
+        ${table.fiscalEnvironment} IS NULL OR
+        ${table.fiscalEnvironment} IN ('test', 'live')
+      `,
+    ),
+
+    check(
+      "sales_invoices_cfdi_type_check",
+      sql`${table.cfdiType} IN ('I', 'E', 'T', 'N', 'P')`,
+    ),
+
+    check(
+      "sales_invoices_cancellation_reason_check",
+      sql`
+        ${table.cancellationReasonCode} IS NULL OR
+        ${table.cancellationReasonCode} IN ('01', '02', '03', '04')
+      `,
+    ),
+  ],
+);
+
+export const commercialOperationEvents = pgTable(
+  "commercial_operation_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => crmDeals.id, {
+        onDelete: "cascade",
+      }),
+
+    eventType: text("event_type").notNull(),
+
+    entityType: text("entity_type").notNull(),
+
+    entityId: text("entity_id").notNull(),
+
+    summary: text("summary").notNull(),
+
+    source: text("source").notNull().default("system"),
+
+    actorClerkUserId: text("actor_clerk_user_id"),
+
+    actorName: text("actor_name"),
+
+    idempotencyKey: text("idempotency_key"),
+
+    payload: jsonb("payload")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    occurredAt: timestamp("occurred_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("commercial_operation_events_tenant_idempotency_unique").on(
+      table.tenantId,
+      table.idempotencyKey,
+    ),
+
+    index("commercial_operation_events_tenant_deal_idx").on(
+      table.tenantId,
+      table.dealId,
+      table.occurredAt,
+    ),
+
+    index("commercial_operation_events_tenant_entity_idx").on(
+      table.tenantId,
+      table.entityType,
+      table.entityId,
+      table.occurredAt,
+    ),
+
+    index("commercial_operation_events_tenant_type_idx").on(
+      table.tenantId,
+      table.eventType,
+      table.occurredAt,
     ),
   ],
 );
@@ -3939,7 +5307,7 @@ export const commercialPurchases = pgTable(
 
     taxId: text("tax_id"),
 
-    industry: text("industry").notNull(),
+    industry: text("industry"),
 
     billingPeriod: text("billing_period").notNull(),
 
@@ -5591,6 +6959,333 @@ export const aiUsageEvents = pgTable(
     ),
   ],
 );
+
+export const fiscalProviderConfigurations = pgTable(
+  "fiscal_provider_configurations",
+  {
+    environment: text("environment").primaryKey(),
+
+    enabled: boolean("enabled").notNull().default(false),
+
+    provider: text("provider").notNull(),
+
+    mode: text("mode")
+      .$type<"test" | "live">()
+      .notNull()
+      .default("test"),
+
+    credentialSecretReference: text("credential_secret_reference"),
+
+    costPerStamp: numeric("cost_per_stamp", {
+      precision: 12,
+      scale: 6,
+    })
+      .notNull()
+      .default("0"),
+
+    currency: text("currency").notNull().default("mxn"),
+
+    changedByClerkUserId: text("changed_by_clerk_user_id"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "fiscal_provider_configurations_mode_check",
+      sql`
+        ${table.mode} IN ('test', 'live')
+      `,
+    ),
+    check(
+      "fiscal_provider_configurations_cost_check",
+      sql`${table.costPerStamp} >= 0`,
+    ),
+  ],
+);
+
+export const fiscalTenantAccounts = pgTable(
+  "fiscal_tenant_accounts",
+  {
+    tenantId: uuid("tenant_id")
+      .primaryKey()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    enabled: boolean("enabled").notNull().default(false),
+
+    status: text("status")
+      .$type<"active" | "paused" | "blocked">()
+      .notNull()
+      .default("active"),
+
+    includedMonthlyStamps: integer("included_monthly_stamps")
+      .notNull()
+      .default(0),
+
+    usedMonthlyStamps: integer("used_monthly_stamps")
+      .notNull()
+      .default(0),
+
+    topUpStampBalance: integer("top_up_stamp_balance")
+      .notNull()
+      .default(0),
+
+    monthlyWindowStart: timestamp("monthly_window_start", {
+      withTimezone: true,
+    }),
+
+    monthlyWindowEnd: timestamp("monthly_window_end", {
+      withTimezone: true,
+    }),
+
+    maxMonthlySpend: numeric("max_monthly_spend", {
+      precision: 14,
+      scale: 2,
+    })
+      .notNull()
+      .default("0"),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("fiscal_tenant_accounts_status_idx").on(
+      table.status,
+      table.updatedAt,
+    ),
+    check(
+      "fiscal_tenant_accounts_status_check",
+      sql`${table.status} IN ('active', 'paused', 'blocked')`,
+    ),
+    check(
+      "fiscal_tenant_accounts_balances_check",
+      sql`
+        ${table.includedMonthlyStamps} >= 0
+        AND ${table.usedMonthlyStamps} >= 0
+        AND ${table.topUpStampBalance} >= 0
+        AND ${table.maxMonthlySpend} >= 0
+      `,
+    ),
+  ],
+);
+
+export const fiscalStampLedgerEntries = pgTable(
+  "fiscal_stamp_ledger_entries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    invoiceId: uuid("invoice_id").references(() => salesInvoices.id, {
+      onDelete: "set null",
+    }),
+
+    entryType: text("entry_type")
+      .$type<
+        | "monthly_grant"
+        | "top_up"
+        | "stamp"
+        | "refund"
+        | "adjustment"
+      >()
+      .notNull(),
+
+    stampDelta: integer("stamp_delta").notNull(),
+
+    monthlyRemainingAfter: integer("monthly_remaining_after")
+      .notNull()
+      .default(0),
+
+    topUpRemainingAfter: integer("top_up_remaining_after")
+      .notNull()
+      .default(0),
+
+    providerCost: numeric("provider_cost", {
+      precision: 14,
+      scale: 6,
+    })
+      .notNull()
+      .default("0"),
+
+    currency: text("currency").notNull().default("mxn"),
+
+    idempotencyKey: text("idempotency_key").notNull(),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("fiscal_stamp_ledger_idempotency_unique").on(
+      table.idempotencyKey,
+    ),
+    index("fiscal_stamp_ledger_tenant_idx").on(
+      table.tenantId,
+      table.createdAt,
+    ),
+    index("fiscal_stamp_ledger_invoice_idx").on(table.invoiceId),
+    check(
+      "fiscal_stamp_ledger_delta_check",
+      sql`${table.stampDelta} <> 0`,
+    ),
+    check(
+      "fiscal_stamp_ledger_balances_check",
+      sql`
+        ${table.monthlyRemainingAfter} >= 0
+        AND ${table.topUpRemainingAfter} >= 0
+        AND ${table.providerCost} >= 0
+      `,
+    ),
+  ],
+);
+
+export const fiscalProviderRequests = pgTable(
+  "fiscal_provider_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, {
+        onDelete: "cascade",
+      }),
+
+    invoiceId: uuid("invoice_id").references(() => salesInvoices.id, {
+      onDelete: "set null",
+    }),
+
+    environment: text("environment").notNull(),
+
+    provider: text("provider").notNull(),
+
+    operation: text("operation")
+      .$type<"stamp" | "cancel" | "status" | "xml" | "pdf">()
+      .notNull(),
+
+    status: text("status")
+      .$type<"pending" | "success" | "error">()
+      .notNull()
+      .default("pending"),
+
+    providerRequestId: text("provider_request_id"),
+
+    fiscalUuid: text("fiscal_uuid"),
+
+    durationMs: integer("duration_ms").notNull().default(0),
+
+    providerCost: numeric("provider_cost", {
+      precision: 14,
+      scale: 6,
+    })
+      .notNull()
+      .default("0"),
+
+    currency: text("currency").notNull().default("mxn"),
+
+    errorCode: text("error_code"),
+
+    errorMessage: text("error_message"),
+
+    idempotencyKey: text("idempotency_key").notNull(),
+
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    completedAt: timestamp("completed_at", {
+      withTimezone: true,
+    }),
+  },
+  (table) => [
+    uniqueIndex("fiscal_provider_requests_idempotency_unique").on(
+      table.idempotencyKey,
+    ),
+    index("fiscal_provider_requests_tenant_idx").on(
+      table.tenantId,
+      table.createdAt,
+    ),
+    index("fiscal_provider_requests_status_idx").on(
+      table.status,
+      table.createdAt,
+    ),
+    index("fiscal_provider_requests_invoice_idx").on(table.invoiceId),
+    check(
+      "fiscal_provider_requests_operation_check",
+      sql`${table.operation} IN ('stamp', 'cancel', 'status', 'xml', 'pdf')`,
+    ),
+    check(
+      "fiscal_provider_requests_status_check",
+      sql`${table.status} IN ('pending', 'success', 'error')`,
+    ),
+    check(
+      "fiscal_provider_requests_metrics_check",
+      sql`
+        ${table.durationMs} >= 0
+        AND ${table.providerCost} >= 0
+      `,
+    ),
+  ],
+);
+
+export type FiscalProviderConfiguration =
+  typeof fiscalProviderConfigurations.$inferSelect;
+
+export type FiscalTenantAccount =
+  typeof fiscalTenantAccounts.$inferSelect;
+
+export type FiscalStampLedgerEntry =
+  typeof fiscalStampLedgerEntries.$inferSelect;
+
+export type FiscalProviderRequest =
+  typeof fiscalProviderRequests.$inferSelect;
 
 export type AIUsageEvent = typeof aiUsageEvents.$inferSelect;
 

@@ -428,6 +428,41 @@
       "when": 1787844780190,
       "tag": "0060_burly_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1787893829188,
+      "tag": "0061_majestic_lady_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1787932171586,
+      "tag": "0063_sparkling_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1787933176729,
+      "tag": "0064_careful_gamma_corps",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1787978776175,
+      "tag": "0065_worthless_edwin_jarvis",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1787979667763,
+      "tag": "0066_fearless_ares",
+      "breakpoints": true
     }
   ]
 }

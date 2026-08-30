@@ -33,6 +33,16 @@ export const CRM_CAMPAIGNS_MODULE_IDS = [
     "campaigns",
 ] as const;
 
+export const CRM_INVOICE_CONTROL_MODULE_IDS = [
+    "invoice-control",
+] as const;
+
+export const CRM_CFDI_STAMPING_MODULE_IDS = [
+    "cfdi-stamping",
+] as const;
+
+
+
 export const CRM_MODULE_PACKAGES = {
     core: {
         key: "core",
@@ -78,6 +88,26 @@ export const CRM_MODULE_PACKAGES = {
         moduleIds:
             CRM_CAMPAIGNS_MODULE_IDS,
     },
+
+    "invoice-control": {
+        key: "invoice-control",
+        name: "Control de facturas",
+        description:
+            "Registro, seguimiento y trazabilidad de facturas comerciales.",
+        moduleIds:
+            CRM_INVOICE_CONTROL_MODULE_IDS,
+    },
+
+    "cfdi-stamping": {
+        key: "cfdi-stamping",
+        name: "Timbrado CFDI",
+        description:
+            "Emisión y cancelación fiscal de CFDI mediante un PAC autorizado.",
+        moduleIds:
+            CRM_CFDI_STAMPING_MODULE_IDS,
+    },
+
+
 } as const;
 
 export type CRMModulePackageKey =

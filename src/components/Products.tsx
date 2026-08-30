@@ -97,12 +97,6 @@ const accentStyles: Record<
   },
 };
 
-function buildMailtoHref(product: Product): string {
-  const subject = encodeURIComponent(product.emailSubject);
-
-  return `mailto:ventas@datara-lab.com?subject=${subject}`;
-}
-
 export default function Products() {
   return (
     <section
@@ -136,8 +130,6 @@ export default function Products() {
         <div className="mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
           {products.map((product) => {
             const styles = accentStyles[product.accent];
-            const isAnalytics = product.accent === "blue";
-
             return (
               <article
                 key={product.name}
@@ -208,11 +200,14 @@ export default function Products() {
                         href={
                           product.shortName === "CRM"
                             ? "/catalogo/crm"
-                            : "#contacto"
+                            : product.shortName === "Cloud"
+                              ? "/cloud"
+                              : "#contacto"
                         }
                         size="lg"
                       >
-                        {product.shortName === "CRM"
+                        {product.shortName === "CRM" ||
+                        product.shortName === "Cloud"
                           ? "Ver catálogo"
                           : "Solicitar información"}
                       </Button>

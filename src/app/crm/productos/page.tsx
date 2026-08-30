@@ -27,6 +27,22 @@ import {
 import {
   useAuth,
 } from "@/contexts/AuthContext";
+import {
+  SAT_FACTOR_TYPES,
+  SAT_TAX_OBJECTS,
+  SAT_TRANSFERRED_TAXES,
+  SAT_UNIT_CODES,
+} from "@/lib/fiscal/catalogs";
+import type { CRMFieldConfig } from "@/types/crm-config";
+
+const PRODUCT_FISCAL_FIELDS: CRMFieldConfig[] = [
+  { key: "productServiceCode", label: "Clave de producto o servicio SAT", description: "Clave de 8 dígitos del catálogo c_ClaveProdServ.", placeholder: "Ej. 25101801", type: "text", validation: { pattern: "^\\d{8}$", message: "Captura una clave SAT de 8 dígitos." }, showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 1, formColumn: 1 },
+  { key: "unitCode", label: "Clave de unidad SAT", type: "select", options: SAT_UNIT_CODES.map((item) => ({ ...item })), showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 1, formColumn: 2 },
+  { key: "taxObject", label: "Objeto de impuesto", type: "select", options: SAT_TAX_OBJECTS.map((item) => ({ ...item })), showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 2, formColumn: 1 },
+  { key: "transferredTaxCode", label: "Impuesto trasladado", type: "select", options: SAT_TRANSFERRED_TAXES.map((item) => ({ ...item })), showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 2, formColumn: 2, visibleWhen: { fieldKey: "taxObject", in: ["02", "03"] } },
+  { key: "transferredFactorType", label: "Tipo de factor", type: "select", options: SAT_FACTOR_TYPES.map((item) => ({ ...item })), showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 3, formColumn: 1, visibleWhen: { fieldKey: "taxObject", in: ["02", "03"] } },
+  { key: "transferredTaxRate", label: "Tasa o cuota", description: "Ej. 0.16 para IVA del 16%.", type: "number", validation: { min: 0, max: 1 }, showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 3, formColumn: 2, visibleWhen: { fieldKey: "transferredFactorType", in: ["Tasa", "Cuota"] } },
+];
 
 type DrawerMode =
   | "view"
@@ -304,9 +320,13 @@ export default function ProductosPage() {
         return {
           ...baseProductsModule,
 
+          formSections: [
+            ...(baseProductsModule.formSections ?? []).filter((section) => section.id !== "fiscal"),
+            { id: "fiscal", title: "Configuración fiscal", description: "Claves y reglas SAT utilizadas al generar CFDI 4.0.", order: 90, columns: 2 as const },
+          ],
+
           fields:
-            baseProductsModule
-              .fields
+            [...baseProductsModule.fields, ...PRODUCT_FISCAL_FIELDS.filter((fiscalField) => !baseProductsModule.fields.some((field) => field.key === fiscalField.key))]
               .map((field) => {
                 if (
                   field.key ===

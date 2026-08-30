@@ -436,7 +436,17 @@ export default function InventoryAuditWorkspace() {
     }, []);
 
   useEffect(() => {
-    void loadAudit();
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void loadAudit();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     loadAudit,
   ]);

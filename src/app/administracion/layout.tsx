@@ -92,6 +92,16 @@ const cloudNavigation:
       href:
         "/administracion/cloud",
     },
+    {
+      id:
+        "administration-fiscal",
+
+      label:
+        "Operación fiscal",
+
+      href:
+        "/administracion/fiscal",
+    },
   ];
 
 export default async function AdministrationLayout({

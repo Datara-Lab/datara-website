@@ -11,6 +11,7 @@ import {
 
 import InventoryAuditWorkspace from "@/components/crm/inventory/InventoryAuditWorkspace";
 import InventoryCountsWorkspace from "@/components/crm/inventory/InventoryCountsWorkspace";
+import InventoryUnitsWorkspace from "@/components/crm/inventory/InventoryUnitsWorkspace";
 import DataraTableScroll from "@/components/shared/DataraTableScroll";
 import PageHeader from "@/components/shared/PageHeader";
 
@@ -677,12 +678,15 @@ export default function InventariosPage() {
 
   const [activeView, setActiveView] = useState<
     | "stocks"
+    | "units"
     | "movements"
     | "reservations"
     | "replenishment"
     | "counts"
     | "audit"
   >("stocks");
+
+  const [supportsPhysicalUnits, setSupportsPhysicalUnits] = useState(false);
 
   const [linkedDealReservationId, setLinkedDealReservationId] = useState<
     string | null
@@ -1007,17 +1011,74 @@ export default function InventariosPage() {
   }, []);
 
   useEffect(() => {
-    void loadInventory();
+    const timeout =
+      window.setTimeout(
+        () => {
+          void loadInventory();
+        },
+        0,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeout,
+      );
+    };
   }, [loadInventory]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
+    let active = true;
 
-    if (searchParams.get("view") === "reservations") {
-      setActiveView("reservations");
-    }
+    void fetch("/api/crm/inventory/units?status=available", { cache: "no-store" })
+      .then((response) => {
+        if (active) {
+          setSupportsPhysicalUnits(response.ok);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSupportsPhysicalUnits(false);
+        }
+      });
 
-    setLinkedDealReservationId(searchParams.get("dealId"));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const timeout =
+      window.setTimeout(
+        () => {
+          const searchParams =
+            new URLSearchParams(
+              window.location.search,
+            );
+
+          if (
+            searchParams.get(
+              "view",
+            ) === "reservations"
+          ) {
+            setActiveView(
+              "reservations",
+            );
+          }
+
+          setLinkedDealReservationId(
+            searchParams.get(
+              "dealId",
+            ),
+          );
+        },
+        0,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeout,
+      );
+    };
   }, []);
 
   useEffect(() => {
@@ -2301,7 +2362,12 @@ export default function InventariosPage() {
       : new Date();
 
     const suggestedExpiration = new Date(
-      Math.max(currentExpiration.getTime(), Date.now()) + 24 * 60 * 60 * 1000,
+      Math.max(
+        currentExpiration.getTime(),
+        // eslint-disable-next-line react-hooks/purity -- La extensión parte del momento de la acción del usuario.
+        Date.now(),
+      ) +
+        24 * 60 * 60 * 1000,
     );
 
     const timezoneOffset = suggestedExpiration.getTimezoneOffset() * 60 * 1000;
@@ -2934,17 +3000,6 @@ export default function InventariosPage() {
     );
   }
 
-  function handleMovementBranchChange(branchId: string) {
-    setMovementBranchId(branchId);
-
-    const nextLocation =
-      activeLocations.find(
-        (item) => item.branchId === branchId && item.isDefault,
-      ) ?? activeLocations.find((item) => item.branchId === branchId);
-
-    handleMovementLocationChange(nextLocation?.value ?? "");
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
@@ -3286,6 +3341,21 @@ export default function InventariosPage() {
                   Existencias
                 </button>
 
+                {supportsPhysicalUnits && (
+                  <button
+                    type="button"
+                    className={[
+                      "rounded-lg px-4 py-2 text-sm font-semibold transition",
+                      activeView === "units"
+                        ? "bg-slate-950 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-slate-100",
+                    ].join(" ")}
+                    onClick={() => setActiveView("units")}
+                  >
+                    Unidades / VIN
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className={[
@@ -3370,7 +3440,9 @@ export default function InventariosPage() {
                 )}
               </div>
 
-              {activeView !== "counts" && activeView !== "audit" && (
+              {activeView !== "counts" &&
+                activeView !== "audit" &&
+                activeView !== "units" && (
                 <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <input
                     type="search"
@@ -3526,7 +3598,12 @@ export default function InventariosPage() {
             </div>
           )}
 
-          {activeView === "audit" && permissions.canManage ? (
+          {activeView === "units" && supportsPhysicalUnits ? (
+            <InventoryUnitsWorkspace
+              stocks={stocks}
+              permissions={permissions}
+            />
+          ) : activeView === "audit" && permissions.canManage ? (
             <div className="p-5 sm:p-6">
               <InventoryAuditWorkspace />
             </div>

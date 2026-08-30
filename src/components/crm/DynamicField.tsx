@@ -182,7 +182,10 @@ function MultiSelectDropdown({
   const selectedValues =
     normalizeStringArray(value);
 
-  const options = field.options ?? [];
+  const options = useMemo(
+    () => field.options ?? [],
+    [field.options],
+  );
 
   const visibleOptions = useMemo(() => {
     const normalizedSearchTerm =

@@ -39,6 +39,13 @@ import {
   type CRMModulePermission,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
+import {
+  isSatCatalogValue,
+  isValidMexicanPostalCode,
+  isValidMexicanTaxId,
+  SAT_CFDI_USES,
+  SAT_TAX_REGIMES,
+} from "@/lib/fiscal/catalogs";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +58,8 @@ type CustomerFormPayload = {
   companyName?: unknown;
   legalName?: unknown;
   taxId?: unknown;
+  fiscalTaxRegime?: unknown;
+  cfdiUse?: unknown;
   email?: unknown;
   phone?: unknown;
   mobile?: unknown;
@@ -177,6 +186,21 @@ function validatePayload(
 
   if (!email && !phone && !mobile) {
     return "Captura al menos un correo electrónico, teléfono o móvil.";
+  }
+
+  const taxId = getOptionalString(values.taxId);
+  const taxRegime = getOptionalString(values.fiscalTaxRegime);
+  const cfdiUse = getOptionalString(values.cfdiUse);
+  const postalCode = getOptionalString(values.postalCode);
+
+  if (taxId && !isValidMexicanTaxId(taxId)) return "El RFC fiscal no tiene un formato válido.";
+  if (!isSatCatalogValue(SAT_TAX_REGIMES, taxRegime)) return "El régimen fiscal no es válido.";
+  if (!isSatCatalogValue(SAT_CFDI_USES, cfdiUse)) return "El uso CFDI no es válido.";
+  if (postalCode && !isValidMexicanPostalCode(postalCode)) return "El código postal fiscal debe contener 5 dígitos.";
+
+  const fiscalFields = [taxId, taxRegime, cfdiUse, postalCode];
+  if (fiscalFields.some(Boolean) && !fiscalFields.every(Boolean)) {
+    return "Para facturar captura RFC, régimen fiscal, uso CFDI y código postal fiscal.";
   }
 
   return null;
@@ -735,6 +759,8 @@ export async function GET() {
         legalName:
           crmCustomers.legalName,
         taxId: crmCustomers.taxId,
+        fiscalTaxRegime: crmCustomers.fiscalTaxRegime,
+        cfdiUse: crmCustomers.cfdiUse,
         email: crmCustomers.email,
         phone: crmCustomers.phone,
         mobile: crmCustomers.mobile,
@@ -891,6 +917,8 @@ export async function GET() {
           legalName:
             record.legalName,
           taxId: record.taxId,
+          fiscalTaxRegime: record.fiscalTaxRegime,
+          cfdiUse: record.cfdiUse,
           email: record.email,
           phone: record.phone,
           mobile: record.mobile,
@@ -1091,6 +1119,10 @@ export async function POST(
             values.taxId,
           )?.toUpperCase() ??
           null,
+        fiscalTaxRegime:
+          getOptionalString(values.fiscalTaxRegime) ?? null,
+        cfdiUse:
+          getOptionalString(values.cfdiUse) ?? null,
         email:
           normalizeEmail(
             values.email,
@@ -1380,6 +1412,10 @@ export async function PATCH(
             values.taxId,
           )?.toUpperCase() ??
           null,
+        fiscalTaxRegime:
+          getOptionalString(values.fiscalTaxRegime) ?? null,
+        cfdiUse:
+          getOptionalString(values.cfdiUse) ?? null,
         email:
           normalizeEmail(
             values.email,

@@ -134,6 +134,13 @@ export default function DocumentUploadDrawer({
       return;
     }
 
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
     setFile(null);
     setName("");
     setIsNameManuallyEdited(
@@ -149,6 +156,12 @@ export default function DocumentUploadDrawer({
       inputRef.current.value =
         "";
     }
+
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) {

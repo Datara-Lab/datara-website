@@ -567,7 +567,9 @@ export default function DealFormDrawer({
       ),
     );
 
-    setName(initialName);
+    setName(
+      initialName || automaticName,
+    );
 
     setIsNameManuallyEdited(false);
     setCustomerId(

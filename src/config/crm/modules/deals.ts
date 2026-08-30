@@ -165,7 +165,7 @@ export function createDealsModule(
         id: "deal-items",
         title: itemPluralLabel,
         description:
-          `Agrega uno o más ${itemPluralLabel.toLowerCase()} a la operación.`,
+          `Agrega cada ${itemSingularLabel.toLowerCase()} incluido en la operación.`,
         order: 2,
         columns: 1,
       },

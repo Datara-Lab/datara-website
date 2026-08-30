@@ -223,5 +223,3 @@ export function createMotorcycleDealershipCRMConfig({
     pipelines: [],
   };
 }
-
-/#export default bajajIzcalliCRMConfig;#/

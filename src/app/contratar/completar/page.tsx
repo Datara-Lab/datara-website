@@ -273,7 +273,20 @@ export default async function CompletionPage({
         );
     }
 
+    const industry =
+    purchase.industry
+        ?.trim();
+
+if (!industry) {
     return (
+        <ErrorCard
+            title="La compra no tiene una industria"
+            message="No fue posible identificar la configuración comercial de esta compra. Contacta a soporte para completar la activación."
+        />
+    );
+}
+
+return (
         <>
             <Navbar />
 
@@ -288,9 +301,7 @@ export default async function CompletionPage({
                     ownerEmail={
                         ownerEmail
                     }
-                    industry={
-                        purchase.industry
-                    }
+                    industry={industry}
                     billingPeriod={
                         purchase.billingPeriod
                     }

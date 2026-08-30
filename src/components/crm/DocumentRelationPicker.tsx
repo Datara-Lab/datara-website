@@ -48,9 +48,19 @@ export default function DocumentRelationPicker({
     );
 
   useEffect(() => {
-    setSearch(
-      selectedOption?.label ?? "",
-    );
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setSearch(
+          selectedOption?.label ?? "",
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedOption]);
 
   const filteredOptions =

@@ -1,6 +1,7 @@
 import {
     and,
     eq,
+    inArray,
     notInArray,
 } from "drizzle-orm";
 
@@ -114,6 +115,17 @@ export function resolveCRMModuleIds({
             template.defaultModules,
         );
 
+    /*
+     * Las capacidades fiscales son transversales a la industria.
+     * Continúan requiriendo un paquete contratado, pero no deben
+     * desaparecer por no formar parte del template vertical.
+     */
+    const crossIndustryModuleIds =
+        new Set([
+            "invoice-control",
+            "cfdi-stamping",
+        ]);
+
     const selectedModuleIds =
         mode === "trial"
             ? template.defaultModules
@@ -141,6 +153,9 @@ export function resolveCRMModuleIds({
             ...selectedModuleIds.filter(
                 (moduleId) =>
                     industryModuleIds.has(
+                        moduleId,
+                    ) ||
+                    crossIndustryModuleIds.has(
                         moduleId,
                     ),
             ),
@@ -243,6 +258,21 @@ export async function provisionCRMModuleEntitlements({
                     tenantModuleEntitlements
                         .product,
                     "crm",
+                ),
+
+                /*
+                 * Una reconciliación de la suscripción solamente puede
+                 * retirar permisos administrados por la suscripción.
+                 * Las concesiones manuales pertenecen a administración
+                 * de plataforma y deben conservarse.
+                 */
+                inArray(
+                    tenantModuleEntitlements
+                        .source,
+                    [
+                        "trial",
+                        "subscription",
+                    ],
                 ),
 
                 notInArray(

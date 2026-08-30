@@ -127,6 +127,34 @@ export const permissionModules:
       "Campañas comerciales.",
   },
   {
+    id: "invoice-control",
+    label: "Control de facturas",
+    product: "crm",
+    description:
+      "Registro, consulta y seguimiento de facturas vinculadas con ventas.",
+  },
+  {
+    id: "cfdi-stamping",
+    label: "Timbrado CFDI",
+    product: "crm",
+    description:
+      "Emisión y cancelación de CFDI mediante el proveedor fiscal configurado.",
+  },
+  {
+    id: "invoice-control",
+    label: "Control de facturas",
+    product: "crm",
+    description:
+      "Registro, consulta y seguimiento de facturas vinculadas con ventas.",
+  },
+  {
+    id: "cfdi-stamping",
+    label: "Timbrado CFDI",
+    product: "crm",
+    description:
+      "Emisión y cancelación de CFDI mediante el proveedor fiscal configurado.",
+  },
+  {
     id: "crm-users",
     label: "Usuarios del CRM",
     product: "crm",

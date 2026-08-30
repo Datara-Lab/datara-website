@@ -537,6 +537,13 @@ export default function QuoteFormDrawer({
       return;
     }
 
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
     setSubject(
       record?.subject ?? "",
     );
@@ -732,10 +739,20 @@ export default function QuoteFormDrawer({
         );
       }
     }
+
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // loadPromotions recibe aquí identificadores explícitos del registro.
+    // Su identidad local cambia en cada render y no debe reiniciar el formulario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isOpen,
     record,
     primaryBranchId,
+    members,
   ]);
 
   const productsById =
@@ -982,11 +999,21 @@ export default function QuoteFormDrawer({
       return;
     }
 
-    setValidUntil(
-      promotionValidityLimit.date,
-    );
+    let cancelled = false;
 
-    setValidityDays("custom");
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setValidUntil(
+          promotionValidityLimit.date,
+        );
+
+        setValidityDays("custom");
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     promotionValidityLimit,
     validUntil,

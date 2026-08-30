@@ -20,6 +20,13 @@ import {
   type CRMModulePermission,
   requireCRMModulePermission,
 } from "@/lib/crm/permissions";
+import {
+  isSatCatalogValue,
+  SAT_FACTOR_TYPES,
+  SAT_TAX_OBJECTS,
+  SAT_TRANSFERRED_TAXES,
+  SAT_UNIT_CODES,
+} from "@/lib/fiscal/catalogs";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +49,12 @@ type ProductFormPayload = {
   unitPrice?: unknown;
   currency?: unknown;
   active?: unknown;
+  productServiceCode?: unknown;
+  unitCode?: unknown;
+  taxObject?: unknown;
+  transferredTaxCode?: unknown;
+  transferredFactorType?: unknown;
+  transferredTaxRate?: unknown;
 
   modelYear?: unknown;
   colors?: unknown;
@@ -349,6 +362,24 @@ function validateProduct(
     return "El precio no puede ser negativo.";
   }
 
+  const productServiceCode = getOptionalString(values.productServiceCode);
+  const unitCode = getOptionalString(values.unitCode);
+  const taxObject = getOptionalString(values.taxObject);
+  const taxCode = getOptionalString(values.transferredTaxCode);
+  const factorType = getOptionalString(values.transferredFactorType);
+  const taxRate = getOptionalNumber(values.transferredTaxRate);
+
+  if (productServiceCode && !/^\d{8}$/.test(productServiceCode)) return "La clave de producto o servicio SAT debe contener 8 dígitos.";
+  if (!isSatCatalogValue(SAT_UNIT_CODES, unitCode)) return "La clave de unidad SAT no es válida.";
+  if (!isSatCatalogValue(SAT_TAX_OBJECTS, taxObject)) return "El objeto de impuesto no es válido.";
+  if (!isSatCatalogValue(SAT_TRANSFERRED_TAXES, taxCode)) return "El impuesto trasladado no es válido.";
+  if (!isSatCatalogValue(SAT_FACTOR_TYPES, factorType)) return "El tipo de factor no es válido.";
+  if (taxRate !== undefined && (taxRate < 0 || taxRate > 1)) return "La tasa fiscal debe expresarse entre 0 y 1.";
+
+  const fiscalFields = [productServiceCode, unitCode, taxObject];
+  if (fiscalFields.some(Boolean) && !fiscalFields.every(Boolean)) return "Para facturar el producto captura clave SAT, unidad y objeto de impuesto.";
+  if ((taxObject === "02" || taxObject === "03") && (!taxCode || !factorType || (factorType !== "Exento" && taxRate === undefined))) return "Completa la regla de impuesto trasladado del producto.";
+
   return null;
 }
 
@@ -361,6 +392,15 @@ function mapProductValues(
     Record<string, unknown> = {},
   currentActive = true,
 ) {
+  const transferredFactorTypeValue = getOptionalString(
+    values.transferredFactorType,
+  );
+  const transferredFactorType =
+    transferredFactorTypeValue === "Tasa" ||
+    transferredFactorTypeValue === "Cuota" ||
+    transferredFactorTypeValue === "Exento"
+      ? transferredFactorTypeValue
+      : null;
   const itemType =
     getLegacyItemType(
       productType,
@@ -443,6 +483,20 @@ function mapProductValues(
         values.active,
         currentActive,
       ),
+
+    productServiceCode: getOptionalString(values.productServiceCode) ?? null,
+    unitCode: getOptionalString(values.unitCode) ?? null,
+    taxObject: getOptionalString(values.taxObject) ?? null,
+    transferredTaxCode: getOptionalString(values.transferredTaxCode) ?? null,
+    transferredFactorType: transferredFactorType as
+      | "Tasa"
+      | "Cuota"
+      | "Exento"
+      | null,
+    transferredTaxRate:
+      getOptionalNumber(values.transferredTaxRate) !== undefined
+        ? String(getOptionalNumber(values.transferredTaxRate))
+        : null,
 
     metadata: {
       ...currentMetadata,
@@ -671,6 +725,12 @@ function serializeProduct(
     name: product.name,
     code: product.code,
     description: product.description,
+    productServiceCode: product.productServiceCode,
+    unitCode: product.unitCode,
+    taxObject: product.taxObject,
+    transferredTaxCode: product.transferredTaxCode,
+    transferredFactorType: product.transferredFactorType,
+    transferredTaxRate: product.transferredTaxRate,
 
     hasImage:
       Boolean(

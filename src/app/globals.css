@@ -92,3 +92,24 @@ img {
     transform: translateY(0) rotate(3deg);
   }
 }
+
+@keyframes datara-cloud-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.datara-cloud-float {
+    animation: datara-cloud-float 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .datara-cloud-float {
+        animation: none;
+    }
+}

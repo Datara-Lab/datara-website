@@ -362,7 +362,17 @@ export default function InventoryCountsWorkspace({
     }, []);
 
   useEffect(() => {
-    void loadCounts();
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void loadCounts();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     loadCounts,
   ]);

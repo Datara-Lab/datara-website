@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    useCallback,
     useEffect,
     useMemo,
     useState,
@@ -901,9 +902,10 @@ export default function AutomationRuleEditor({
                     "datetime",
         );
 
-    function getFieldOptions(
-        fieldKey: string,
-    ) {
+    const getFieldOptions =
+        useCallback((
+            fieldKey: string,
+        ) => {
         const field =
             availableFields.find(
                 (
@@ -956,7 +958,10 @@ export default function AutomationRuleEditor({
         }
 
         return [];
-    }
+        }, [
+            availableFields,
+            entityType,
+        ]);
 
     useEffect(() => {
         if (
@@ -971,10 +976,14 @@ export default function AutomationRuleEditor({
                 "status",
             );
 
-        setConditions(
-            (
-                current,
-            ) => {
+        let cancelled = false;
+
+        queueMicrotask(() => {
+            if (cancelled) {
+                return;
+            }
+
+            setConditions((current) => {
                 const statusCondition =
                     current.find(
                         (
@@ -1004,10 +1013,14 @@ export default function AutomationRuleEditor({
                             "",
                     },
                 ];
-            },
-        );
+            });
+        });
+
+        return () => {
+            cancelled = true;
+        };
     }, [
-        entityType,
+        getFieldOptions,
         triggerType,
     ]);
 

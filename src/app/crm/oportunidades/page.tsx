@@ -9,6 +9,7 @@ import CRMDataTable, {
   type CRMRecord,
 } from "@/components/crm/CRMDataTable";
 import DealFormDrawer from "@/components/crm/DealFormDrawer";
+import MotorcycleDealOperationWorkspace from "@/components/crm/MotorcycleDealOperationWorkspace";
 import CRMRecordDrawer from "@/components/crm/CRMRecordDrawer";
 import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/ui/Button";
@@ -146,6 +147,8 @@ export default function OportunidadesPage() {
     setTableVersion,
   ] = useState(0);
 
+
+
   const [
     successMessage,
     setSuccessMessage,
@@ -161,6 +164,18 @@ export default function OportunidadesPage() {
   );
 
   const [
+    supportsMotorcycleCycle,
+    setSupportsMotorcycleCycle,
+  ] = useState(false);
+
+  const [
+    operationDealId,
+    setOperationDealId,
+  ] = useState<string | null>(
+    null,
+  );
+
+  const [
     submitError,
     setSubmitError,
   ] = useState<string | null>(
@@ -170,6 +185,27 @@ export default function OportunidadesPage() {
   useEffect(() => {
     const controller =
       new AbortController();
+
+    void fetch(
+      "/api/crm/inventory/units?status=available",
+      {
+        cache: "no-store",
+        signal:
+          controller.signal,
+      },
+    )
+      .then((response) => {
+        setSupportsMotorcycleCycle(
+          response.ok,
+        );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setSupportsMotorcycleCycle(
+            false,
+          );
+        }
+      });
 
     async function loadCatalogs() {
       try {
@@ -645,17 +681,9 @@ export default function OportunidadesPage() {
             searchPlaceholder="Buscar por oportunidad, cliente, etapa, responsable o producto..."
             emptyTitle={`No hay ${dealsModule.pluralLabel.toLowerCase()} registradas`}
             emptyDescription={`Registra la primera ${dealsModule.singularLabel.toLowerCase()} para comenzar el seguimiento comercial.`}
-            onCreate={
-              isLoadingCatalogs
-                ? undefined
-                : openCreateDrawer
-            }
-            onView={
-              openViewDrawer
-            }
-            onEdit={
-              openEditDrawer
-            }
+            onCreate={isLoadingCatalogs ? undefined : openCreateDrawer}
+            onView={openViewDrawer}
+            onEdit={openEditDrawer}
           />
         </section>
       </div>
@@ -670,6 +698,25 @@ export default function OportunidadesPage() {
             isSubmitting
           }
           onClose={closeDrawer}
+          additionalActions={
+            selectedRecord?.id &&
+            supportsMotorcycleCycle ? (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setOperationDealId(
+                    selectedRecord.id,
+                  );
+                  setIsDrawerOpen(
+                    false,
+                  );
+                }}
+              >
+                Abrir operación
+              </Button>
+            ) : null
+          }
           onEdit={
             openEditDrawer
           }
@@ -697,6 +744,23 @@ export default function OportunidadesPage() {
           onSubmit={
             handleDealSubmit
           }
+        />
+      )}
+
+      {operationDealId && (
+        <MotorcycleDealOperationWorkspace
+          dealId={operationDealId}
+          onClose={() => {
+            setOperationDealId(
+              null,
+            );
+            setSelectedRecord(
+              null,
+            );
+            setDrawerMode(
+              "view",
+            );
+          }}
         />
       )}
 

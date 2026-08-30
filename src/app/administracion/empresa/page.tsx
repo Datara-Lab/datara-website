@@ -8,6 +8,7 @@ import {
 import ImageUploader from "@/components/upload/ImageUploader";
 
 import Button from "@/components/ui/Button";
+import { SAT_TAX_REGIMES } from "@/lib/fiscal/catalogs";
 
 type UploadResponse = {
   success: boolean;
@@ -22,6 +23,8 @@ type CompanyProfile = {
   name: string;
   legalName: string;
   taxId: string;
+  fiscalTaxRegime: string;
+  fiscalPostalCode: string;
   tagline: string;
   country: string;
   timezone: string;
@@ -47,6 +50,8 @@ export default function AdministracionEmpresaPage() {
     name: "",
     legalName: "",
     taxId: "",
+    fiscalTaxRegime: "",
+    fiscalPostalCode: "",
     tagline: "",
     country: "MX",
     timezone:
@@ -386,6 +391,39 @@ export default function AdministracionEmpresaPage() {
                 />
               </div>
             </div>
+            <section className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/40 p-5 sm:p-6">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Datos fiscales del emisor</p>
+                <h3 className="mt-2 text-lg font-black text-slate-950">Configuración para CFDI 4.0</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Estos datos se utilizarán al generar y timbrar facturas. Deben coincidir exactamente con la constancia de situación fiscal.</p>
+              </div>
+              <div className="mt-5 grid gap-5 md:grid-cols-2">
+                <label>
+                  <span className="text-sm font-bold text-slate-700">Régimen fiscal</span>
+                  <select
+                    value={profile.fiscalTaxRegime}
+                    disabled={isLoadingProfile || isSavingProfile}
+                    onChange={(event) => updateProfileField("fiscalTaxRegime", event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none disabled:bg-slate-100"
+                  >
+                    <option value="">Selecciona un régimen</option>
+                    {SAT_TAX_REGIMES.map((regime) => <option key={regime.value} value={regime.value}>{regime.label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span className="text-sm font-bold text-slate-700">Código postal fiscal</span>
+                  <input
+                    inputMode="numeric"
+                    maxLength={5}
+                    value={profile.fiscalPostalCode}
+                    disabled={isLoadingProfile || isSavingProfile}
+                    onChange={(event) => updateProfileField("fiscalPostalCode", event.target.value.replace(/\D/g, ""))}
+                    placeholder="Ej. 64000"
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none disabled:bg-slate-100"
+                  />
+                </label>
+              </div>
+            </section>
             <div className="mt-6 grid gap-6 md:grid-cols-2">
               <div>
                 <label className="text-sm font-bold text-slate-700">

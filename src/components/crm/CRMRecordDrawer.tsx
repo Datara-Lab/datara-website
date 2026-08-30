@@ -34,6 +34,9 @@ type CRMRecordDrawerProps = {
   contentBefore?:
     ReactNode;
 
+  additionalActions?:
+    ReactNode;
+
   onClose: () => void;
   onEdit?: (record: CRMRecord) => void;
 
@@ -721,6 +724,7 @@ export default function CRMRecordDrawer({
   isSubmitting = false,
   isConverting = false,
   contentBefore,
+  additionalActions,
   onClose,
   onEdit,
   onConvert,
@@ -1153,6 +1157,8 @@ export default function CRMRecordDrawer({
                       : "Convertir en cliente"}
                   </Button>
                 )}
+
+              {additionalActions}
 
               {record &&
                 onEdit &&
