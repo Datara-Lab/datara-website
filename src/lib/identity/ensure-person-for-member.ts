@@ -50,9 +50,7 @@ export async function ensurePersonForMember({
 
     const [existingLinkedPerson] =
         await db
-            .select({
-                id: people.id,
-            })
+            .select()
             .from(people)
             .where(
                 and(
@@ -69,29 +67,7 @@ export async function ensurePersonForMember({
             .limit(1);
 
     if (existingLinkedPerson) {
-        const [updatedPerson] =
-            await db
-                .update(people)
-                .set({
-                    firstName:
-                        firstName ?? "",
-                    lastName:
-                        lastName ?? null,
-                    email:
-                        normalizedEmail,
-                    status: "active",
-                    updatedAt:
-                        new Date(),
-                })
-                .where(
-                    eq(
-                        people.id,
-                        existingLinkedPerson.id,
-                    ),
-                )
-                .returning();
-
-        return updatedPerson;
+        return existingLinkedPerson;
     }
 
     const standaloneMatches =
@@ -125,13 +101,6 @@ export async function ensurePersonForMember({
                 .update(people)
                 .set({
                     memberId,
-                    firstName:
-                        firstName ?? "",
-                    lastName:
-                        lastName ?? null,
-                    email:
-                        normalizedEmail,
-                    status: "active",
                     updatedAt:
                         new Date(),
                 })
