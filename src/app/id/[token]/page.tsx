@@ -31,7 +31,7 @@ type PublicCredentialResponse = {
         firstName: string;
         lastName: string | null;
         photoObjectKey: string | null;
-        personCode: string | null;
+        employeeNumber: string | null;
         jobTitle: string | null;
         department: string | null;
         email: string | null;
@@ -358,15 +358,15 @@ export default function PublicCredentialPage({
                         </div>
 
                         <div className="mt-8 space-y-3">
-                            {person.personCode ? (
+                            {person.employeeNumber ? (
                                 <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
                                     <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                                        ID
+                                        ID de empleado
                                     </span>
 
                                     <span className="text-sm font-black text-slate-900">
                                         {
-                                            person.personCode
+                                            person.employeeNumber
                                         }
                                     </span>
                                 </div>

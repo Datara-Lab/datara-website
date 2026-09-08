@@ -2172,14 +2172,14 @@ export default function PersonPage({
                                                                 </div>
 
                                                                 <div
-                                                                    className="absolute z-10 overflow-hidden whitespace-nowrap text-[14px] leading-[25px] text-[#0755ff]"
+                                                                    className="absolute z-10 overflow-hidden whitespace-nowrap text-[15px] leading-[25px] text-[#0755ff]"
                                                                     style={{
                                                                         left:
                                                                             "264px",
                                                                         top:
                                                                             "495px",
                                                                         width:
-                                                                            "135px",
+                                                                            "153px",
                                                                         height:
                                                                             "25px",
                                                                     }}

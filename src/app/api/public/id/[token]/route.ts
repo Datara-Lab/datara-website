@@ -86,8 +86,8 @@ export async function GET(
                     personStatus:
                         people.status,
 
-                    personCode:
-                        people.personCode,
+                    employeeNumber:
+                        people.employeeNumber,
 
                     firstName:
                         people.firstName,
@@ -280,9 +280,9 @@ export async function GET(
                         ? result.photoObjectKey
                         : null,
 
-                personCode:
+                employeeNumber:
                     visibility.personCode
-                        ? result.personCode
+                        ? result.employeeNumber
                         : null,
 
                 jobTitle:
