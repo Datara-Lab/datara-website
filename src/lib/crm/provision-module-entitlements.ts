@@ -25,6 +25,11 @@ import type {
     CRMIndustry,
 } from "@/types/crm-config";
 
+import {
+    EMBEDDED_CHECKOUT_MODULE_ID,
+    requiresEmbeddedCheckout,
+} from "@/lib/pos/commercial-model";
+
 export type CRMProvisioningMode =
     | "trial"
     | "subscription";
@@ -124,6 +129,7 @@ export function resolveCRMModuleIds({
         new Set([
             "invoice-control",
             "cfdi-stamping",
+            "embedded-checkout",
         ]);
 
     const selectedModuleIds =
@@ -146,7 +152,7 @@ export function resolveCRMModuleIds({
         );
     }
 
-    return Array.from(
+    const resolvedModuleIds =
         new Set([
             ...CRM_PLATFORM_MODULE_IDS,
 
@@ -159,7 +165,20 @@ export function resolveCRMModuleIds({
                         moduleId,
                     ),
             ),
-        ]),
+        ]);
+
+    if (
+        requiresEmbeddedCheckout(
+            resolvedModuleIds,
+        )
+    ) {
+        resolvedModuleIds.add(
+            EMBEDDED_CHECKOUT_MODULE_ID,
+        );
+    }
+
+    return Array.from(
+        resolvedModuleIds,
     );
 }
 

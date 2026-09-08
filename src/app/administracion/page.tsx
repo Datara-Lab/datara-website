@@ -27,6 +27,13 @@ const baseAdministrationModules = [
     status: "Disponible",
   },
   {
+    title: "Personas",
+    description:
+      "Administra información laboral, perfiles públicos, privacidad y credenciales digitales de tu organización.",
+    href: "/administracion/personas",
+    status: "Disponible",
+  },
+  {
     title: "Roles y permisos",
     description:
       "Define qué puede consultar, crear, editar, eliminar o administrar cada perfil.",

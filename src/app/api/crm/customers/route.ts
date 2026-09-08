@@ -806,6 +806,23 @@ export async function GET() {
           crmCustomers.createdAt,
         updatedAt:
           crmCustomers.updatedAt,
+
+        petCount: sql<number>`(
+          SELECT COUNT(*)::int
+          FROM crm_pets pet
+          WHERE pet.tenant_id = ${tenantId}
+            AND pet.customer_id = ${crmCustomers.id}
+        )`,
+
+        petNames: sql<string>`(
+          SELECT COALESCE(
+            string_agg(pet.name, ', ' ORDER BY pet.name),
+            ''
+          )
+          FROM crm_pets pet
+          WHERE pet.tenant_id = ${tenantId}
+            AND pet.customer_id = ${crmCustomers.id}
+        )`,
       })
       .from(crmCustomers)
       .leftJoin(
@@ -978,6 +995,11 @@ export async function GET() {
           commercialConsent:
             record.commercialConsent,
           notes: record.notes,
+
+          petCount: record.petCount,
+          petNames:
+            record.petNames ||
+            "Sin mascotas registradas",
 
           createdTime:
             record.createdAt

@@ -1,3 +1,4 @@
+import { petPromotionError } from "@/lib/crm/pet-commercial-policy";
 import {
   auth,
   currentUser,
@@ -350,6 +351,7 @@ async function getTenantContext(
   const [tenant] = await db
     .select({
       id: tenants.id,
+      industry: tenants.industry,
     })
     .from(tenants)
     .where(
@@ -378,6 +380,7 @@ async function getTenantContext(
   return {
     userId,
     tenantId: tenant.id,
+    industry: tenant.industry,
     permissions,
   };
 }
@@ -715,6 +718,7 @@ export async function POST(
     const {
       tenantId,
       userId,
+      industry,
     } = await getTenantContext(
       "create",
     );
@@ -731,6 +735,14 @@ export async function POST(
 
     const values =
       body as PromotionFormPayload;
+
+    if (industry === "veterinary") {
+      const error = petPromotionError(body);
+      if (error) throw new ApiError(error, 400);
+      values.paymentMethod = "Contado";
+      values.minimumDownPayment = 0;
+      values.availableMonths = [];
+    }
 
     const validationError =
       validatePayload(values);
@@ -917,6 +929,7 @@ export async function PATCH(
   try {
     const {
       tenantId,
+      industry,
     } = await getTenantContext(
       "edit",
     );
@@ -938,6 +951,14 @@ export async function PATCH(
       getOptionalString(
         values.id,
       );
+
+    if (industry === "veterinary") {
+      const error = petPromotionError(body);
+      if (error) throw new ApiError(error, 400);
+      values.paymentMethod = "Contado";
+      values.minimumDownPayment = 0;
+      values.availableMonths = [];
+    }
 
     if (!recordId) {
       throw new ApiError(

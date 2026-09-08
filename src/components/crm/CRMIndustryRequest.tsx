@@ -126,7 +126,7 @@ export default function CRMIndustryRequest() {
                                 formData.phone,
 
                             product:
-                                "CRM para industria no disponible",
+                                "Solicitud de nueva industria para Datara DBP",
 
                             message: [
                                 `Industria solicitada: ${formData.industry}`,
@@ -181,26 +181,26 @@ export default function CRMIndustryRequest() {
 
     return (
         <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
-            <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg shadow-slate-950/5">
+            <div className="overflow-hidden border-y border-slate-300 bg-white">
                 <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
-                    <div className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-8 text-white sm:p-10">
+                    <div className="bg-slate-950 p-8 text-white sm:p-10">
                         <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">
-                            ¿No encuentras tu industria?
+                            ¿Tu industria aún no aparece?
                         </p>
 
                         <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
-                            Cuéntanos cómo trabaja tu empresa.
+                            Ayúdanos a construir el próximo perfil de Datara DBP.
                         </h2>
 
                         <p className="mt-5 max-w-xl leading-7 text-slate-300">
-                            Estamos desarrollando nuevas configuraciones de Datara CRM.
-                            Si tu industria todavía no aparece en nuestro catálogo,
-                            queremos conocerla.
+                            Cuéntanos cómo funciona tu industria, qué procesos necesita
+                            controlar y qué haría verdaderamente útil una plataforma para
+                            empresas como la tuya.
                         </p>
 
                         <p className="mt-5 max-w-xl text-sm leading-6 text-slate-400">
-                            Tu solicitud nos ayuda a priorizar las próximas industrias
-                            que incorporaremos a la plataforma.
+                            Revisaremos tu solicitud para orientar nuestras próximas
+                            configuraciones y perfiles especializados.
                         </p>
                     </div>
 
@@ -215,7 +215,7 @@ export default function CRMIndustryRequest() {
                                 htmlFor="industry-name"
                                 className="mb-2 block text-sm font-semibold text-slate-800"
                             >
-                                Industria *
+                                Industria solicitada *
                             </label>
 
                             <input
@@ -232,7 +232,7 @@ export default function CRMIndustryRequest() {
                                 disabled={
                                     isSubmitting
                                 }
-                                placeholder="Ej. Restaurantes"
+                                placeholder="Ej. Restaurantes, clínicas o construcción"
                                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
                             />
                         </div>
@@ -348,7 +348,7 @@ export default function CRMIndustryRequest() {
                                 htmlFor="industry-message"
                                 className="mb-2 block text-sm font-semibold text-slate-800"
                             >
-                                ¿Qué necesitas gestionar?
+                                ¿Qué necesita gestionar esta industria? *
                             </label>
 
                             <textarea
@@ -361,10 +361,11 @@ export default function CRMIndustryRequest() {
                                     handleChange
                                 }
                                 rows={4}
+                                required
                                 disabled={
                                     isSubmitting
                                 }
-                                placeholder="Cuéntanos brevemente qué procesos o necesidades tiene tu empresa."
+                                placeholder="Describe sus procesos, necesidades y particularidades principales."
                                 className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
                             />
                         </div>
@@ -381,7 +382,7 @@ export default function CRMIndustryRequest() {
                             >
                                 {isSubmitting
                                     ? "Enviando solicitud..."
-                                    : "Enviar mi industria"}
+                                    : "Solicitar esta industria"}
                             </Button>
                         </div>
 

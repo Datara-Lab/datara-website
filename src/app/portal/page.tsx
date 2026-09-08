@@ -40,6 +40,18 @@ type DataraProduct = {
 
 const products: DataraProduct[] = [
   {
+    id: "pos",
+    name: "Datara POS",
+    category: "Punto de venta",
+    description: "Ventas, caja y cobros conectados con tu operación.",
+    route: "/pos",
+    contracted: true,
+    status: "available",
+    accent: "border-violet-200 bg-violet-50/70",
+    buttonClassName:
+      "border-violet-200 text-violet-700 hover:bg-violet-100",
+  },
+  {
     id: "analytics",
     name: "Datara Analytics",
     category: "Inteligencia empresarial",
@@ -371,6 +383,10 @@ export default async function PortalPage() {
 
       if (product.id === "cloud") {
         return authz.products.cloud.allowed;
+      }
+
+      if (product.id === "pos") {
+        return authz.products.pos.allowed;
       }
 
       return false;

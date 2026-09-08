@@ -1,0 +1,1 @@
+DROP INDEX "crm_product_categories_tenant_type_name_unique";

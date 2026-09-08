@@ -6,6 +6,15 @@ import {
   createProfessionalServicesCRMConfig,
 } from "@/config/crm/industries/create-professional-services-config";
 
+import { createPetServicesCRMConfig } from "@/config/crm/industries/create-pet-services-config";
+
+import type {
+  CRMIndustryProfileId,
+} from "@/config/crm/industries/industry-profiles";
+
+import { isMobilityProfileId } from "@/config/crm/industries/mobility-profiles";
+import { isProfessionalServiceProfileId } from "@/config/crm/industries/professional-service-profiles";
+
 import type {
   CRMModuleConfig,
   CRMNavigationItemConfig,
@@ -18,6 +27,9 @@ export function getCRMIndustryConfig(
   industry: string,
   tenantId: string,
   tenantName: string,
+  industryProfile?:
+    | CRMIndustryProfileId
+    | null,
 ): CRMTenantConfig | null {
   if (
     industry ===
@@ -26,6 +38,7 @@ export function getCRMIndustryConfig(
     return createMotorcycleDealershipCRMConfig({
       tenantId,
       tenantName,
+      profile: isMobilityProfileId(industryProfile) ? industryProfile : null,
     });
   }
 
@@ -36,7 +49,13 @@ export function getCRMIndustryConfig(
     return createProfessionalServicesCRMConfig({
       tenantId,
       tenantName,
+      profile:
+        isProfessionalServiceProfileId(industryProfile) ? industryProfile : null,
     });
+  }
+
+  if (industry === "veterinary") {
+    return createPetServicesCRMConfig({ tenantId, tenantName });
   }
 
   return null;

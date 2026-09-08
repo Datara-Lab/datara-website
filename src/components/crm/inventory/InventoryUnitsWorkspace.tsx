@@ -10,6 +10,7 @@ import {
 
 import DataraTableScroll from "@/components/shared/DataraTableScroll";
 import Button from "@/components/ui/Button";
+import { useMobilityTerminology } from "@/hooks/useMobilityTerminology";
 
 type StockOption = {
   stockId: string | null;
@@ -97,6 +98,7 @@ export default function InventoryUnitsWorkspace({
   stocks,
   permissions,
 }: InventoryUnitsWorkspaceProps) {
+  const mobility = useMobilityTerminology();
   const [units, setUnits] = useState<UnitRecord[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -369,10 +371,10 @@ export default function InventoryUnitsWorkspace({
             Unidades físicas
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-            Inventario por VIN
+            Inventario por {mobility.identifierLabel}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Consulta cada motocicleta desde su ingreso hasta el apartado, venta y entrega.
+            {`Consulta cada ${mobility.vehicleSingular} desde su ingreso hasta el apartado, venta y entrega.`}
           </p>
         </div>
 
@@ -415,7 +417,7 @@ export default function InventoryUnitsWorkspace({
         <input
           type="search"
           value={search}
-          placeholder="Buscar VIN, serie, modelo, color..."
+          placeholder={`Buscar ${mobility.identifierLabel.toLowerCase()}, ${mobility.itemSingular}, color...`}
           className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -435,7 +437,7 @@ export default function InventoryUnitsWorkspace({
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              {["Unidad", "Modelo", "Ubicación", "Ingreso", "Antigüedad", "Estado", "Precio", "Acciones"].map((header) => (
+              {["Unidad", mobility.itemSingularLabel, "Ubicación", "Ingreso", "Antigüedad", "Estado", "Precio", "Acciones"].map((header) => (
                 <th key={header} className="whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
                   {header}
                 </th>
@@ -537,8 +539,8 @@ export default function InventoryUnitsWorkspace({
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {editingUnit
-                    ? "Actualiza la ficha identificable de la motocicleta."
-                    : "Vincula el VIN con una existencia real del inventario."}
+                    ? `Actualiza la ficha identificable de la ${mobility.vehicleSingular}.`
+                    : `Vincula el ${mobility.identifierLabel.toLowerCase()} con una existencia real del inventario.`}
                 </p>
               </header>
               <div className="grid gap-5 p-6 sm:grid-cols-2">
@@ -554,9 +556,9 @@ export default function InventoryUnitsWorkspace({
                   </select>
                 </label>
                 {[
-                  ["vin", "VIN"],
+                  ["vin", mobility.identifierLabel],
                   ["serialNumber", "Número de serie"],
-                  ["modelYear", "Año modelo"],
+                  ["modelYear", `Año de ${mobility.itemSingular}`],
                   ["color", "Color"],
                   ["receivedAt", "Fecha de ingreso"],
                   ["unitCost", "Costo"],

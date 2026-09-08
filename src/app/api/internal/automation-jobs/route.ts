@@ -10,6 +10,10 @@ import {
     processScheduledAutomationJobs,
 } from "@/lib/crm/automation-job-processor";
 
+import {
+    processPetStayRollover,
+} from "@/lib/crm/pet-stay-rollover";
+
 export const dynamic =
     "force-dynamic";
 
@@ -78,12 +82,18 @@ export async function POST(
     }
 
     try {
-        const result =
+        const automationJobs =
             await processScheduledAutomationJobs();
+
+        const petStayRollover =
+            await processPetStayRollover();
 
         return NextResponse.json({
             success: true,
-            data: result,
+            data: {
+                automationJobs,
+                petStayRollover,
+            },
         });
     } catch (
     processingError

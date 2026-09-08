@@ -25,7 +25,8 @@ export const dynamic = "force-dynamic";
 type Product =
   | "crm"
   | "analytics"
-  | "cloud";
+  | "cloud"
+  | "pos";
 
 type InvitationStatus =
   | "pending"
@@ -37,9 +38,10 @@ const productNames: Record<
   Product,
   string
 > = {
-  crm: "Datara CRM",
+  crm: "Datara DBP",
   analytics: "Datara Analytics",
   cloud: "Datara Cloud",
+  pos: "Datara POS",
 };
 
 class ApiError extends Error {

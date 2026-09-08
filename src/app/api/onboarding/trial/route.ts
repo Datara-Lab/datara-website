@@ -27,6 +27,11 @@ import type {
     CRMIndustry,
 } from "@/types/crm-config";
 
+import {
+    resolveCRMIndustryProfile,
+    type CRMIndustryProfileId,
+} from "@/config/crm/industries/industry-profiles";
+
 export const dynamic =
     "force-dynamic";
 
@@ -35,6 +40,7 @@ type TrialPayload = {
     ownerEmail?: unknown;
     taxId?: unknown;
     industry?: unknown;
+    industryProfile?: unknown;
 };
 
 class ApiError extends Error {
@@ -195,6 +201,16 @@ function getIndustry(
     return value as CRMIndustry;
 }
 
+function getIndustryProfile(
+    industry: CRMIndustry,
+    value: unknown,
+): CRMIndustryProfileId | null {
+    return resolveCRMIndustryProfile(
+        industry,
+        value,
+    );
+}
+
 function createErrorResponse(
     error: unknown,
 ) {
@@ -293,6 +309,12 @@ export async function POST(
         const industry =
             getIndustry(
                 payload.industry,
+            );
+
+        const industryProfile =
+            getIndustryProfile(
+                industry,
+                payload.industryProfile,
             );
 
         const clerk =
@@ -499,6 +521,8 @@ export async function POST(
 
                                 industry,
 
+                                industryProfile,
+
                                 dataraProvisioning: {
                                     mode:
                                         "trial",
@@ -578,6 +602,8 @@ export async function POST(
 
                     industry,
 
+                    industryProfile,
+
                     trialStartsAt:
                         trialStartsAt
                             .toISOString(),
@@ -588,7 +614,7 @@ export async function POST(
                 },
 
                 message:
-                    "Tu demo de Datara CRM está listo para activarse.",
+                    "Tu demo de Datara DBP está listo para activarse.",
             },
             {
                 status: 201,

@@ -2,386 +2,321 @@ import Image from "next/image";
 import Link from "next/link";
 
 import {
-    FaCubesStacked,
-    FaMotorcycle,
-    FaPaw,
-    FaShieldHalved,
-    FaTooth,
-    FaUserTie,
+  FaArrowRight,
+  FaCircleCheck,
+  FaMotorcycle,
+  FaPaw,
+  FaSliders,
+  FaUserTie,
 } from "react-icons/fa6";
 
 import CRMIndustryRequest from "@/components/crm/CRMIndustryRequest";
 import Button from "@/components/ui/Button";
 
-type CRMIndustry = {
+type IndustryProfile = {
   id: string;
+  label: string;
   name: string;
   description: string;
-  availablePackages: string[];
-  status: "available" | "coming-soon";
+  outcomes: string[];
+  groupLabel?: string;
+  availableProfiles: Array<{
+    name: string;
+    status: "available" | "coming-soon";
+  }>;
+  icon: "flexible" | "motorcycle" | "services" | "pets";
 };
 
-const industries: CRMIndustry[] = [
+const capabilities = [
+  ["01", "Clientes y ventas", "Del primer contacto al cierre, con todo el contexto disponible."],
+  ["02", "Operación", "Cada negocio, responsable y siguiente paso en un mismo flujo."],
+  ["03", "Inventario", "Existencias, unidades y reservas conectadas con la venta."],
+  ["04", "Financiamiento y pagos", "Solicitudes, anticipos y cobros visibles desde la operación."],
+  ["05", "Facturación CFDI", "Prepara, timbra y consulta facturas sin salir de Datara DBP."],
+  ["06", "Automatización", "Reglas que eliminan tareas repetitivas y mantienen al equipo avanzando."],
+] as const;
+
+const profiles: IndustryProfile[] = [
   {
     id: "other",
-    name: "CRM Core",
-    description:
-      "El núcleo comercial de Datara CRM para empresas que necesitan centralizar y dar seguimiento a toda su operación comercial.",
-    availablePackages: [
-      "CRM Core",
+    label: "Base flexible",
+    name: "DBP para tu operación",
+    description: "Una estructura adaptable para organizar clientes, ventas y procesos alrededor de tu empresa.",
+    outcomes: ["Pipeline configurable", "Información centralizada", "Módulos que crecen contigo"],
+    availableProfiles: [
+      {
+        name: "Configuración general",
+        status: "available",
+      },
     ],
-    status: "available",
+    icon: "flexible",
   },
   {
     id: "motorcycle_dealership",
-    name: "Agencias y distribuidores de motos",
-    description:
-      "Una solución comercial diseñada para agencias, distribuidores y negocios especializados en la venta de motocicletas.",
-    availablePackages: [
-      "CRM Core",
-      "Ventas",
-      "Inventarios",
-      "Servicios",
+    label: "Perfil especializado",
+    name: "Agencias y distribuidores",
+    description: "Una operación conectada desde la oportunidad hasta la unidad, la factura y la entrega.",
+    outcomes: ["Inventario por unidad y sucursal", "Reservas, pagos y financiamiento", "Ciclo comercial completo"],
+    availableProfiles: [
+      {
+        name: "Motocicletas",
+        status: "available",
+      },
+      {
+        name: "Bicicletas",
+        status: "available",
+      },
+      {
+        name: "Scooters",
+        status: "available",
+      },
     ],
-    status: "available",
+    icon: "motorcycle",
+  },
+  {
+    id: "veterinary",
+    label: "Template especializado",
+    name: "Mascotas",
+    description: "Una sola base para tutores y mascotas, con módulos que se activan conforme crece el negocio.",
+    outcomes: ["Expediente único por mascota", "Agenda y operación conectadas", "Activa únicamente lo que necesitas"],
+    groupLabel: "Módulos",
+    availableProfiles: ["Veterinaria", "Grooming y estética", "Guardería y pensión", "Tienda de mascotas"].map((name) => ({ name, status: "available" as const })),
+    icon: "pets",
   },
   {
     id: "professional_services",
+    label: "Perfil especializado",
     name: "Servicios profesionales",
-    description:
-      "Para consultoras, agencias, despachos y empresas de servicios que necesitan administrar clientes y oportunidades de principio a fin.",
-    availablePackages: [
-      "CRM Core",
-      "Ventas",
-    ],
-    status: "available",
-  },
-  {
-    id: "dentistas",
-    name: "Dentistas y ortodoncistas",
-    description:
-      "Gestión comercial y operativa para consultorios, clínicas dentales y especialistas en ortodoncia.",
-    availablePackages: [],
-    status: "coming-soon",
-  },
-  {
-    id: "veterinarias",
-    name: "Veterinarias y servicios para mascotas",
-    description:
-      "Una solución para negocios que combinan atención veterinaria con servicios especializados para mascotas.",
-    availablePackages: [],
-    status: "coming-soon",
-  },
-  {
-    id: "seguros",
-    name: "Seguros",
-    description:
-      "Gestión comercial para agentes, brokers y empresas que administran clientes, pólizas y renovaciones.",
-    availablePackages: [],
-    status: "coming-soon",
+    description: "Seguimiento claro de prospectos, propuestas, clientes y responsables de principio a fin.",
+    outcomes: ["Pipeline para servicios", "Cotizaciones y órdenes conectadas", "Control por cliente y responsable"],
+    availableProfiles: [
+      "Consultoría",
+      "Software",
+      "Infraestructura",
+      "Agencias",
+      "Despachos",
+      "Servicios técnicos",
+      "General",
+    ].map((name) => ({
+      name,
+      status: "available" as const,
+    })),
+    icon: "services",
   },
 ];
 
+function ProfileIcon({ icon }: { icon: IndustryProfile["icon"] }) {
+  if (icon === "motorcycle") return <FaMotorcycle size={22} />;
+  if (icon === "services") return <FaUserTie size={20} />;
+  if (icon === "pets") return <FaPaw size={20} />;
+  return <FaSliders size={20} />;
+}
+
 export default function CRMCatalogPage() {
-    return (
-        <main className="min-h-screen bg-slate-50">
-            <section className="relative overflow-hidden border-b border-slate-200 bg-white">
-                <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-emerald-100/70 blur-3xl" />
-                <div className="pointer-events-none absolute -right-32 top-0 h-96 w-96 rounded-full bg-cyan-100/70 blur-3xl" />
+  return (
+    <main className="min-h-screen bg-white text-slate-950">
+      <section className="relative overflow-hidden border-b border-slate-200">
+        <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-blue-400/15 blur-3xl" />
+        <div className="pointer-events-none absolute -right-32 -top-28 h-[30rem] w-[30rem] rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-emerald-200/15 blur-3xl" />
 
-                <div className="relative mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
-                    <Link
-                        href="/#productos"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950"
-                    >
-                        ← Volver a productos
-                    </Link>
+        <div className="relative mx-auto max-w-7xl px-5 pb-20 pt-8 sm:px-8 sm:pb-24 lg:pb-28">
+          <Link href="/#productos" className="text-sm font-semibold text-slate-500 transition hover:text-slate-950">
+            ← Productos Datara
+          </Link>
 
-                    <div className="mt-10 grid items-center gap-10 lg:grid-cols-[1fr_auto]">
-                        <div className="max-w-3xl">
-                            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
-                                Catálogo Datara CRM
+          <div className="mt-16 grid items-end gap-12 lg:grid-cols-[1fr_0.72fr] lg:gap-20">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">
+                Datara Business Platform
+              </p>
+
+              <h1 className="mt-10 max-w-4xl text-5xl font-black tracking-[-0.055em] sm:text-6xl lg:text-7xl">
+                Todo tu negocio.
+                <span className="block text-blue-600">Finalmente conectado.</span>
+              </h1>
+
+              <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">
+                Clientes, ventas, operación, inventario y facturación en una plataforma configurada para la forma en que trabaja tu empresa.
+              </p>
+            </div>
+
+            <div className="border-l border-slate-200 pl-7 sm:pl-9">
+              <div className="mb-10 flex items-center gap-5">
+                <Image
+                  src="/logos/dbp-icon.png"
+                  alt="Icono de Datara DBP"
+                  width={132}
+                  height={132}
+                  priority
+                  className="h-28 w-28 rounded-3xl object-contain sm:h-32 sm:w-32"
+                />
+                <div>
+                  <p className="text-2xl font-black leading-none">Datara DBP</p>
+                  <p className="mt-2 max-w-36 text-xs font-semibold leading-5 text-slate-500">
+                    Una plataforma. Todo tu negocio.
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">De oportunidad a resultado</p>
+              <div className="mt-6 space-y-5">
+                {["Vende con contexto", "Opera con claridad", "Factura sin fricción", "Decide con información"].map((item, index) => (
+                  <div key={item} className="flex items-center gap-4">
+                    <span className="text-xs font-black text-blue-600">0{index + 1}</span>
+                    <span className="font-bold text-slate-800">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-48 top-1/3 h-96 w-96 rounded-full bg-blue-300/10 blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-24">
+          <div className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Una sola operación</p>
+            <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] sm:text-4xl">Menos sistemas. Más control.</h2>
+            <p className="mt-5 max-w-md leading-7 text-slate-600">
+              Cada área comparte la misma información. Tu equipo avanza sin duplicar trabajo y tú entiendes qué está pasando.
+            </p>
+          </div>
+
+          <div className="border-t border-slate-950">
+            {capabilities.map(([number, title, description]) => (
+              <article key={title} className="grid gap-3 border-b border-slate-200 py-6 sm:grid-cols-[3rem_0.7fr_1.3fr] sm:items-start sm:gap-5">
+                <span className="text-xs font-black text-blue-600">{number}</span>
+                <h3 className="font-black">{title}</h3>
+                <p className="text-sm leading-6 text-slate-600">{description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 sm:pb-24">
+        <div className="border-y border-slate-950 py-9">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">
+            14 días gratis
+          </p>
+          <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-[-0.04em] sm:text-4xl">
+            Descubre qué cambia cuando todo trabaja junto.
+          </h2>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-y border-slate-200 bg-slate-50">
+        <div className="pointer-events-none absolute -left-48 top-24 h-[28rem] w-[28rem] rounded-full bg-cyan-300/15 blur-3xl" />
+        <div className="pointer-events-none absolute -right-52 bottom-0 h-[30rem] w-[30rem] rounded-full bg-blue-400/10 blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-24">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Perfiles disponibles</p>
+            <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] sm:text-4xl">La plataforma se adapta a tu industria. No al revés.</h2>
+          </div>
+
+          <div className="mt-12 grid border-y border-slate-300 lg:grid-cols-4">
+            {profiles.map((profile, index) => (
+              <article
+                key={profile.id}
+                className={[
+                  "flex h-full flex-col py-8 lg:px-8",
+                  index > 0 ? "border-t border-slate-300 lg:border-l lg:border-t-0" : "",
+                  index === 0 ? "lg:pl-0" : "",
+                  index === profiles.length - 1 ? "lg:pr-0" : "",
+                ].join(" ")}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-blue-600">
+                    <ProfileIcon icon={profile.icon} />
+                  </span>
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Disponible</span>
+                </div>
+
+                <p className="mt-8 text-xs font-black uppercase tracking-[0.16em] text-slate-400">{profile.label}</p>
+                <h3 className="mt-3 text-2xl font-black tracking-tight">{profile.name}</h3>
+                <p className="mt-4 min-h-24 text-sm leading-6 text-slate-600">{profile.description}</p>
+
+                <div className="mt-6 border-y border-slate-200 py-5">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                    {profile.groupLabel ?? "Perfiles"}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2.5">
+                    {profile.availableProfiles.map(
+                      (availableProfile) => (
+                        <span
+                          key={
+                            availableProfile.name
+                          }
+                          className={[
+                            "inline-flex items-center gap-1.5 text-xs font-bold",
+                            availableProfile.status ===
+                            "available"
+                              ? "text-blue-700"
+                              : "text-slate-400",
+                          ].join(" ")}
+                        >
+                          <span
+                            className={[
+                              "h-1.5 w-1.5 rounded-full",
+                              availableProfile.status ===
+                              "available"
+                                ? "bg-emerald-500"
+                                : "bg-slate-300",
+                            ].join(" ")}
+                          />
+                          {availableProfile.name}
+                          {availableProfile.status ===
+                            "coming-soon" && (
+                            <span className="font-medium">
+                              Próximamente
                             </span>
+                          )}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                </div>
 
-                            <h1 className="mt-6 text-4xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
-                                Un CRM diseñado para{" "}
-                                <span className="bg-gradient-to-r from-emerald-700 via-green-500 to-cyan-500 bg-clip-text text-transparent">
-                                    la forma en que trabaja tu industria.
-                                </span>
-                            </h1>
-
-                            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-                                Elige la solución que mejor se adapte a tu empresa. Cada
-                                versión de Datara CRM combina nuestro núcleo comercial con
-                                módulos, procesos y herramientas específicas para cada
-                                industria.
-                            </p>
-                        </div>
-
-                        <div className="hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-950/5 lg:block">
-                            <Image
-                                src="/logos/crm.png"
-                                alt="Datara CRM"
-                                width={280}
-                                height={110}
-                                priority
-                                className="h-auto w-64 object-contain"
-                            />
-                        </div>
+                <div className="mt-6 space-y-3">
+                  {profile.outcomes.map((outcome) => (
+                    <div key={outcome} className="flex items-start gap-3 text-sm font-semibold text-slate-700">
+                      <FaCircleCheck className="mt-0.5 shrink-0 text-blue-600" />
+                      <span>{outcome}</span>
                     </div>
-                </div>
-            </section>
-
-            <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
-                <div className="max-w-3xl">
-                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-600">
-                        Soluciones por industria
-                    </p>
-
-                    <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                        Elige el CRM que mejor se adapte a tu empresa
-                    </h2>
-
-                    <p className="mt-4 text-base leading-7 text-slate-600">
-                        Todas nuestras soluciones parten de Datara CRM Core y
-                        agregan herramientas, procesos y configuraciones
-                        específicas para cada industria.
-                    </p>
+                  ))}
                 </div>
 
-                <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {industries.map((industry) => {
-                        const isAvailable =
-                            industry.status ===
-                            "available";
-
-                        return (
-                            <article
-                                key={
-                                    industry.id
-                                }
-                                className={[
-                                    "relative flex h-full flex-col overflow-hidden rounded-[2rem] border bg-white p-7 shadow-lg shadow-slate-950/5 transition duration-300",
-                                    isAvailable
-                                        ? "border-slate-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-950/10"
-                                        : "border-slate-200",
-                                ].join(
-                                    " ",
-                                )}
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-emerald-50 text-blue-700 shadow-sm ring-1 ring-slate-200">
-                                        {industry.id === "other" && (
-                                            <FaCubesStacked
-                                                size={26}
-                                            />
-                                        )}
-
-                                        {industry.id ===
-                                            "motorcycle_dealership" && (
-                                            <FaMotorcycle
-                                                size={28}
-                                            />
-                                        )}
-
-                                        {industry.id ===
-                                            "professional_services" && (
-                                            <FaUserTie
-                                                size={26}
-                                            />
-                                        )}
-
-                                        {industry.id === "dentistas" && (
-                                            <FaTooth
-                                                size={26}
-                                            />
-                                        )}
-
-                                        {industry.id === "veterinarias" && (
-                                            <FaPaw
-                                                size={26}
-                                            />
-                                        )}
-
-                                        {industry.id === "seguros" && (
-                                            <FaShieldHalved
-                                                size={26}
-                                            />
-                                        )}
-                                    </div>
-
-                                    {isAvailable ? (
-                                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                                            Disponible
-                                        </span>
-                                    ) : (
-                                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500">
-                                            Próximamente
-                                        </span>
-                                    )}
-                                </div>
-
-                                <h3 className="mt-6 min-h-[64px] text-2xl font-black tracking-tight text-slate-950">
-                                    {
-                                        industry.name
-                                    }
-                                </h3>
-
-                                <p className="mt-3 min-h-[96px] text-sm leading-6 text-slate-600">
-                                    {
-                                        industry.description
-                                    }
-                                </p>
-
-                                <div className="my-6 h-px bg-slate-200" />
-
-                                {isAvailable ? (
-                                    industry.id === "other" ? (
-                                        <>
-                                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                                                Incluye
-                                            </p>
-
-                                            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                                <p className="text-sm font-bold text-slate-900">
-                                                    CRM Core
-                                                </p>
-
-                                                <p className="mt-1 text-xs leading-5 text-slate-500">
-                                                    Todo lo necesario para comenzar
-                                                    a gestionar tu operación
-                                                    comercial.
-                                                </p>
-
-                                                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2">
-                                                    {[
-                                                        "Prospectos",
-                                                        "Clientes",
-                                                        "Oportunidades",
-                                                        "Productos",
-                                                        "Actividades",
-                                                        "Documentos",
-                                                        "Integraciones",
-                                                        "Automatizaciones",
-                                                        "Resumen y Analytics",
-                                                    ].map(
-                                                        (
-                                                            moduleName,
-                                                        ) => (
-                                                            <div
-                                                                key={
-                                                                    moduleName
-                                                                }
-                                                                className="flex items-center gap-2 text-xs font-semibold text-slate-700"
-                                                            >
-                                                                <span className="text-blue-600">
-                                                                    ✓
-                                                                </span>
-
-                                                                <span>
-                                                                    {
-                                                                        moduleName
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                                                Incluye
-                                            </p>
-
-                                            <div className="mt-4 flex items-center gap-3 text-sm font-bold text-slate-800">
-                                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
-                                                    ✓
-                                                </span>
-
-                                                <span>
-                                                    CRM Core
-                                                </span>
-                                            </div>
-
-                                            {industry.availablePackages.length >
-                                                1 && (
-                                                <>
-                                                    <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                                                        Expansiones disponibles
-                                                    </p>
-
-                                                    <div className="mt-4 flex flex-wrap gap-2">
-                                                        {industry.availablePackages
-                                                            .filter(
-                                                                (
-                                                                    packageName,
-                                                                ) =>
-                                                                    packageName !==
-                                                                    "CRM Core",
-                                                            )
-                                                            .map(
-                                                                (
-                                                                    packageName,
-                                                                ) => (
-                                                                    <span
-                                                                        key={
-                                                                            packageName
-                                                                        }
-                                                                        className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700"
-                                                                    >
-                                                                        +{" "}
-                                                                        {
-                                                                            packageName
-                                                                        }
-                                                                    </span>
-                                                                ),
-                                                            )}
-                                                    </div>
-
-                                                    <p className="mt-5 text-sm leading-6 text-slate-500">
-                                                        Empieza con CRM Core y
-                                                        agrega únicamente las
-                                                        expansiones que necesites.
-                                                    </p>
-                                                </>
-                                            )}
-                                        </>
-                                    )
-                                ) : (
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                                        <p className="text-sm leading-6 text-slate-500">
-                                            Estamos preparando los módulos y
-                                            configuración específicos para
-                                            esta industria.
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className="mt-auto pt-8">
-                                    {isAvailable ? (
-                                        <Button
-                                            href={`/demo?industry=${industry.id}`}
-                                            variant="primary"
-                                            size="lg"
-                                            className="w-full"
-                                        >
-                                            Iniciar prueba gratis 14 días
-                                        </Button>
-                                    ) : (
-                                        <div className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-center text-sm font-semibold text-slate-500">
-                                            Próximamente
-                                        </div>
-                                    )}
-                                </div>
-                            </article>
-                        );
-                    })}
+                <div className="mt-auto pt-9">
+                  <Button href={`/demo?industry=${profile.id}`} variant="primary" size="lg" className="w-full">
+                    {(profile.id === "professional_services" ||
+                      profile.id === "motorcycle_dealership")
+                      ? "Ver perfiles y probar"
+                      : profile.id === "veterinary"
+                        ? "Probar Mascotas"
+                        : "Probar este perfil"}
+                  </Button>
                 </div>
-            </section>
+              </article>
+            ))}
+          </div>
 
-            <CRMIndustryRequest />
-        </main>
-    );
+          <a href="#solicitar-industria" className="mt-8 inline-flex items-center gap-3 text-sm font-black transition hover:text-blue-600">
+            ¿Necesitas otra configuración? Cuéntanos cómo trabajas.
+            <FaArrowRight />
+          </a>
+        </div>
+      </section>
+
+      <div id="solicitar-industria">
+        <CRMIndustryRequest />
+      </div>
+    </main>
+  );
 }

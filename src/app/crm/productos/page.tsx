@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -34,6 +35,8 @@ import {
   SAT_UNIT_CODES,
 } from "@/lib/fiscal/catalogs";
 import type { CRMFieldConfig } from "@/types/crm-config";
+import { buildTechnicalCRMFields } from "@/lib/crm/technical-fields";
+import type { TechnicalFieldDefinition } from "@/lib/crm/technical-fields";
 
 const PRODUCT_FISCAL_FIELDS: CRMFieldConfig[] = [
   { key: "productServiceCode", label: "Clave de producto o servicio SAT", description: "Clave de 8 dígitos del catálogo c_ClaveProdServ.", placeholder: "Ej. 25101801", type: "text", validation: { pattern: "^\\d{8}$", message: "Captura una clave SAT de 8 dígitos." }, showInForm: true, showInDetail: true, formSectionId: "fiscal", formRow: 1, formColumn: 1 },
@@ -67,6 +70,7 @@ type ProductType = {
   technicalProfile:
     | string
     | null;
+  technicalFields: TechnicalFieldDefinition[];
   active: boolean;
   sortOrder: number;
 };
@@ -132,21 +136,16 @@ export default function ProductosPage() {
     null
   >(null);
 
-  useEffect(() => {
-    const controller =
-      new AbortController();
-
-    const timeoutId =
-      window.setTimeout(
-        () => {
-          void Promise.all([
+  const loadCatalogConfiguration = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const [typesResponse, categoriesResponse] = await Promise.all([
             fetch(
               "/api/crm/product-types",
               {
                 cache:
                   "no-store",
                 signal:
-                  controller.signal,
+                  signal,
               },
             ),
 
@@ -156,80 +155,50 @@ export default function ProductosPage() {
                 cache:
                   "no-store",
                 signal:
-                  controller.signal,
+                  signal,
               },
             ),
-          ])
-            .then(
-              async ([
-                typesResponse,
-                categoriesResponse,
-              ]) => {
-                const typesResult =
-                  (await typesResponse.json()) as
-                    ProductTypesResponse;
+      ]);
+      const typesResult = (await typesResponse.json()) as ProductTypesResponse;
 
-                const categoriesResult =
-                  (await categoriesResponse.json()) as
-                    ProductCategoriesResponse;
+      const categoriesResult = (await categoriesResponse.json()) as ProductCategoriesResponse;
 
-                if (
+      if (
                   !typesResponse.ok ||
                   !typesResult.success ||
                   !typesResult.data
-                ) {
-                  throw new Error(
+      ) {
+        throw new Error(
                     typesResult.error ??
                       "No fue posible cargar los tipos del catálogo.",
-                  );
-                }
+        );
+      }
 
-                if (
+      if (
                   !categoriesResponse.ok ||
                   !categoriesResult.success ||
                   !categoriesResult.data
-                ) {
-                  throw new Error(
+      ) {
+        throw new Error(
                     categoriesResult.error ??
                       "No fue posible cargar las categorías.",
-                  );
-                }
+        );
+      }
 
-                setProductTypes(
-                  typesResult.data,
-                );
+      setProductTypes(typesResult.data);
 
-                setCategories(
-                  categoriesResult.data,
-                );
+      setCategories(categoriesResult.data);
 
-                setCategoriesError(
-                  null,
-                );
-              },
-            )
-            .catch(
-              (loadError) => {
-                if (
-                  loadError instanceof
-                    DOMException &&
-                  loadError.name ===
-                    "AbortError"
-                ) {
-                  return;
-                }
+      setCategoriesError(null);
+    } catch (loadError) {
+      if (loadError instanceof DOMException && loadError.name === "AbortError") return;
+      setCategoriesError(loadError instanceof Error ? loadError.message : "No fue posible cargar la configuración del catálogo.");
+    }
+  }, []);
 
-                setCategoriesError(
-                  loadError instanceof
-                    Error
-                    ? loadError.message
-                    : "No fue posible cargar la configuración del catálogo.",
-                );
-              },
-            );
-        },
-        0,
-      );
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => void loadCatalogConfiguration(controller.signal), 0);
 
     return () => {
       window.clearTimeout(
@@ -238,7 +207,7 @@ export default function ProductosPage() {
 
       controller.abort();
     };
-  }, []);
+  }, [loadCatalogConfiguration]);
 
   const productsModule =
     useMemo(
@@ -294,6 +263,10 @@ export default function ProductosPage() {
           const category of
           categories
         ) {
+          const categoryProductType = productTypes.find((productType) => productType.id === category.productTypeId);
+          if (categoryProductType?.key === "stay_package" && !["Guardería", "Pensión", "Ambos"].includes(category.name)) {
+            continue;
+          }
           const typeCategories =
             optionsByType[
               category.productTypeId
@@ -317,16 +290,105 @@ export default function ProductosPage() {
           });
         }
 
+        const stayPackageTypeIds = productTypes
+          .filter((item) => item.key === "stay_package")
+          .map((item) => item.id);
+
+        const guarderiaTechnicalKeys = new Set([
+          "technical__includedHours",
+          "technical__overagePolicy",
+        ]);
+
+        const pensionTechnicalKeys = new Set<string>();
+
+        const petServiceGuarderiaTechnicalKeys = new Set([
+          "technical__durationHours",
+        ]);
+
+        const petServicePensionTechnicalKeys = new Set([
+          "technical__durationNights",
+        ]);
+
+        const petServiceTypeIds = productTypes
+          .filter((item) => item.key === "pet_service")
+          .map((item) => item.id);
+        const technicalFields: CRMFieldConfig[] = buildTechnicalCRMFields(productTypes).map((field): CRMFieldConfig => {
+          const baseCondition = field.visibleWhen;
+          if (field.key === "technical__packageUnitType") {
+            return {
+              ...field,
+              optionsByFieldValue: {
+                fieldKey: "category",
+                options: {
+                  "Guardería": [
+                    { label: "Día", value: "Día" },
+                    { label: "Acceso", value: "Acceso" },
+                  ],
+                  "Pensión": [{ label: "Noche", value: "Noche" }],
+                  "Ambos": [
+                    { label: "Día", value: "Día" },
+                    { label: "Noche", value: "Noche" },
+                    { label: "Acceso", value: "Acceso" },
+                  ],
+                },
+              },
+            };
+          }
+          if (guarderiaTechnicalKeys.has(field.key)) {
+            return {
+              ...field,
+              visibleWhen: undefined,
+              visibleWhenAll: [
+                { fieldKey: "productTypeId", in: stayPackageTypeIds },
+                { fieldKey: "category", in: ["Guardería", "Ambos"] },
+              ],
+            };
+          }
+          if (pensionTechnicalKeys.has(field.key)) {
+            return {
+              ...field,
+              visibleWhen: undefined,
+              visibleWhenAll: [
+                { fieldKey: "productTypeId", in: stayPackageTypeIds },
+                { fieldKey: "category", in: ["Pensión", "Ambos"] },
+              ],
+            };
+          }
+                    if (petServiceGuarderiaTechnicalKeys.has(field.key)) {
+            return {
+              ...field,
+              visibleWhen: undefined,
+              visibleWhenAll: [
+                { fieldKey: "productTypeId", in: petServiceTypeIds },
+                { fieldKey: "category", in: ["Guardería"] },
+              ],
+            };
+          }
+
+          if (petServicePensionTechnicalKeys.has(field.key)) {
+            return {
+              ...field,
+              visibleWhen: undefined,
+              visibleWhenAll: [
+                { fieldKey: "productTypeId", in: petServiceTypeIds },
+                { fieldKey: "category", in: ["Pensión"] },
+              ],
+            };
+          }
+          return { ...field, visibleWhen: baseCondition };
+        });
+
         return {
           ...baseProductsModule,
 
           formSections: [
             ...(baseProductsModule.formSections ?? []).filter((section) => section.id !== "fiscal"),
+            { id: "technical-specifications", title: "Ficha técnica", description: "Especificaciones definidas para este tipo de producto.", order: 80, columns: 2 as const },
             { id: "fiscal", title: "Configuración fiscal", description: "Claves y reglas SAT utilizadas al generar CFDI 4.0.", order: 90, columns: 2 as const },
           ],
 
           fields:
-            [...baseProductsModule.fields, ...PRODUCT_FISCAL_FIELDS.filter((fiscalField) => !baseProductsModule.fields.some((field) => field.key === fiscalField.key))]
+            [...baseProductsModule.fields, ...PRODUCT_FISCAL_FIELDS.filter((fiscalField) => !baseProductsModule.fields.some((field) => field.key === fiscalField.key)), ...technicalFields]
               .map((field) => {
                 if (
                   field.key ===
@@ -376,33 +438,11 @@ export default function ProductosPage() {
                   };
                 }
 
-                if (
-                  field.technicalProfile
-                ) {
-                  const applicableTypeIds =
-                    productTypes
-                      .filter(
-                        (productType) =>
-                          productType
-                            .technicalProfile ===
-                          field
-                            .technicalProfile,
-                      )
-                      .map(
-                        (productType) =>
-                          productType.id,
-                      );
-
+                if (field.technicalProfile) {
                   return {
                     ...field,
-
-                    visibleWhen: {
-                      fieldKey:
-                        "productTypeId",
-
-                      in:
-                        applicableTypeIds,
-                    },
+                    showInForm: false,
+                    showInDetail: false,
                   };
                 }
 
@@ -453,6 +493,7 @@ export default function ProductosPage() {
     "inactive" |
     "all"
   >("active");
+  const [catalogView, setCatalogView] = useState<"table" | "cards">("cards");
 
   const tableProductsModule =
     useMemo(
@@ -517,6 +558,7 @@ export default function ProductosPage() {
   ] = useState<string | null>(null);
 
   function openCreateDrawer() {
+    void loadCatalogConfiguration();
     setSelectedRecord(null);
     setDrawerMode("create");
     setSubmitError(null);
@@ -816,7 +858,8 @@ export default function ProductosPage() {
         )}
 
         <section className="mt-8">
-          <div className="mb-4 inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
             {[
               {
                 value:
@@ -861,6 +904,11 @@ export default function ProductosPage() {
               ),
             )}
           </div>
+          <div className="inline-flex self-start rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+            <button type="button" onClick={() => setCatalogView("cards")} className={catalogView === "cards" ? "rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white" : "rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Tarjetas</button>
+            <button type="button" onClick={() => setCatalogView("table")} className={catalogView === "table" ? "rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white" : "rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"}>Lista</button>
+          </div>
+          </div>
 
           <CRMDataTable
             key={`${tableVersion}-${productStatus}`}
@@ -876,6 +924,7 @@ export default function ProductosPage() {
             onCreate={openCreateDrawer}
             onView={openViewDrawer}
             onEdit={openEditDrawer}
+            viewMode={catalogView}
           />
         </section>
       </div>

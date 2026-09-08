@@ -2,7 +2,8 @@ export type PermissionProduct =
   | "global"
   | "crm"
   | "analytics"
-  | "cloud";
+  | "cloud"
+  | "pos";
 
 export type PermissionModule = {
   id: string;
@@ -43,6 +44,49 @@ export const permissionModules:
   },
 
   {
+    id: "pos-terminal",
+    label: "Punto de venta",
+    product: "pos",
+    description:
+      "Venta rápida, carrito, órdenes pendientes y cobro en mostrador.",
+  },
+  {
+    id: "pos-cash",
+    label: "Caja",
+    product: "pos",
+    description:
+      "Aperturas, cierres, movimientos y arqueos de caja.",
+  },
+  {
+    id: "pos-catalog",
+    label: "Catálogo POS",
+    product: "pos",
+    description:
+      "Productos, servicios, precios, códigos de barras e impuestos.",
+  },
+  {
+    id: "pos-inventory",
+    label: "Inventario POS",
+    product: "pos",
+    description:
+      "Existencias y movimientos provocados por ventas y devoluciones.",
+  },
+  {
+    id: "pos-reports",
+    label: "Reportes POS",
+    product: "pos",
+    description:
+      "Ventas, métodos de pago, cortes y desempeño por sucursal y cajero.",
+  },
+  {
+    id: "pos-settings",
+    label: "Configuración POS",
+    product: "pos",
+    description:
+      "Terminales, recibos, métodos de pago y reglas operativas.",
+  },
+
+  {
     id: "leads",
     label: "Prospectos",
     product: "crm",
@@ -76,6 +120,13 @@ export const permissionModules:
     product: "crm",
     description:
       "Órdenes generadas por operaciones comerciales.",
+  },
+  {
+    id: "embedded-checkout",
+    label: "Cobro integrado",
+    product: "crm",
+    description:
+      "Cobra órdenes generadas por los módulos contratados sin habilitar caja, terminales ni venta directa de Datara POS.",
   },
   {
     id: "inventory",
@@ -155,6 +206,36 @@ export const permissionModules:
       "Emisión y cancelación de CFDI mediante el proveedor fiscal configurado.",
   },
   {
+    id: "pet-veterinary",
+    label: "Veterinaria",
+    product: "crm",
+    description: "Expedientes, consultas, vacunas, tratamientos y seguimiento clínico de mascotas.",
+  },
+  {
+    id: "pet-grooming",
+    label: "Grooming y estética",
+    product: "crm",
+    description: "Agenda, preferencias, paquetes y seguimiento de servicios de estética.",
+  },
+  {
+    id: "pet-stays",
+    label: "Guardería y pensión",
+    product: "crm",
+    description: "Reservaciones, check-in, check-out y paquetes de días o noches.",
+  },
+  {
+    id: "pet-store",
+    label: "Tienda de mascotas",
+    product: "crm",
+    description: "Productos, inventario, ventas, promociones y facturación para mascotas.",
+  },
+  {
+    id: "qr-codes",
+    label: "Códigos QR",
+    product: "crm",
+    description: "Identificación, impresión, lectura y auditoría de códigos QR operativos.",
+  },
+  {
     id: "crm-users",
     label: "Usuarios del CRM",
     product: "crm",
@@ -196,6 +277,7 @@ export function getPermissionModules(
     | "crm"
     | "analytics"
     | "cloud"
+    | "pos"
     | null,
 ): PermissionModule[] {
   const expectedProduct =

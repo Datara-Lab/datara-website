@@ -67,6 +67,7 @@ type CRMDataTableProps = {
   onCreate?: () => void;
   onView?: (record: CRMRecord) => void;
   onEdit?: (record: CRMRecord) => void;
+  viewMode?: "table" | "cards";
 };
 
 type SortDirection = "asc" | "desc";
@@ -537,6 +538,7 @@ export default function CRMDataTable({
   onCreate,
   onView,
   onEdit,
+  viewMode = "table",
 }: CRMDataTableProps) {
   const {
     organization,
@@ -1837,7 +1839,22 @@ export default function CRMDataTable({
         </div>
       )}
 
-      <DataraTableScroll>
+      {viewMode === "cards" && !isLoading && visibleRecords.length > 0 ? (
+        <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
+          {visibleRecords.map((record) => (
+            <article key={record.id} className="flex min-h-56 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-200 hover:shadow-lg">
+              <div className="flex-1 space-y-3">
+                {visibleTableFields.slice(0, 6).map((field, index) => (
+                  <div key={`${record.id}-${field.key}`} className={index === 0 ? "" : "grid grid-cols-[110px_1fr] gap-3 border-t border-slate-100 pt-3"}>
+                    {index === 0 ? <><p className="text-xs font-bold uppercase tracking-wider text-cyan-600">{field.label}</p><div className="mt-1 text-lg font-black text-slate-950">{formatFieldValue(field, record[field.key])}</div></> : <><p className="text-xs font-semibold text-slate-400">{field.label}</p><div className="text-sm font-semibold text-slate-700">{formatFieldValue(field, record[field.key])}</div></>}
+                  </div>
+                ))}
+              </div>
+              {hasActions && <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">{onView && <Button size="sm" variant="secondary" onClick={() => onView(record)}>Ver</Button>}{permissions.canEdit && onEdit && module.allowEdit !== false && <Button size="sm" variant="secondary" onClick={() => onEdit(record)}>Editar</Button>}</div>}
+            </article>
+          ))}
+        </div>
+      ) : <DataraTableScroll>
         <table className="min-w-full">
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
@@ -1990,7 +2007,7 @@ export default function CRMDataTable({
             )}
           </tbody>
         </table>
-      </DataraTableScroll>
+      </DataraTableScroll>}
     </section>
   );
 }

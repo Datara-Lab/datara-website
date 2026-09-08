@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   useEffect,
   useMemo,
@@ -217,17 +219,40 @@ export default function ClientesPage() {
         return undefined;
       }
 
+      const isTutorModule =
+        configuredCustomersModule.singularLabel ===
+        "Tutor";
+
+      const fiscalSectionId =
+        isTutorModule
+          ? "fiscal-information"
+          : "fiscal";
+
       return {
         ...configuredCustomersModule,
 
-        formSections: [
-          ...(configuredCustomersModule.formSections ?? []).filter((section) => section.id !== "fiscal"),
-          { id: "fiscal", title: "Datos fiscales", description: "Información del receptor utilizada para CFDI 4.0.", order: 90, columns: 2 as const },
-        ],
+        formSections:
+          isTutorModule
+            ? configuredCustomersModule.formSections
+            : [
+                ...(configuredCustomersModule.formSections ?? []).filter((section) => section.id !== "fiscal"),
+                { id: "fiscal", title: "Datos fiscales", description: "Información del receptor utilizada para CFDI 4.0.", order: 90, columns: 2 as const },
+              ],
 
         fields:
           [...configuredCustomersModule.fields, ...CUSTOMER_FISCAL_FIELDS.filter((fiscalField) => !configuredCustomersModule.fields.some((field) => field.key === fiscalField.key))]
             .map((field) => {
+              if (
+                field.key === "fiscalTaxRegime" ||
+                field.key === "cfdiUse"
+              ) {
+                return {
+                  ...field,
+                  formSectionId:
+                    fiscalSectionId,
+                };
+              }
+
               if (
                 field.key ===
                 "branchId"
@@ -548,9 +573,17 @@ export default function ClientesPage() {
             module={customersModule}
             endpoint="/api/crm/customers"
             createLabel={`Nuevo ${customersModule.singularLabel.toLowerCase()}`}
-            searchPlaceholder="Buscar por nombre, empresa, correo, teléfono, RFC o estado..."
+            searchPlaceholder={
+              customersModule.singularLabel === "Tutor"
+                ? "Buscar por tutor, mascota, correo o teléfono..."
+                : "Buscar por nombre, empresa, correo, teléfono, RFC o estado..."
+            }
             emptyTitle={`No hay ${customersModule.pluralLabel.toLowerCase()} registrados`}
-            emptyDescription={`Registra el primer ${customersModule.singularLabel.toLowerCase()} para comenzar a administrar su información comercial.`}
+            emptyDescription={
+              customersModule.singularLabel === "Tutor"
+                ? "Registra al primer tutor para relacionarlo con sus mascotas y mantener sus datos de contacto disponibles."
+                : `Registra el primer ${customersModule.singularLabel.toLowerCase()} para comenzar a administrar su información comercial.`
+            }
             onCreate={
               openCreateDrawer
             }
@@ -571,6 +604,19 @@ export default function ClientesPage() {
         record={selectedRecord}
         isSubmitting={
           isSubmitting
+        }
+        additionalActions={
+          customersModule.singularLabel === "Tutor" &&
+          selectedRecord?.id
+            ? (
+                <Link
+                  href={`/crm/mascotas?newPet=1&tutorId=${encodeURIComponent(String(selectedRecord.id))}`}
+                  className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-105"
+                >
+                  Registrar mascota
+                </Link>
+              )
+            : null
         }
         onClose={closeDrawer}
         onEdit={

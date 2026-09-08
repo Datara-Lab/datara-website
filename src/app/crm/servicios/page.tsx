@@ -11,6 +11,7 @@ import {
 import DataraTableScroll from "@/components/shared/DataraTableScroll";
 import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/ui/Button";
+import { useMobilityTerminology } from "@/hooks/useMobilityTerminology";
 
 type ServiceStatus =
   | "Borrador"
@@ -525,6 +526,7 @@ function getStatusClassName(
 }
 
 export default function ServiciosPage() {
+  const mobility = useMobilityTerminology();
   const [
     services,
     setServices,
@@ -870,7 +872,7 @@ export default function ServiciosPage() {
         ) {
           throw new Error(
             productsPayload.error ??
-              "No fue posible cargar los modelos.",
+              `No fue posible cargar ${mobility.itemPlural}.`,
           );
         }
 
@@ -953,10 +955,22 @@ export default function ServiciosPage() {
       } finally {
         setIsLoading(false);
       }
-    }, []);
+    }, [
+      mobility.itemPlural,
+    ]);
 
   useEffect(() => {
-    void loadWorkspace();
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void loadWorkspace();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     loadWorkspace,
   ]);
@@ -1327,7 +1341,7 @@ export default function ServiciosPage() {
         <PageHeader
           eyebrow="Operación comercial"
           title="Servicios"
-          description="Administra las órdenes de taller y el seguimiento de las motocicletas atendidas."
+          description={mobility.workshopDescription}
           action={
             permissions.canCreate ? (
               <Button
@@ -1454,7 +1468,7 @@ export default function ServiciosPage() {
                 <input
                   type="search"
                   value={search}
-                  placeholder="Buscar orden, cliente o motocicleta..."
+                  placeholder={mobility.searchPlaceholder}
                   className="min-w-72 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   onChange={(
                     event,
@@ -1522,7 +1536,7 @@ export default function ServiciosPage() {
                       {[
                         "Orden",
                         "Cliente",
-                        "Motocicleta",
+                        mobility.vehicleSingularLabel,
                         "Servicio",
                         "Programación",
                         "Responsable",
@@ -1768,7 +1782,7 @@ export default function ServiciosPage() {
               </h2>
 
               <p className="mt-2 text-sm text-slate-500">
-                Registra la motocicleta, el trabajo solicitado y su programación.
+                {`Registra la ${mobility.vehicleSingular}, el trabajo solicitado y su programación.`}
               </p>
             </header>
 
@@ -1963,7 +1977,7 @@ export default function ServiciosPage() {
 
                 <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
                   <h3 className="font-bold text-slate-950">
-                    Motocicleta y servicio
+                    {mobility.vehicleSingularLabel} y servicio
                   </h3>
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -2053,7 +2067,7 @@ export default function ServiciosPage() {
                     </label>
 
                     <label className="text-sm font-semibold text-slate-700">
-                      Modelo *
+                      {mobility.itemSingularLabel} *
 
                       <select
                         required
@@ -2112,7 +2126,7 @@ export default function ServiciosPage() {
                         )}
 
                         <option value="__manual__">
-                          Capturar otro modelo manualmente
+                          Capturar {mobility.itemSingular} manualmente
                         </option>
                       </select>
 
@@ -2122,7 +2136,7 @@ export default function ServiciosPage() {
                           value={
                             unitModel
                           }
-                          placeholder="Escribe el modelo de la motocicleta"
+                          placeholder={mobility.modelPlaceholder}
                           className="mt-3 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                           onChange={(
                             event,
@@ -2165,7 +2179,7 @@ export default function ServiciosPage() {
                         value={
                           unitIdentifier
                         }
-                        placeholder="Captura el NIV completo de la motocicleta"
+                        placeholder={mobility.identifierPlaceholder}
                         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                         onChange={(
                           event,
@@ -2471,13 +2485,13 @@ export default function ServiciosPage() {
 
               <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="font-bold text-slate-950">
-                  Motocicleta
+                  {mobility.vehicleSingularLabel}
                 </h3>
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <div>
                     <p className="text-xs font-bold uppercase text-slate-500">
-                      Modelo
+                      {mobility.itemSingularLabel}
                     </p>
 
                     <p className="mt-1 font-semibold text-slate-900">
@@ -2682,7 +2696,7 @@ export default function ServiciosPage() {
                       value={
                         diagnosis
                       }
-                      placeholder="Describe el diagnóstico técnico de la motocicleta."
+                      placeholder={`Describe el diagnóstico técnico de la ${mobility.vehicleSingular}.`}
                       className="mt-2 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 font-normal text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-600"
                       onChange={(
                         event,

@@ -18,6 +18,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/ui/Button";
 
 import { useCRMConfig } from "@/hooks/useCRMConfig";
+import { useMobilityTerminology } from "@/hooks/useMobilityTerminology";
 
 type MovementType = "Entrada" | "Salida" | "Ajuste";
 
@@ -621,6 +622,7 @@ function getMovementClassName(type: MovementType): string {
 
 export default function InventariosPage() {
   const { tenantConfig } = useCRMConfig();
+  const mobility = useMobilityTerminology();
 
   const productSingularLabel =
     tenantConfig?.terminology?.modules.products?.singular ?? "Producto";
@@ -702,6 +704,10 @@ export default function InventariosPage() {
   const [branchFilter, setBranchFilter] = useState("");
 
   const [statusFilter, setStatusFilter] = useState("");
+
+  const [stockAlertFilter, setStockAlertFilter] = useState<
+    "" | "over"
+  >("");
 
   const [productTypeFilter, setProductTypeFilter] = useState("");
 
@@ -1070,6 +1076,47 @@ export default function InventariosPage() {
               "dealId",
             ),
           );
+          const stockAlert =
+            searchParams.get(
+              "stockAlert",
+            );
+
+          if (
+            stockAlert === "low" ||
+            stockAlert === "out" ||
+            stockAlert === "over"
+          ) {
+            setActiveView(
+              "stocks",
+            );
+
+            setStockAlertFilter(
+              stockAlert === "over"
+                ? "over"
+                : "",
+            );
+
+            setStatusFilter(
+              stockAlert === "low"
+                ? "Bajo"
+                : stockAlert === "out"
+                  ? "Agotado"
+                  : "",
+            );
+
+            window.setTimeout(
+              () =>
+                document
+                  .getElementById(
+                    "inventory-detail-table",
+                  )
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  }),
+              0,
+            );
+          }
         },
         0,
       );
@@ -1316,7 +1363,19 @@ export default function InventariosPage() {
       ? consolidatedRecords.filter((record) => record.status === statusFilter)
       : consolidatedRecords;
 
-    return [...statusFilteredRecords].sort((first, second) => {
+    const alertFilteredRecords =
+      stockAlertFilter === "over"
+        ? statusFilteredRecords.filter((record) =>
+            record.locations.some(
+              (stock) =>
+                stock.maximumQuantity !== null &&
+                stock.quantity >
+                  stock.maximumQuantity,
+            ),
+          )
+        : statusFilteredRecords;
+
+    return [...alertFilteredRecords].sort((first, second) => {
       const result = compareSortValues(
         first[stockSortField],
         second[stockSortField],
@@ -1331,6 +1390,7 @@ export default function InventariosPage() {
     productTypeFilter,
     categoryFilter,
     statusFilter,
+    stockAlertFilter,
     stockSortField,
     stockSortDirection,
   ]);
@@ -2195,7 +2255,7 @@ export default function InventariosPage() {
 
     const confirmationMessage =
       action === "Entregar"
-        ? "¿Confirmas la entrega de todos los modelos reservados? Se descontarán las existencias y se registrará una salida en el Kardex por cada modelo."
+        ? `¿Confirmas la entrega de todos los ${mobility.itemPlural} reservados? Se descontarán las existencias y se registrará una salida en el Kardex por cada ${mobility.itemSingular}.`
         : action === "Cancelar"
           ? "¿Confirmas la cancelación de todas las reservas de esta oportunidad?"
           : "¿Confirmas la liberación de todas las reservas de esta oportunidad?";
@@ -3488,7 +3548,10 @@ export default function InventariosPage() {
                     <select
                       value={statusFilter}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
-                      onChange={(event) => setStatusFilter(event.target.value)}
+                      onChange={(event) => {
+                        setStatusFilter(event.target.value);
+                        setStockAlertFilter("");
+                      }}
                     >
                       <option value="">Todos los estados</option>
                       <option value="Disponible">Disponible</option>
@@ -3557,7 +3620,7 @@ export default function InventariosPage() {
                 </p>
 
                 <p className="mt-1 text-xs text-blue-700">
-                  Confirma la entrega de cada modelo para descontar la
+                  Confirma la entrega de cada {mobility.itemSingular} para descontar la
                   existencia y registrar su salida en el Kardex.
                 </p>
               </div>
@@ -3616,7 +3679,7 @@ export default function InventariosPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Modelos cuya disponibilidad alcanzó el punto de reorden o la
+                    {mobility.itemPluralLabel} cuya disponibilidad alcanzó el punto de reorden o la
                     existencia mínima.
                   </p>
                 </div>
@@ -3643,7 +3706,7 @@ export default function InventariosPage() {
                   <thead className="bg-slate-50">
                     <tr>
                       {[
-                        "Modelo",
+                        mobility.itemSingularLabel,
                         "Ubicación",
                         "Disponible",
                         "Punto de reorden",
@@ -4625,7 +4688,7 @@ export default function InventariosPage() {
 
                             <td className="min-w-64 px-5 py-4">
                               <p className="font-black text-slate-950">
-                                {relatedReservationCount} modelos reservados
+                                {relatedReservationCount} {mobility.itemPlural} reservados
                               </p>
 
                               <p className="mt-1 max-w-72 truncate text-xs text-slate-500">
@@ -4652,7 +4715,7 @@ export default function InventariosPage() {
                               </p>
 
                               <p className="mt-1 text-xs text-slate-500">
-                                Abre el grupo para consultar cada modelo.
+                                Abre el grupo para consultar cada {mobility.itemSingular}.
                               </p>
                             </td>
 
@@ -4704,8 +4767,8 @@ export default function InventariosPage() {
                                   }
                                 >
                                   {isReservationGroupExpanded
-                                    ? "Ocultar modelos"
-                                    : `Ver ${relatedReservationCount} modelos`}
+                                    ? `Ocultar ${mobility.itemPlural}`
+                                    : `Ver ${relatedReservationCount} ${mobility.itemPlural}`}
                                 </Button>
 
                                 {activeGroupReservations > 0 &&
@@ -4830,7 +4893,7 @@ export default function InventariosPage() {
                                 {reservation.sourceType === "Oportunidad" &&
                                   relatedReservationCount > 1 && (
                                     <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-600/15">
-                                      Grupo de {relatedReservationCount} modelos
+                                      Grupo de {relatedReservationCount} {mobility.itemPlural}
                                     </span>
                                   )}
                               </div>
@@ -6133,7 +6196,7 @@ export default function InventariosPage() {
                       </select>
                       <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">
                         Al elegir una oportunidad se cargarán automáticamente el
-                        cliente, la sucursal, el modelo, la cantidad y la
+                        cliente, la sucursal, {mobility.itemSingular}, la cantidad y la
                         referencia disponibles.
                       </span>
                     </label>
@@ -6142,18 +6205,18 @@ export default function InventariosPage() {
                       <div className="space-y-4 sm:col-span-2">
                         <div>
                           <h4 className="font-bold text-slate-950">
-                            Modelos que se reservarán
+                            {mobility.itemPluralLabel} que se reservarán
                           </h4>
 
                           <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Se creará una reserva separada por modelo, agrupadas
+                            Se creará una reserva separada por {mobility.itemSingular}, agrupadas
                             bajo la misma oportunidad.
                           </p>
                         </div>
 
                         {reservationDraftItems.length === 0 ? (
                           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-semibold text-amber-800">
-                            La oportunidad no contiene modelos válidos para
+                            La oportunidad no contiene {mobility.itemPlural} válidos para
                             reservar.
                           </div>
                         ) : (

@@ -465,6 +465,20 @@ function shouldShowField(
   field: CRMFieldConfig,
   values: CRMFormValues,
 ): boolean {
+  if (field.visibleWhenAll) {
+    const matches = field.visibleWhenAll.every((condition) => {
+      const dependentValue = values[condition.fieldKey];
+      if ("hasValue" in condition) {
+        return Array.isArray(dependentValue)
+          ? dependentValue.length > 0
+          : dependentValue !== null && dependentValue !== undefined && dependentValue !== "";
+      }
+      if ("in" in condition) return condition.in.includes(dependentValue as string | number | boolean | null);
+      return dependentValue === condition.equals;
+    });
+    if (!matches) return false;
+  }
+
   if (field.visibleWhen) {
     const dependentValue =
       values[
@@ -844,18 +858,8 @@ export default function DynamicForm({
     useState<CRMFormErrors>({});
 
   useEffect(() => {
-    let cancelled = false;
-
-    queueMicrotask(() => {
-      if (!cancelled) {
-        setValues(initialValues);
-        setErrors({});
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    setValues(initialValues);
+    setErrors({});
   }, [initialValues]);
 
   function handleFieldChange(
@@ -878,9 +882,9 @@ export default function DynamicForm({
             ?.fieldKey ===
           fieldKey
         ) {
-          nextValues[
-            dependentField.key
-          ] = "";
+          const dependentOptions = dependentField.optionsByFieldValue.options[String(value)] ?? [];
+          const enabledOptions = dependentOptions.filter((option) => !option.disabled);
+          nextValues[dependentField.key] = enabledOptions.length === 1 ? enabledOptions[0].value : "";
         }
       }
 

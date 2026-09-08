@@ -1,0 +1,1 @@
+ALTER TABLE "commercial_payments" ALTER COLUMN "deal_id" DROP NOT NULL;

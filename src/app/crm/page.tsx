@@ -4,6 +4,7 @@ import MetricCard from "@/components/shared/MetricCard";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionCard from "@/components/shared/SectionCard";
 import { useAuth } from "@/contexts/AuthContext";
+import PetsSummary from "@/components/crm/pets/PetsSummary";
 
 import {
   useEffect,
@@ -100,6 +101,12 @@ type CRMSummaryResponse = {
 };
 
 export default function CRMPage() {
+  const { user } = useAuth();
+  if (!user?.industry) return <p className="p-6 text-sm text-slate-500">Cargando resumen…</p>;
+  return user.industry === "veterinary" ? <PetsSummary key={user.tenantId} /> : <CommercialSummary />;
+}
+
+function CommercialSummary() {
   const { user } = useAuth();
 
     const [

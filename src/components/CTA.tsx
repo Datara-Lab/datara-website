@@ -4,9 +4,11 @@ import {
   ChangeEvent,
   FormEvent,
   useState,
+  useRef,
 } from "react";
 
 import Button from "@/components/ui/Button";
+import { getWebsiteAnalyticsContext, trackWebsiteEvent } from "@/lib/website/analytics-client";
 
 type FormData = {
   name: string;
@@ -27,24 +29,51 @@ const initialFormData: FormData = {
   company: "",
   email: "",
   phone: "",
-  product: "Desarrollo a la medida",
+  product: "Necesito orientación",
   message: "",
 };
 
-export default function CTA() {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<FormStatus>({
-    type: "idle",
-    message: "",
-  });
+type CTAProps = {
+  selection?: { product: string; message: string } | null;
+};
+
+export default function CTA({ selection = null }: CTAProps) {
+  const formStarted = useRef(false);
+  const [formData, setFormData] =
+    useState<FormData>(() => ({ ...initialFormData, ...(selection ?? {}) }));
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [status, setStatus] =
+    useState<FormStatus>({
+      type: "idle",
+      message: "",
+    });
+
+  const [previousSelection, setPreviousSelection] = useState(selection);
+  if (selection !== previousSelection) {
+    setPreviousSelection(selection);
+    if (selection) {
+      // Preserve the visitor's contact details when selecting another service.
+      setFormData((current) => ({ ...current, product: selection.product, message: selection.message }));
+      setStatus({ type: "idle", message: "" });
+    }
+  }
 
   function handleChange(
     event: ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      | HTMLInputElement
+      | HTMLSelectElement
+      | HTMLTextAreaElement
     >,
   ) {
-    const { name, value } = event.target;
+    if (!formStarted.current && getWebsiteAnalyticsContext()) {
+      trackWebsiteEvent("form_start");
+      formStarted.current = true;
+    }
+    const { name, value } =
+      event.target;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -59,7 +88,9 @@ export default function CTA() {
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
     if (isSubmitting) {
@@ -73,20 +104,30 @@ export default function CTA() {
     });
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "/api/contact",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            { ...formData, analytics: getWebsiteAnalyticsContext() },
+          ),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
-      const data = (await response.json()) as {
-        success?: boolean;
-        message?: string;
-      };
+      const data =
+        (await response.json()) as {
+          success?: boolean;
+          message?: string;
+        };
 
-      if (!response.ok || !data.success) {
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         throw new Error(
           data.message ??
             "No fue posible enviar tu solicitud. Inténtalo nuevamente.",
@@ -94,7 +135,6 @@ export default function CTA() {
       }
 
       setFormData(initialFormData);
-
       setStatus({
         type: "success",
         message:
@@ -102,14 +142,12 @@ export default function CTA() {
           "¡Gracias! Recibimos tu solicitud y pronto nos pondremos en contacto.",
       });
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Ocurrió un error al enviar tu solicitud.";
-
       setStatus({
         type: "error",
-        message,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error al enviar tu solicitud.",
       });
     } finally {
       setIsSubmitting(false);
@@ -125,24 +163,22 @@ export default function CTA() {
         <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
           <div className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-8 text-white sm:p-10">
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">
-              Soluciones a la medida
+              Tu siguiente mejora empieza aquí
             </p>
 
             <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
-              ¿Tu empresa necesita una solución diferente?
+              Cuéntanos qué te frena. Diseñemos cómo resolverlo.
             </h2>
 
             <p className="mt-5 max-w-xl leading-7 text-slate-300">
-              Además de nuestros productos estándar, en Datara desarrollamos
-              soluciones tecnológicas a la medida para empresas que requieren
-              procesos, integraciones o desarrollos específicos.
+              No necesitas saber qué producto elegir. Cuéntanos qué quieres
+              mejorar y te ayudaremos a encontrar la mejor alternativa.
             </p>
 
             <p className="mt-5 max-w-xl text-sm leading-6 text-slate-400">
-              Cuéntanos qué necesitas y nuestro equipo evaluará la mejor forma
-              de llevarlo a la plataforma Datara.
+              Puede ser una configuración de Datara, una integración, una
+              personalización o una solución diferente.
             </p>
-
           </div>
 
           <form
@@ -240,7 +276,7 @@ export default function CTA() {
                 htmlFor="product"
                 className="mb-2 block text-sm font-semibold text-slate-800"
               >
-                Tipo de solución *
+                ¿Cómo podemos ayudarte? *
               </label>
 
               <select
@@ -252,17 +288,28 @@ export default function CTA() {
                 disabled={isSubmitting}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               >
-                <option value="Desarrollo a la medida">
-                  Desarrollo a la medida
+                <option value="Necesito orientación">
+                  No estoy seguro, necesito orientación
                 </option>
 
-                <option value="Integración personalizada">
-                  Integración personalizada
+                <option value="Mejorar un proceso">
+                  Quiero mejorar un proceso de mi empresa
                 </option>
 
-                <option value="Automatización personalizada">
-                  Automatización personalizada
+                <option value="Conectar sistemas">
+                  Necesito conectar sistemas o información
                 </option>
+
+                <option value="Automatizar operación">
+                  Quiero automatizar tareas u operaciones
+                </option>
+
+                <option value="Personalización o desarrollo">
+                  Necesito una personalización o desarrollo
+                </option>
+
+                <option value="Sitios Web">Sitios Web</option>
+                {selection && selection.product !== "Sitios Web" && <option value={selection.product}>{selection.product}</option>}
 
                 <option value="Otro">
                   Otro
@@ -275,7 +322,7 @@ export default function CTA() {
                 htmlFor="message"
                 className="mb-2 block text-sm font-semibold text-slate-800"
               >
-                Cuéntanos qué necesita tu empresa
+                Cuéntanos el reto
               </label>
 
               <textarea
@@ -283,7 +330,7 @@ export default function CTA() {
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
-                placeholder="Describe brevemente el reto, proceso o solución que necesitas."
+                placeholder="En pocas palabras, ¿qué quieres mejorar, conectar o automatizar?"
                 rows={4}
                 disabled={isSubmitting}
                 className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
@@ -300,7 +347,7 @@ export default function CTA() {
               >
                 {isSubmitting
                   ? "Enviando solicitud..."
-                  : "Enviar solicitud"}
+                  : "Quiero hablar con un especialista"}
               </Button>
             </div>
 

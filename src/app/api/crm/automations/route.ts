@@ -1,3 +1,4 @@
+import { validateAutomationIndustry } from "@/lib/crm/automation-industry";
 import {
     auth,
 } from "@clerk/nextjs/server";
@@ -452,6 +453,8 @@ export async function POST(
             getAutomationRulePayload(
                 requestBody,
             );
+
+        await validateAutomationIndustry(tenantId, payload);
 
         const branchId =
             payload.branchId

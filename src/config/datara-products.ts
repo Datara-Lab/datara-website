@@ -2,6 +2,7 @@ export const DATARA_PRODUCT_KEYS = [
     "crm",
     "analytics",
     "cloud",
+    "pos",
 ] as const;
 
 export type DataraProductKey =
@@ -30,8 +31,8 @@ export const DATARA_PRODUCTS:
     > = {
     crm: {
         key: "crm",
-        name: "Datara CRM",
-        shortName: "CRM",
+        name: "Datara DBP",
+        shortName: "DBP",
 
         description:
             "Gestión comercial, clientes y operación.",
@@ -49,7 +50,7 @@ export const DATARA_PRODUCTS:
             "/crm",
 
         purchaseHref:
-            "mailto:ventas@datara-lab.com?subject=Contratar%20Datara%20CRM",
+            "mailto:ventas@datara-lab.com?subject=Contratar%20Datara%20DBP",
 
         trialAvailable: true,
     },
@@ -104,6 +105,21 @@ export const DATARA_PRODUCTS:
             "mailto:ventas@datara-lab.com?subject=Contratar%20Datara%20Cloud",
 
         trialAvailable: false,
+    },
+
+    pos: {
+        key: "pos",
+        name: "Datara POS",
+        shortName: "POS",
+        description:
+            "Punto de venta, caja, cobros e inventario conectado.",
+        logoPath: "/logos/pos.png",
+        iconPath: "/logos/pos-icon.png",
+        accentColor: "#06b6d4",
+        applicationPath: "/pos",
+        purchaseHref:
+            "mailto:ventas@datara-lab.com?subject=Contratar%20Datara%20POS",
+        trialAvailable: true,
     },
 };
 

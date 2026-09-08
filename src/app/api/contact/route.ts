@@ -5,6 +5,7 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/db";
+import { recordWebsiteContactSubmission } from "@/lib/website/analytics-store";
 
 import {
   crmLeads,
@@ -12,6 +13,7 @@ import {
 } from "@/db/schema";
 
 type ContactRequest = {
+  analytics?: unknown;
   name?: string;
   company?: string;
   email?: string;
@@ -307,6 +309,8 @@ export async function POST(request: Request): Promise<Response> {
         502,
       );
     }
+
+    await recordWebsiteContactSubmission(dataraTenant.id, lead.id, body.analytics);
 
     return jsonResponse(
       {

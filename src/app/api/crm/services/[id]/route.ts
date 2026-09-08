@@ -344,6 +344,7 @@ export async function PATCH(
       "Solicitar autorización",
       "Autorizar",
       "Servicio realizado",
+      "Finalizar grooming",
       "Devolver",
       "Completar",
       "Cancelar",
@@ -485,12 +486,15 @@ export async function PATCH(
           "Pendiente de autorización"
       ) ||
       (
-        action ===
-          "Servicio realizado" &&
+        (
+          action === "Servicio realizado" ||
+          action === "Finalizar grooming"
+        ) &&
         service.status ===
           "En proceso" &&
-        Boolean(
-          service.authorizedAt,
+        (
+          action === "Finalizar grooming" ||
+          Boolean(service.authorizedAt)
         )
       ) ||
       (
@@ -619,8 +623,10 @@ export async function PATCH(
           ) ?? null;
 
     if (
-      action ===
-        "Servicio realizado" &&
+      (
+        action === "Servicio realizado" ||
+        action === "Finalizar grooming"
+      ) &&
       !result
     ) {
       throw new ApiError(
@@ -1043,8 +1049,10 @@ export async function PATCH(
               ? "Pendiente de autorización"
               : action === "Autorizar"
                 ? "En proceso"
-                : action ===
-                    "Servicio realizado"
+                : (
+                    action === "Servicio realizado" ||
+                    action === "Finalizar grooming"
+                  )
                   ? "Pendiente de cierre"
                   : action ===
                       "Devolver"
@@ -1143,22 +1151,22 @@ export async function PATCH(
                 ) ?? null,
 
           workCompletedAt:
-            action ===
-              "Servicio realizado"
+            action === "Servicio realizado" ||
+            action === "Finalizar grooming"
               ? now
               : service
                   .workCompletedAt,
 
           workCompletedByClerkUserId:
-            action ===
-              "Servicio realizado"
+            action === "Servicio realizado" ||
+            action === "Finalizar grooming"
               ? userId
               : service
                   .workCompletedByClerkUserId,
 
           workCompletedByName:
-            action ===
-              "Servicio realizado"
+            action === "Servicio realizado" ||
+            action === "Finalizar grooming"
               ? updatedByName
               : service
                   .workCompletedByName,

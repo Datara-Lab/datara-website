@@ -9,6 +9,7 @@ import {
   desc,
   eq,
   inArray,
+  sql,
 } from "drizzle-orm";
 
 import {
@@ -469,6 +470,30 @@ export async function GET() {
           order.id,
       );
 
+    const paymentsByOrder =
+      orderIds.length > 0
+        ? await db.execute<{
+            salesOrderId: string;
+            amount: string;
+            currency: string;
+          }>(sql`
+            SELECT
+              p.sales_order_id AS "salesOrderId",
+              COALESCE(SUM(p.amount), 0)::text AS amount,
+              lower(p.currency) AS currency
+            FROM commercial_payments p
+            WHERE p.tenant_id = ${tenantId}
+              AND p.sales_order_id IN ${sql`(${sql.join(
+                orderIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`}
+              AND p.status = 'received'
+            GROUP BY
+              p.sales_order_id,
+              lower(p.currency)
+          `)
+        : { rows: [] };
+
     const items =
       orderIds.length > 0
         ? await db
@@ -561,8 +586,35 @@ export async function GET() {
 
       data:
         orders.map(
-          (order) => ({
-            ...order,
+          (order) => {
+            const paidAmount =
+              paymentsByOrder.rows
+                .filter(
+                  (payment) =>
+                    payment.salesOrderId ===
+                      order.id &&
+                    payment.currency ===
+                      order.currency.toLowerCase(),
+                )
+                .reduce(
+                  (
+                    total,
+                    payment,
+                  ) =>
+                    total +
+                    Number(
+                      payment.amount,
+                    ),
+                  0,
+                );
+
+            const totalAmount =
+              Number(
+                order.totalAmount,
+              );
+
+            return {
+              ...order,
 
             branchLabel:
               order.branchName
@@ -582,9 +634,15 @@ export async function GET() {
                   .discountAmount,
               ),
 
-            totalAmount:
-              Number(
-                order.totalAmount,
+            totalAmount,
+
+            paidAmount,
+
+            balance:
+              Math.max(
+                0,
+                totalAmount -
+                  paidAmount,
               ),
 
             deliveryReason:
@@ -622,7 +680,8 @@ export async function GET() {
                       ),
                   }),
                 ),
-          }),
+            };
+          },
         ),
 
       permissions,

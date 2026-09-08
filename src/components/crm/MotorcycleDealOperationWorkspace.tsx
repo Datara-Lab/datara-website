@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import Button from "@/components/ui/Button";
+import { useMobilityTerminology } from "@/hooks/useMobilityTerminology";
 
 type OperationData = {
   deal: {
@@ -160,6 +161,8 @@ export default function MotorcycleDealOperationWorkspace({
   dealId,
   onClose,
 }: Props) {
+  const mobility = useMobilityTerminology();
+
   const [activeTab, setActiveTab] =
     useState<(typeof tabs)[number][0]>("summary");
   const [data, setData] = useState<OperationData | null>(null);
@@ -541,7 +544,7 @@ export default function MotorcycleDealOperationWorkspace({
           <div className="flex items-start justify-between gap-5">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-                Operación de motocicleta
+                {mobility.operationLabel}
               </p>
               <h2 className="mt-2 text-2xl font-black text-slate-950">
                 {data?.deal.name ?? "Ciclo comercial"}

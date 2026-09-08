@@ -43,6 +43,7 @@ export async function createAuthorization(): Promise<AuthorizationEngine> {
     crm,
     analytics,
     cloud,
+    pos,
   ] = await Promise.all([
     canAccessProductWithContext(
       context,
@@ -56,6 +57,10 @@ export async function createAuthorization(): Promise<AuthorizationEngine> {
       context,
       "cloud",
     ),
+    canAccessProductWithContext(
+      context,
+      "pos",
+    ),
   ]);
 
   return new AuthorizationEngine(
@@ -64,6 +69,7 @@ export async function createAuthorization(): Promise<AuthorizationEngine> {
       crm,
       analytics,
       cloud,
+      pos,
     },
   );
 }

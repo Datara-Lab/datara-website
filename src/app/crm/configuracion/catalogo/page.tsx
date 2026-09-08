@@ -7,6 +7,8 @@ import {
 } from "react";
 
 import PageHeader from "@/components/shared/PageHeader";
+import TechnicalFieldsEditor from "@/components/crm/TechnicalFieldsEditor";
+import type { TechnicalFieldDefinition } from "@/lib/crm/technical-fields";
 
 type ProductType = {
   id: string;
@@ -16,6 +18,7 @@ type ProductType = {
   technicalProfile:
     | string
     | null;
+  technicalFields: TechnicalFieldDefinition[];
   active: boolean;
   sortOrder: number;
 };
@@ -404,8 +407,10 @@ export default function CatalogSettingsPage() {
                   productType.active,
 
                 sortOrder:
-                  productType
-                    .sortOrder,
+                  productType.sortOrder,
+
+                technicalFields:
+                  productType.technicalFields,
               }),
           },
         );
@@ -1070,7 +1075,7 @@ export default function CatalogSettingsPage() {
                           {productType
                             .technicalProfile && (
                             <span className="mt-1.5 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
-                              Perfil técnico: motocicleta
+                              Ficha técnica configurable
                             </span>
                           )}
                         </div>
@@ -1196,6 +1201,12 @@ export default function CatalogSettingsPage() {
                           </button>
                         </div>
                       </div>
+                    <TechnicalFieldsEditor
+                      fields={productType.technicalFields}
+                      disabled={savingId === `type:${productType.id}`}
+                      onChange={(technicalFields) => updateProductType(productType.id, { technicalFields })}
+                    />
+
                     </div>
 
                     <div className="my-6 border-t border-slate-200" />

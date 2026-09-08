@@ -20,16 +20,24 @@ import {
   baseCRMProductRoles,
 } from "@/config/crm/base-roles";
 
+import type {
+  CRMIndustryProfileId,
+} from "@/config/crm/industries/industry-profiles";
+
 export async function provisionCRMTemplateRoles(
   tenantId: string,
   tenantName: string,
   industry: string,
+  industryProfile?:
+    | CRMIndustryProfileId
+    | null,
 ) {
   const tenantConfig =
     getCRMIndustryConfig(
       industry,
       tenantId,
       tenantName,
+      industryProfile,
     );
 
   const templateRoles = [

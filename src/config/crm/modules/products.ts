@@ -1,6 +1,7 @@
 import type {
   CRMFieldConfig,
   CRMFieldOption,
+  CRMIndustryTemplateConfig,
   CRMModuleConfig,
   CRMTerminologyConfig,
 } from "@/types/crm-config";
@@ -28,10 +29,12 @@ export function createProductsModule(
   >,
 
   industryId?: string,
+
+  productTypes?: CRMIndustryTemplateConfig["defaultProductTypes"],
 ): CRMModuleConfig {
   const supportsMotorcycleDetails =
-    industryId ===
-    "motorcycle_dealership";
+    productTypes?.some((productType) => productType.technicalProfile === "motorcycle_model") ??
+    industryId === "motorcycle_dealership";
   const moduleTerminology =
     terminology?.modules.products;
 

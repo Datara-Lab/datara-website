@@ -89,6 +89,13 @@ export type CRMFieldConfig = {
       hasValue: true;
     };
 
+  /* Todas las condiciones deben cumplirse. */
+  visibleWhenAll?: Array<
+    | { fieldKey: string; equals: string | number | boolean | null }
+    | { fieldKey: string; in: Array<string | number | boolean | null> }
+    | { fieldKey: string; hasValue: true }
+  >;
+
   defaultValue?:
     | string
     | number
@@ -346,6 +353,17 @@ export type CRMProductTypeTemplateConfig = {
   technicalProfile?:
     | string
     | null;
+
+  technicalFields?: Array<{
+    key: string;
+    label: string;
+    type: "text" | "textarea" | "number" | "select";
+    required: boolean;
+    active: boolean;
+    sortOrder: number;
+    placeholder?: string;
+    options?: string[];
+  }>;
 
   sortOrder: number;
 

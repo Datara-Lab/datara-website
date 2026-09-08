@@ -145,6 +145,8 @@ export default async function AdministrationLayout({
         ? [
             ...administrationNavigation,
             ...cloudNavigation,
+            { id: "administration-websites", label: "Sitios Web", href: "/administracion/sitios-web" },
+            { id: "administration-website-analytics", label: "Analítica web", href: "/administracion/analitica-web" },
           ]
         : administrationNavigation;
 

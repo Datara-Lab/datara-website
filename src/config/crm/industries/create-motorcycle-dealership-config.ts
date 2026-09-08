@@ -39,8 +39,15 @@ import {
 } from "@/config/crm/modules/services";
 
 import type {
+  CRMFieldOption,
+  CRMTerminologyConfig,
   CRMTenantConfig,
 } from "@/types/crm-config";
+
+import {
+  resolveMobilityProfile,
+  type MobilityProfileId,
+} from "@/config/crm/industries/mobility-profiles";
 
 import {
   createCRMNavigation,
@@ -51,28 +58,53 @@ const industryTemplate =
     "motorcycle_dealership",
   );
 
-const navigation =
-  createCRMNavigation(
-    industryTemplate.terminology,
-  );
-
-const leadsTerminology =
-  industryTemplate.terminology
-    .modules.leads;
-
-const dealsTerminology =
-  industryTemplate.terminology
-    .modules.deals;
-
 type MotorcycleDealershipConfigOptions = {
   tenantId: string;
   tenantName: string;
+  profile?: MobilityProfileId | null;
 };
 
 export function createMotorcycleDealershipCRMConfig({
   tenantId,
   tenantName,
+  profile,
 }: MotorcycleDealershipConfigOptions): CRMTenantConfig {
+  const mobility = resolveMobilityProfile(profile);
+  const catalogs: Record<string, CRMFieldOption[]> = {
+    ...industryTemplate.defaultCatalogs,
+    "products.category": mobility.modelCategories.map((value) => ({ label: value, value })),
+    "deals.stage": mobility.stages,
+  };
+  const terminology: CRMTerminologyConfig = {
+    ...industryTemplate.terminology,
+    modules: {
+      ...industryTemplate.terminology.modules,
+      products: { ...industryTemplate.terminology.modules.products, description: mobility.catalogDescription },
+      leads: {
+        ...industryTemplate.terminology.modules.leads,
+        description: "Personas interesadas en adquirir " +
+          (mobility.vehicleSingular === "scooter" ? "un " : "una ") + mobility.vehicleSingular + ".",
+      },
+      inventory: { ...industryTemplate.terminology.modules.inventory, description: mobility.inventoryDescription },
+      services: { ...industryTemplate.terminology.modules.services, description: mobility.serviceDescription },
+    },
+    fields: {
+      ...industryTemplate.terminology.fields,
+      "leads.productInterest": mobility.productInterestLabel,
+    },
+  };
+  const productTypes = industryTemplate.defaultProductTypes.map((productType) => ({
+    ...productType,
+    categories: productType.key === "product"
+      ? mobility.accessoryCategories
+      : productType.key === "service"
+        ? mobility.serviceCategories
+        : productType.categories,
+  }));
+  const navigation = createCRMNavigation(terminology);
+  const leadsTerminology = terminology.modules.leads;
+  const dealsTerminology = terminology.modules.deals;
+
   return {
     tenantId,
     tenantName,
@@ -80,11 +112,9 @@ export function createMotorcycleDealershipCRMConfig({
   industry:
     industryTemplate.id,
 
-  terminology:
-    industryTemplate.terminology,
+  terminology,
 
-  catalogs:
-    industryTemplate.defaultCatalogs,
+  catalogs,
 
   defaultRoles:
     industryTemplate.defaultRoles,
@@ -125,9 +155,10 @@ export function createMotorcycleDealershipCRMConfig({
 
   modules: [
     createProductsModule(
-      industryTemplate.terminology,
-      industryTemplate.defaultCatalogs,
+      terminology,
+      catalogs,
       industryTemplate.id,
+      productTypes,
     ),
 
     createLeadsModule({
@@ -141,32 +172,27 @@ export function createMotorcycleDealershipCRMConfig({
         leadsTerminology?.description,
 
       productInterestLabel:
-        industryTemplate.terminology
-          .fields[
-            "leads.productInterest"
-          ],
+        mobility.productInterestLabel,
 
       productInterestDescription:
-        "Modelo por el que se interesó el prospecto.",
+        mobility.productInterestDescription,
 
       productInterestPlaceholder:
-        "Buscar un modelo",
+        mobility.productInterestPlaceholder,
 
       sourceOptions:
-        industryTemplate
-          .defaultCatalogs[
+        catalogs[
             "leads.source"
           ],
 
       statusOptions:
-        industryTemplate
-          .defaultCatalogs[
+        catalogs[
             "leads.status"
           ],
     }),
 
     createCustomersModule(
-      industryTemplate.terminology,
+      terminology,
     ),
 
     promotionsModule,
@@ -182,30 +208,27 @@ export function createMotorcycleDealershipCRMConfig({
         dealsTerminology?.description,
 
       itemSingularLabel:
-        industryTemplate.terminology
+        terminology
           .modules.products
           ?.singular,
 
       itemPluralLabel:
-        industryTemplate.terminology
+        terminology
           .modules.products
           ?.plural,
 
       stageOptions:
-        industryTemplate
-          .defaultCatalogs[
+        catalogs[
             "deals.stage"
           ],
 
       acquisitionChannelOptions:
-        industryTemplate
-          .defaultCatalogs[
+        catalogs[
             "deals.acquisitionChannel"
           ],
 
       paymentMethodOptions:
-        industryTemplate
-          .defaultCatalogs[
+        catalogs[
             "deals.paymentMethod"
           ],
     }),

@@ -50,7 +50,7 @@
     },
     {
       "type": "list-item",
-      "text": "Medición/analítica: ayudan a entender rendimiento y uso agregado. No habilitada en la V1."
+      "text": "Medición/analítica: medición propia de Datara en páginas comerciales, activada únicamente después de aceptar. Registra página, tipo de acción, origen agrupado y tipo de dispositivo; no incorpora nombres, correos, IP ni contenido de formularios."
     },
     {
       "type": "list-item",
@@ -79,10 +79,17 @@
           "Necesaria"
         ],
         [
-          "Sin proveedor habilitado en la V1",
-          "Inventario técnico pendiente de validación antes de producción",
-          "Medición",
-          "Inventario técnico pendiente de validación antes de producción",
+          "Datara",
+          "localStorage: datara.website.analytics.consent.v1",
+          "Recordar aceptación o rechazo de medición",
+          "Hasta cambiar la preferencia o borrar los datos del navegador",
+          "Preferencia"
+        ],
+        [
+          "Datara",
+          "sessionStorage: datara.website.analytics.session.v1",
+          "Agrupar actividad de una pestaña mediante identificador aleatorio, únicamente con aceptación",
+          "Hasta cerrar la pestaña; se renueva tras 30 minutos de inactividad",
           "Analítica"
         ]
       ]
@@ -94,7 +101,7 @@
     },
     {
       "type": "paragraph",
-      "text": "El usuario podrá gestionar cookies no necesarias mediante el panel de consentimiento cuando se habiliten. También puede utilizar controles del navegador, aunque bloquear cookies necesarias puede impedir iniciar sesión o utilizar funciones."
+      "text": "La opción “Preferencias de medición” al final de las páginas comerciales permite aceptar o rechazar la analítica en cualquier momento. Rechazar detiene el registro futuro y elimina el identificador de sesión de esa pestaña. Se respetan las señales Do Not Track y Global Privacy Control. El sitio y el formulario funcionan sin aceptar la medición."
     },
     {
       "type": "heading",
@@ -112,7 +119,7 @@
     },
     {
       "type": "paragraph",
-      "text": "La V1 utilizará únicamente cookies y tecnologías estrictamente necesarias para autenticación, seguridad, sesión, balanceo y procesamiento del pago. No se activarán cookies de publicidad, perfilamiento o analítica no esencial hasta implementar un inventario verificado y, cuando corresponda, un mecanismo de consentimiento."
+      "text": "La analítica propia no instala cookies publicitarias ni transmite eventos a proveedores de publicidad. Usa una preferencia local y, únicamente con aceptación, un identificador aleatorio de sesión. La información se almacena en la infraestructura de Datara, asociada a su organización interna y accesible mediante permisos de Administración."
     }
   ]
 }

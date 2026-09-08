@@ -8,6 +8,8 @@ import {
 import { AuthProvider } from "@/contexts/AuthContext";
 
 import "./globals.css";
+import WebsiteAnalytics from "@/components/WebsiteAnalytics";
+import { websiteUrl } from "@/lib/website/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +22,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(websiteUrl),
+  robots: { index: false, follow: false },
   title:
     "Datara Lab | Analytics, CRM & Cloud",
   description:
@@ -50,6 +54,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <WebsiteAnalytics />
           </AuthProvider>
         </ClerkProvider>
       </body>

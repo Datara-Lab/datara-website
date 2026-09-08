@@ -73,6 +73,16 @@ function shouldShowDetailField(
   field: CRMFieldConfig,
   record: CRMRecord,
 ): boolean {
+  if (field.visibleWhenAll) {
+    const matches = field.visibleWhenAll.every((condition) => {
+      const relatedValue = record[condition.fieldKey];
+      if ("hasValue" in condition) return relatedValue !== null && relatedValue !== undefined && relatedValue !== "";
+      if ("in" in condition) return condition.in.includes(relatedValue as string | number | boolean | null);
+      return relatedValue === condition.equals;
+    });
+    if (!matches) return false;
+  }
+
   if (!field.visibleWhen) {
     return true;
   }
@@ -431,7 +441,7 @@ function getRecordTitle(
   record?: CRMRecord | null,
 ): string {
   if (!record) {
-    return `Nueva ${module.singularLabel.toLowerCase()}`;
+    return `${module.singularLabel === "Tutor" ? "Nuevo" : "Nueva"} ${module.singularLabel.toLowerCase()}`;
   }
 
   const possibleTitleKeys = [
@@ -843,7 +853,7 @@ export default function CRMRecordDrawer({
 
   const modeLabel =
     mode === "create"
-      ? `Nueva ${module.singularLabel.toLowerCase()}`
+      ? `${module.singularLabel === "Tutor" ? "Nuevo" : "Nueva"} ${module.singularLabel.toLowerCase()}`
       : mode === "edit"
         ? `Editar ${module.singularLabel.toLowerCase()}`
         : `Detalle de ${module.singularLabel.toLowerCase()}`;

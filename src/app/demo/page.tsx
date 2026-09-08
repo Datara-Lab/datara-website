@@ -4,21 +4,29 @@ import {
 
 import Image from "next/image";
 
+import Link from "next/link";
+
 import {
     redirect,
 } from "next/navigation";
 
 import TrialActivationForm from "@/components/onboarding/TrialActivationForm";
 
+import {
+    resolveCRMIndustryProfile,
+} from "@/config/crm/industries/industry-profiles";
+
 type DemoPageProps = {
     searchParams: Promise<{
         industry?: string;
+        profile?: string;
     }>;
 };
 
 const allowedIndustries = [
     "motorcycle_dealership",
     "professional_services",
+    "veterinary",
 ] as const;
 
 export default async function DemoPage({
@@ -38,6 +46,7 @@ export default async function DemoPage({
 
     const {
         industry,
+        profile,
     } = await searchParams;
 
     if (
@@ -57,10 +66,20 @@ export default async function DemoPage({
         userId,
     } = await auth();
 
+    const industryProfile =
+        resolveCRMIndustryProfile(
+            industry,
+            profile,
+        );
+
     if (!userId) {
         const redirectUrl =
             encodeURIComponent(
-                `/demo?industry=${industry}`,
+                `/demo?industry=${industry}${
+                    industryProfile
+                        ? `&profile=${industryProfile}`
+                        : ""
+                }`,
             );
 
         redirect(
@@ -73,7 +92,7 @@ export default async function DemoPage({
             <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-6xl overflow-hidden rounded-[32px] border border-white/10 bg-white shadow-2xl lg:grid-cols-[1.1fr_0.9fr]">
                 <section className="flex flex-col justify-between bg-slate-950 p-8 text-white sm:p-12">
                     <div>
-                        <a
+                        <Link
                             href="/"
                             aria-label="Volver al inicio de Datara Lab"
                             className="inline-flex w-fit items-center gap-4 rounded-2xl border border-white/20 bg-white px-5 py-3 shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-cyan-400/30"
@@ -96,14 +115,14 @@ export default async function DemoPage({
                                     Explora • Experimenta • Innova
                                 </span>
                             </span>
-                        </a>
+                        </Link>
 
                         <p className="mt-14 text-sm font-bold uppercase tracking-[0.22em] text-cyan-300">
                             Demo gratuito
                         </p>
 
                         <h1 className="mt-4 max-w-xl text-4xl font-black tracking-tight sm:text-5xl">
-                            Conoce Datara CRM durante 14 días.
+                            Conoce Datara DBP durante 14 días.
                         </h1>
 
                         <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
@@ -155,13 +174,16 @@ export default async function DemoPage({
                         </h2>
 
                         <p className="mt-3 leading-7 text-slate-500">
-                            Captura los datos de tu empresa para preparar automáticamente Datara CRM.
+                            Captura los datos de tu empresa para preparar automáticamente Datara DBP.
                         </p>
 
                         <div className="mt-8">
                             <TrialActivationForm
                                 initialIndustry={
                                     industry
+                                }
+                                initialProfile={
+                                    industryProfile
                                 }
                             />
                         </div>

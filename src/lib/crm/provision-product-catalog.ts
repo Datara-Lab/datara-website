@@ -71,6 +71,11 @@ export async function provisionCRMProductCatalog(
             metadata: {
               provisionedFromTemplate:
                 template.id,
+
+              technicalFields:
+                productType
+                  .technicalFields ??
+                [],
             },
           }),
         ),
@@ -82,6 +87,94 @@ export async function provisionCRMProductCatalog(
         crmProductTypes.key,
       ],
     });
+
+    const storedTemplateTypes =
+    await db
+      .select()
+      .from(
+        crmProductTypes,
+      )
+      .where(
+        eq(
+          crmProductTypes
+            .tenantId,
+          tenantId,
+        ),
+      );
+
+  const now =
+    new Date();
+
+  for (
+    const productType of
+    template.defaultProductTypes
+  ) {
+    const storedType =
+      storedTemplateTypes.find(
+        (item) =>
+          item.key ===
+          productType.key,
+      );
+
+    const storedMetadata =
+      storedType?.metadata &&
+      typeof storedType.metadata ===
+        "object" &&
+      !Array.isArray(
+        storedType.metadata,
+      )
+        ? storedType.metadata
+        : {};
+
+    if (
+      !storedType ||
+      storedMetadata
+        .provisionedFromTemplate !==
+        template.id
+    ) {
+      continue;
+    }
+
+    await db
+      .update(
+        crmProductTypes,
+      )
+      .set({
+        technicalProfile:
+          productType
+            .technicalProfile ??
+          null,
+
+        inventoryTracked:
+          productType
+            .inventoryTracked,
+
+        sortOrder:
+          productType
+            .sortOrder,
+
+        metadata: {
+          ...storedMetadata,
+
+          provisionedFromTemplate:
+            template.id,
+
+          technicalFields:
+            productType
+              .technicalFields ??
+            [],
+        },
+
+        updatedAt:
+          now,
+      })
+      .where(
+        eq(
+          crmProductTypes.id,
+          storedType.id,
+        ),
+      );
+  }
 
   const storedTypes =
     await db

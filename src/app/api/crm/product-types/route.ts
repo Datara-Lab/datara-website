@@ -34,6 +34,11 @@ import {
 } from "@/db/schema";
 
 import {
+  getTechnicalFieldsFromMetadata,
+  sanitizeTechnicalFields,
+} from "@/lib/crm/technical-fields";
+
+import {
   CRMPermissionError,
   type CRMModulePermission,
   requireCRMModulePermission,
@@ -48,6 +53,7 @@ type ProductTypePayload = {
   inventoryTracked?: unknown;
   active?: unknown;
   sortOrder?: unknown;
+  technicalFields?: unknown;
 };
 
 class ApiError extends Error {
@@ -198,8 +204,13 @@ function serializeProductType(
         .inventoryTracked,
 
     technicalProfile:
-      productType
-        .technicalProfile,
+      productType.technicalProfile,
+
+    technicalFields:
+      getTechnicalFieldsFromMetadata(
+        productType.metadata,
+        productType.technicalProfile,
+      ),
 
     active:
       productType.active,
@@ -509,8 +520,10 @@ export async function PATCH(
             crmProductTypes.active,
 
           inventoryTracked:
-            crmProductTypes
-              .inventoryTracked,
+            crmProductTypes.inventoryTracked,
+
+          metadata:
+            crmProductTypes.metadata,
         })
         .from(
           crmProductTypes,
@@ -886,6 +899,11 @@ export async function PATCH(
           name,
           active,
           inventoryTracked,
+
+          metadata: {
+            ...existing.metadata,
+            technicalFields: sanitizeTechnicalFields(payload.technicalFields),
+          },
 
           sortOrder:
             getSortOrder(

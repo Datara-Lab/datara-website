@@ -84,7 +84,8 @@ function getProductAccess(
     ): product is ProductAccess =>
       product === "crm" ||
       product === "analytics" ||
-      product === "cloud",
+      product === "cloud" ||
+      product === "pos",
   );
 }
 

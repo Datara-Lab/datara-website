@@ -1,0 +1,1 @@
+ALTER TABLE "employee_profiles" ADD COLUMN "photo_size_bytes" integer DEFAULT 0 NOT NULL;

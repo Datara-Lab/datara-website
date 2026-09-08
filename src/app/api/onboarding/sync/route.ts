@@ -6,6 +6,9 @@ import {
 import {
   and,
   eq,
+  gt,
+  isNull,
+  or,
 } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -15,12 +18,18 @@ import {
   memberProductRoles,
   roles,
   subscriptions,
+  tenantBranches,
   tenantMembers,
+  tenantModuleEntitlements,
   tenantProducts,
   tenants,
   trialRedemptions,
   workspaceInvitations,
 } from "@/db/schema";
+
+import {
+  ensurePersonForMember,
+} from "@/lib/identity/ensure-person-for-member";
 
 import {
   provisionCRMTemplateRoles,
@@ -38,10 +47,15 @@ import {
   getDataraProvisioningMetadata,
 } from "@/lib/onboarding/provisioning-metadata";
 
+import {
+  resolveCRMIndustryProfile,
+} from "@/config/crm/industries/industry-profiles";
+
 const supportedProducts = [
   "crm",
   "analytics",
   "cloud",
+  "pos",
 ] as const;
 
 type ProductKey =
@@ -164,6 +178,20 @@ function getLocalRoleKey(
     default:
       return "user";
   }
+}
+
+function getIndustryProfile(
+  industry: string | null,
+  metadata: unknown,
+) {
+  if (typeof metadata !== "object" || metadata === null) {
+    return null;
+  }
+
+  return resolveCRMIndustryProfile(
+    industry ?? "",
+    (metadata as { industryProfile?: unknown }).industryProfile,
+  );
 }
 
 export async function POST(
@@ -295,6 +323,12 @@ export async function POST(
         organization.publicMetadata,
       );
 
+    const organizationIndustryProfile =
+      getIndustryProfile(
+        organizationIndustry,
+        organization.publicMetadata,
+      );
+
     const provisioningMetadata =
       getDataraProvisioningMetadata(
         organization.publicMetadata,
@@ -386,6 +420,29 @@ export async function POST(
     }
 
     await db
+      .insert(tenantBranches)
+      .values({
+        tenantId: tenant.id,
+        name: "Sucursal principal",
+        code: "MATRIZ",
+        folioPrefix: "MAT",
+        timezone: "America/Mexico_City",
+        address: {},
+        active: true,
+        metadata: {
+          primary: true,
+          provisionedBy: "onboarding",
+        },
+        updatedAt: now,
+      })
+      .onConflictDoNothing({
+        target: [
+          tenantBranches.tenantId,
+          tenantBranches.code,
+        ],
+      });
+
+    await db
       .insert(roles)
       .values(
         defaultRoles.map((role) => ({
@@ -415,6 +472,7 @@ export async function POST(
         tenant.name,
         tenant.industry ??
           "other",
+        organizationIndustryProfile,
       );
 
       if (tenant.industry) {
@@ -575,6 +633,25 @@ export async function POST(
       );
     }
 
+    await ensurePersonForMember({
+      tenantId:
+        tenant.id,
+
+      memberId:
+        member.id,
+
+      email:
+        primaryEmail.emailAddress,
+
+      firstName:
+        user.firstName ??
+        null,
+
+      lastName:
+        user.lastName ??
+        null,
+    });
+
     const normalizedMemberEmail =
       primaryEmail.emailAddress
         .trim()
@@ -664,6 +741,63 @@ export async function POST(
         });
     }
 
+    const [activePOSLicense] =
+      await db
+        .select({
+          moduleId:
+            tenantModuleEntitlements
+              .moduleId,
+        })
+        .from(
+          tenantModuleEntitlements,
+        )
+        .where(
+          and(
+            eq(
+              tenantModuleEntitlements
+                .tenantId,
+              tenant.id,
+            ),
+            eq(
+              tenantModuleEntitlements
+                .product,
+              "pos",
+            ),
+            eq(
+              tenantModuleEntitlements
+                .moduleId,
+              "pos-terminal",
+            ),
+            eq(
+              tenantModuleEntitlements
+                .enabled,
+              true,
+            ),
+            or(
+              isNull(
+                tenantModuleEntitlements
+                  .expiresAt,
+              ),
+              gt(
+                tenantModuleEntitlements
+                  .expiresAt,
+                now,
+              ),
+            ),
+          ),
+        )
+        .limit(1);
+
+    const synchronizedProducts =
+      Array.from(
+        new Set<ProductKey>([
+          ...organizationProducts,
+          ...(activePOSLicense
+            ? (["pos"] as const)
+            : []),
+        ]),
+      );
+
     await db
       .update(tenantProducts)
       .set({
@@ -678,12 +812,12 @@ export async function POST(
       );
 
     if (
-      organizationProducts.length > 0
+      synchronizedProducts.length > 0
     ) {
       await db
         .insert(tenantProducts)
         .values(
-          organizationProducts.map(
+          synchronizedProducts.map(
             (product) => ({
               tenantId: tenant.id,
               product,

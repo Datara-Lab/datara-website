@@ -1,7 +1,8 @@
 export type ProductAccess =
   | "analytics"
   | "crm"
-  | "cloud";
+  | "cloud"
+  | "pos";
 
 export type UserRole =
   | "owner"

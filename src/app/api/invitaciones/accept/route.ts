@@ -16,6 +16,10 @@ import {
   workspaceInvitations,
 } from "@/db/schema";
 
+import {
+  ensurePersonForMember,
+} from "@/lib/identity/ensure-person-for-member";
+
 export const dynamic = "force-dynamic";
 
 type AcceptInvitationRequest = {
@@ -277,6 +281,27 @@ export async function POST(
         500,
       );
     }
+
+    await ensurePersonForMember({
+      tenantId:
+        invitation.tenantId,
+
+      memberId:
+        member.id,
+
+      email:
+        invitationEmail,
+
+      firstName:
+        invitation.firstName ??
+        user.firstName ??
+        null,
+
+      lastName:
+        invitation.lastName ??
+        user.lastName ??
+        null,
+    });
 
     /*
      * La invitación define el acceso completo del usuario.

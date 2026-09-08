@@ -11,6 +11,7 @@ import MetricCard from "@/components/shared/MetricCard";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionCard from "@/components/shared/SectionCard";
 import { useAuth } from "@/contexts/AuthContext";
+import PetsAnalytics from "@/components/crm/pets/PetsAnalytics";
 
 import {
   getAnalyticsComparisonPeriod,
@@ -378,6 +379,12 @@ function formatComparisonChange(
 }
 
 export default function CRMAnalyticsPage() {
+  const { user } = useAuth();
+  if (!user?.industry) return <p className="p-6 text-sm text-slate-500">Cargando indicadores…</p>;
+  return user.industry === "veterinary" ? <PetsAnalytics key={user.tenantId} /> : <CommercialAnalytics />;
+}
+
+function CommercialAnalytics() {
   const { user } =
     useAuth();
 

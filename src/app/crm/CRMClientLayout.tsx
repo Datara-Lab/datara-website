@@ -14,6 +14,7 @@ import AccessPreparationScreen, {
 } from "@/components/auth/AccessPreparationScreen";
 import AppShell from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
+import ActiveBranchSelector from "@/components/crm/ActiveBranchSelector";
 import CRMHeaderActions from "@/components/crm/CRMHeaderActions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCRMConfig } from "@/hooks/useCRMConfig";
@@ -539,7 +540,7 @@ export default function CRMClientLayout({
             navigation={appNavigation}
             headerContent={
                 <div className="flex items-center gap-2">
-                    <CRMHeaderActions />
+                    <div className="flex flex-wrap items-center gap-3"><ActiveBranchSelector /><CRMHeaderActions /></div>
 
                     {trial ? (
                         <div className="flex items-center gap-2">

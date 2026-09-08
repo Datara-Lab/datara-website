@@ -17,6 +17,20 @@ import {
 
 import Button from "@/components/ui/Button";
 
+import {
+    professionalServiceProfiles,
+    professionalServiceProfileIds,
+} from "@/config/crm/industries/professional-service-profiles";
+
+import {
+    mobilityProfiles,
+    mobilityProfileIds,
+} from "@/config/crm/industries/mobility-profiles";
+
+import type {
+    CRMIndustryProfileId,
+} from "@/config/crm/industries/industry-profiles";
+
 type TrialResponse = {
     success: boolean;
 
@@ -24,6 +38,7 @@ type TrialResponse = {
         organizationId: string;
         companyName: string;
         industry: string;
+        industryProfile?: string | null;
         trialStartsAt: string;
         trialEndsAt: string;
     };
@@ -38,10 +53,12 @@ type SynchronizationResponse = {
 
 type TrialActivationFormProps = {
     initialIndustry: string;
+    initialProfile: CRMIndustryProfileId | null;
 };
 
 export default function TrialActivationForm({
     initialIndustry,
+    initialProfile,
 }: TrialActivationFormProps) {
     const router =
         useRouter();
@@ -87,11 +104,15 @@ export default function TrialActivationForm({
         setTaxId,
     ] = useState("");
 
+    const industry =
+        initialIndustry;
+
     const [
-        industry,
-        setIndustry,
-    ] = useState(
-        initialIndustry,
+        industryProfile,
+        setIndustryProfile,
+    ] = useState<CRMIndustryProfileId>(
+        initialProfile ??
+        (industry === "motorcycle_dealership" ? "motorcycle" : "general"),
     );
 
     const [
@@ -137,6 +158,9 @@ export default function TrialActivationForm({
 
                             taxId,
                             industry,
+
+                            industryProfile:
+                                industryProfile,
                         }),
                     },
                 );
@@ -228,6 +252,31 @@ export default function TrialActivationForm({
                 handleSubmit
             }
         >
+            {(industry === "professional_services" ||
+                industry === "motorcycle_dealership") && (
+                <div>
+                    <label htmlFor="industryProfile" className="text-sm font-bold text-slate-800">
+                        {industry === "motorcycle_dealership" ? "Perfil de movilidad" : "Perfil de servicios"}
+                    </label>
+                    <select id="industryProfile" name="industryProfile" value={industryProfile} disabled={isSubmitting}
+                        onChange={(event) => setIndustryProfile(event.target.value as CRMIndustryProfileId)}
+                        className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100">
+                        {(industry === "motorcycle_dealership" ? mobilityProfileIds : professionalServiceProfileIds).map((profileId) => (
+                            <option key={profileId} value={profileId}>
+                                {industry === "motorcycle_dealership"
+                                    ? mobilityProfiles[profileId as keyof typeof mobilityProfiles].name
+                                    : professionalServiceProfiles[profileId as keyof typeof professionalServiceProfiles].name}
+                            </option>
+                        ))}
+                    </select>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                        {industry === "motorcycle_dealership"
+                            ? mobilityProfiles[industryProfile as keyof typeof mobilityProfiles].shortDescription
+                            : professionalServiceProfiles[industryProfile as keyof typeof professionalServiceProfiles].shortDescription}
+                    </p>
+                </div>
+            )}
+
             <div>
                 <label
                     htmlFor="ownerEmail"
@@ -386,7 +435,7 @@ export default function TrialActivationForm({
                 }
             >
                 {isSubmitting
-                    ? "Preparando tu CRM..."
+                    ? "Preparando Datara DBP..."
                     : "Activar demo de 14 días"}
             </Button>
 

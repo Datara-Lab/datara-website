@@ -48,3 +48,19 @@ next-env.d.ts
 .wrangler-*
 .dev.vars*
 !.dev.vars.example
+
+# Datara temporary working files
+/datara-*.txt
+
+# Local / one-off operational scripts
+/scripts/activate-development-pets-pos-trial.ts
+/scripts/check-active-pet-stays.ts
+/scripts/check-pet-branch-policies.ts
+/scripts/check-pet-stay-products.ts
+/scripts/debug-duna-checkout.ts
+/scripts/distribute-demo-commercial-operations.ts
+/scripts/fix-test-pet-package-billing.ts
+/scripts/reactivate-development-invoice-control.ts
+/scripts/test-datara-fiscal-credits-runtime.ts
+/scripts/test-datara-fiscal-pdf.ts
+/scripts/verify-development-pos-smoke-test.ts

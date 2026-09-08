@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    useCallback,
     useEffect,
     useMemo,
     useState,
@@ -563,7 +562,15 @@ export default function AutomationRuleEditor({
 }: EditorProps) {
     const {
         getModule,
+        industry,
     } = useCRMConfig();
+
+    const visibleEntityOptions = entityOptions.filter(option => industry !== "veterinary" || ["customer", "activity", "sales_order"].includes(option.value) || rule?.entityType === option.value).map(option => ({
+        ...option,
+        label: industry === "veterinary"
+            ? ({ customer: "Tutores", activity: "Agenda y tareas", sales_order: "Órdenes de venta" } as Record<string,string>)[option.value] ?? `${option.label} (regla heredada)`
+            : option.label,
+    }));
 
     const [
         name,
@@ -593,7 +600,7 @@ export default function AutomationRuleEditor({
         AutomationEntity
     >(
         rule?.entityType ??
-        "lead",
+        (industry === "veterinary" ? "customer" : "lead"),
     );
 
     const [
@@ -902,10 +909,9 @@ export default function AutomationRuleEditor({
                     "datetime",
         );
 
-    const getFieldOptions =
-        useCallback((
+    function getFieldOptions(
             fieldKey: string,
-        ) => {
+        ) {
         const field =
             availableFields.find(
                 (
@@ -958,10 +964,9 @@ export default function AutomationRuleEditor({
         }
 
         return [];
-        }, [
-            availableFields,
-            entityType,
-        ]);
+        }
+
+    const initialStatusValue = getFieldOptions("status")[0]?.value ?? "";
 
     useEffect(() => {
         if (
@@ -970,11 +975,6 @@ export default function AutomationRuleEditor({
         ) {
             return;
         }
-
-        const statusOptions =
-            getFieldOptions(
-                "status",
-            );
 
         let cancelled = false;
 
@@ -1008,9 +1008,7 @@ export default function AutomationRuleEditor({
                             "equals",
 
                         value:
-                            statusOptions[0]
-                                ?.value ??
-                            "",
+                            initialStatusValue,
                     },
                 ];
             });
@@ -1020,7 +1018,7 @@ export default function AutomationRuleEditor({
             cancelled = true;
         };
     }, [
-        getFieldOptions,
+        initialStatusValue,
         triggerType,
     ]);
 
@@ -1307,7 +1305,7 @@ export default function AutomationRuleEditor({
                                         inputClass
                                     }
                                 >
-                                    {entityOptions.map(
+                                    {visibleEntityOptions.map(
                                         (
                                             option,
                                         ) => (

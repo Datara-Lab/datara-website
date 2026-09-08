@@ -10,7 +10,7 @@
   "keep_vars": true,
   "vars": {
     "DATARA_ENVIRONMENT": "demo",
-    "DATARA_EXPECTED_DATABASE_HOST": "ep-tiny-bread-auvm2zu4-pooler.c-10.us-east-1.aws.neon.tech",
+    "DATARA_EXPECTED_DATABASE_HOST": "ep-super-recipe-avxqk7j7-pooler.c-11.us-east-1.aws.neon.tech",
     "DATARA_PUBLIC_URL": "https://demo.datara-lab.com",
     "NEXT_PUBLIC_DATARA_ENVIRONMENT": "demo"
   },
@@ -59,7 +59,7 @@
   },
   "triggers": {
     "crons": [
-      "*/5 * * * *"
+      "*/10 * * * *"
     ]
   },
   "services": [

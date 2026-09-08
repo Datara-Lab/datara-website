@@ -38,7 +38,7 @@ export class PlatformAuthorizationError
     }
 }
 
-function getInternalOrganizationId():
+export function getInternalOrganizationId():
     string | undefined {
     const processValue =
         process.env

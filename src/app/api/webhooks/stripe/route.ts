@@ -1,3 +1,4 @@
+import { handleServiceStripeEvent } from "@/lib/commercial/service-checkout";
 import {
     clerkClient,
 } from "@clerk/nextjs/server";
@@ -2109,6 +2110,9 @@ export async function POST(
     }
 
     try {
+        if (await handleServiceStripeEvent(stripe, event)) {
+            return NextResponse.json({ success: true, data: { received: true, eventId: event.id } });
+        }
         switch (event.type) {
             case "checkout.session.completed":
             case "checkout.session.async_payment_succeeded":

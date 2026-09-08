@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import {
   and,
   asc,
@@ -41,7 +42,7 @@ export type CRMBranchAccessContext = {
     | null;
 };
 
-export async function getCRMBranchAccess(
+async function getUnscopedCRMBranchAccess(
   tenantId: string,
   clerkUserId: string,
 ): Promise<CRMBranchAccessContext> {
@@ -379,4 +380,12 @@ export async function validateCRMBranchId(
   }
 
   return branch.id;
+}
+export async function getCRMBranchAccess(tenantId: string, clerkUserId: string, ignoreActiveSelection = false): Promise<CRMBranchAccessContext> {
+  const access = await getUnscopedCRMBranchAccess(tenantId, clerkUserId);
+  if (ignoreActiveSelection) return access;
+  const selected = (await cookies()).get(`datara_branch_${tenantId}_${clerkUserId}`)?.value ?? access.primaryBranchId;
+  if (!selected) return access;
+  const branchId = await validateCRMBranchId(tenantId, access, selected);
+  return { ...access, primaryBranchId: branchId, allBranches: false, branchIds: [branchId] };
 }

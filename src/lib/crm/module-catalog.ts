@@ -19,6 +19,7 @@ export const CRM_SALES_MODULE_IDS = [
     "quotes",
     "sales-orders",
     "promotions",
+    "embedded-checkout",
 ] as const;
 
 export const CRM_INVENTORY_MODULE_IDS = [
@@ -27,6 +28,65 @@ export const CRM_INVENTORY_MODULE_IDS = [
 
 export const CRM_SERVICES_MODULE_IDS = [
     "services",
+    "embedded-checkout",
+] as const;
+
+export const CRM_PET_VETERINARY_MODULE_IDS = [
+    "pet-veterinary",
+    "contacts",
+    "products",
+    "activities",
+    "services",
+    "documents",
+    "embedded-checkout",
+    "qr-codes",
+] as const;
+
+export const CRM_PET_GROOMING_MODULE_IDS = [
+    "pet-grooming",
+    "contacts",
+    "products",
+    "activities",
+    "services",
+    "embedded-checkout",
+    "qr-codes",
+] as const;
+
+export const CRM_PET_STAYS_MODULE_IDS = [
+    "pet-stays",
+    "contacts",
+    "products",
+    "activities",
+    "services",
+    "embedded-checkout",
+    "qr-codes",
+] as const;
+
+export const CRM_PET_STORE_MODULE_IDS = [
+    "pet-store",
+    "contacts",
+    "products",
+    "inventory",
+    "promotions",
+    "sales-orders",
+    "embedded-checkout",
+    "qr-codes",
+] as const;
+
+export const CRM_PET_INTEGRATED_MODULE_IDS = [
+    ...CRM_PET_VETERINARY_MODULE_IDS,
+    ...CRM_PET_GROOMING_MODULE_IDS,
+    ...CRM_PET_STAYS_MODULE_IDS,
+    ...CRM_PET_STORE_MODULE_IDS,
+    "leads",
+    "deals",
+    "quotes",
+    "automations",
+    "crm-analytics",
+] as const;
+
+export const CRM_QR_CODE_MODULE_IDS = [
+    "qr-codes",
 ] as const;
 
 export const CRM_CAMPAIGNS_MODULE_IDS = [
@@ -78,6 +138,48 @@ export const CRM_MODULE_PACKAGES = {
             "Órdenes de taller, autorizaciones y trazabilidad del servicio.",
         moduleIds:
             CRM_SERVICES_MODULE_IDS,
+    },
+
+    "pet-veterinary": {
+        key: "pet-veterinary",
+        name: "Veterinaria",
+        description: "Expedientes, consultas, vacunas, tratamientos y seguimiento clínico.",
+        moduleIds: CRM_PET_VETERINARY_MODULE_IDS,
+    },
+
+    "pet-grooming": {
+        key: "pet-grooming",
+        name: "Grooming y estética",
+        description: "Agenda, preferencias, paquetes y servicios recurrentes de estética.",
+        moduleIds: CRM_PET_GROOMING_MODULE_IDS,
+    },
+
+    "pet-stays": {
+        key: "pet-stays",
+        name: "Guardería y pensión",
+        description: "Reservaciones, check-in/out y paquetes de días o noches.",
+        moduleIds: CRM_PET_STAYS_MODULE_IDS,
+    },
+
+    "pet-store": {
+        key: "pet-store",
+        name: "Tienda de mascotas",
+        description: "Catálogo, inventario, ventas, promociones y facturación.",
+        moduleIds: CRM_PET_STORE_MODULE_IDS,
+    },
+
+    "pet-integrated": {
+        key: "pet-integrated",
+        name: "Centro integral de mascotas",
+        description: "Veterinaria, grooming, guardería, pensión y tienda en una sola operación.",
+        moduleIds: CRM_PET_INTEGRATED_MODULE_IDS,
+    },
+
+    "qr-codes": {
+        key: "qr-codes",
+        name: "Códigos QR",
+        description: "Identificación segura, lectura de mostrador y trazabilidad para entidades operativas.",
+        moduleIds: CRM_QR_CODE_MODULE_IDS,
     },
 
     campaigns: {

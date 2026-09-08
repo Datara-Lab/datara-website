@@ -5,6 +5,10 @@ import {
 } from "react";
 
 import {
+  useOrganization,
+} from "@clerk/nextjs";
+
+import {
   useAuth,
 } from "@/contexts/AuthContext";
 
@@ -14,10 +18,45 @@ import {
   getCRMNavigationConfig,
 } from "@/lib/crm-config";
 
+import {
+  resolveCRMIndustryProfile,
+} from "@/config/crm/industries/industry-profiles";
+
 export function useCRMConfig() {
   const {
     user,
   } = useAuth();
+
+  const {
+    organization,
+  } = useOrganization();
+
+  const industryProfile =
+    useMemo(() => {
+      const metadata =
+        organization
+          ?.publicMetadata;
+
+      if (
+        typeof metadata !==
+          "object" ||
+        metadata === null
+      ) {
+        return null;
+      }
+
+      const value =
+        (
+          metadata as {
+            industryProfile?: unknown;
+          }
+        ).industryProfile;
+
+      return resolveCRMIndustryProfile(
+        user?.industry ?? "",
+        value,
+      );
+    }, [organization, user?.industry]);
 
   const tenantConfig =
     useMemo(() => {
@@ -32,9 +71,11 @@ export function useCRMConfig() {
         user.industry,
         user.tenantId,
         user.tenantName,
+        industryProfile,
       );
     }, [
       user,
+      industryProfile,
     ]);
 
   const navigation =
@@ -67,6 +108,8 @@ export function useCRMConfig() {
     industry:
       user?.industry ??
       null,
+
+    industryProfile,
 
     tenantConfig,
     navigation,

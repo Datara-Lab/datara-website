@@ -85,6 +85,8 @@ type SalesOrder = {
   baseAmount: number;
   discountAmount: number;
   totalAmount: number;
+  paidAmount: number;
+  balance: number;
 
   paymentMethod:
   | string
@@ -378,6 +380,11 @@ export default function SalesOrdersPage() {
   ] = useState("");
 
   const [
+    paymentFilter,
+    setPaymentFilter,
+  ] = useState("");
+
+  const [
     search,
     setSearch,
   ] = useState("");
@@ -404,6 +411,26 @@ export default function SalesOrdersPage() {
     setError,
   ] = useState<string | null>(
     null,
+  );
+
+  useEffect(
+    () => {
+      const searchParams =
+        new URLSearchParams(
+          window.location.search,
+        );
+
+      if (
+        searchParams.get(
+          "payment",
+        ) === "unpaid"
+      ) {
+        setPaymentFilter(
+          "unpaid",
+        );
+      }
+    },
+    [],
   );
 
   const loadWorkspace =
@@ -797,6 +824,22 @@ export default function SalesOrdersPage() {
               return false;
             }
 
+            if (
+              paymentFilter ===
+                "unpaid" &&
+              (
+                ![
+                  "Confirmada",
+                  "Entregada",
+                ].includes(
+                  order.status,
+                ) ||
+                order.balance <= 0
+              )
+            ) {
+              return false;
+            }
+
             if (!normalizedSearch) {
               return true;
             }
@@ -822,6 +865,7 @@ export default function SalesOrdersPage() {
       },
       [
         orders,
+        paymentFilter,
         search,
         statusFilter,
       ],
@@ -875,6 +919,25 @@ export default function SalesOrdersPage() {
         orders,
       ],
     );
+
+  function clearPaymentFilter() {
+    setPaymentFilter("");
+
+    const url =
+      new URL(
+        window.location.href,
+      );
+
+    url.searchParams.delete(
+      "payment",
+    );
+
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }
 
   async function handleCreate(
     event:
@@ -1169,6 +1232,31 @@ export default function SalesOrdersPage() {
             ),
           )}
         </section>
+
+        {paymentFilter ===
+          "unpaid" && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-cyan-900">
+                Mostrando órdenes con saldo pendiente
+              </p>
+
+              <p className="text-xs text-cyan-700">
+                Confirmadas o entregadas con saldo mayor a $0.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="rounded-xl border border-cyan-300 bg-white px-4 py-2 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-100"
+              onClick={
+                clearPaymentFilter
+              }
+            >
+              Ver todas las órdenes
+            </button>
+          </div>
+        )}
 
         <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
           <header className="border-b border-slate-200 bg-slate-50 px-5 py-5 sm:px-6">

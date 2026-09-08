@@ -18,15 +18,17 @@ export const dynamic = "force-dynamic";
 type Product =
   | "crm"
   | "analytics"
-  | "cloud";
+  | "cloud"
+  | "pos";
 
 const productNames: Record<
   Product,
   string
 > = {
-  crm: "Datara CRM",
+  crm: "Datara DBP",
   analytics: "Datara Analytics",
   cloud: "Datara Cloud",
+  pos: "Datara POS",
 };
 
 function createErrorResponse(

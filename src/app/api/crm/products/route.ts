@@ -15,6 +15,8 @@ import {
   tenants,
 } from "@/db/schema";
 
+import { getTechnicalFieldsFromMetadata } from "@/lib/crm/technical-fields";
+
 import {
   CRMPermissionError,
   type CRMModulePermission,
@@ -31,6 +33,7 @@ import {
 export const dynamic = "force-dynamic";
 
 type ProductFormPayload = {
+  [key: string]: unknown;
   id?: unknown;
 
   name?: unknown;
@@ -152,6 +155,8 @@ type StoredProductType = {
     | string
     | null;
   active: boolean;
+  metadata: Record<string, unknown>;
+  technicalFields?: ReturnType<typeof getTechnicalFieldsFromMetadata>;
 };
 
 function getLegacyItemType(
@@ -226,6 +231,8 @@ async function getProductType(
             .technicalProfile,
         active:
           crmProductTypes.active,
+        metadata:
+          crmProductTypes.metadata,
       })
       .from(crmProductTypes)
       .where(
@@ -246,18 +253,20 @@ async function getProductType(
     );
   }
 
-  if (
-    !productType.active &&
-    productType.id !==
-      currentProductTypeId
-  ) {
+  if (!productType.active && productType.id !== currentProductTypeId) {
     throw new ApiError(
       "El tipo seleccionado está inactivo.",
       400,
     );
   }
 
-  return productType;
+  return {
+    ...productType,
+    technicalFields: getTechnicalFieldsFromMetadata(
+      productType.metadata,
+      productType.technicalProfile,
+    ),
+  };
 }
 
 async function validateProductCategory(
@@ -552,9 +561,19 @@ function mapProductValues(
           ) ?? null,
 
         warranty:
-          getOptionalString(
-            values.warranty,
-          ) ?? null,
+          getOptionalString(values.warranty) ?? null,
+
+        ...Object.fromEntries(
+          (productType.technicalFields ??
+            getTechnicalFieldsFromMetadata(
+              productType.metadata,
+              productType.technicalProfile,
+            )
+          ).map((field) => [
+            field.key,
+            values[`technical__${field.key}`] ?? currentTechnical[field.key] ?? null,
+          ]),
+        ),
       },
     },
   };
@@ -827,9 +846,14 @@ function serializeProduct(
       ),
 
     warranty:
-      technicalString(
-        "warranty",
-      ),
+      technicalString("warranty"),
+
+    ...Object.fromEntries(
+      Object.entries(technicalSpecifications).map(([key, value]) => [
+        `technical__${key}`,
+        value ?? "",
+      ]),
+    ),
 
     unitPrice: Number(
       product.unitPrice,
@@ -932,8 +956,10 @@ export async function GET(
             crmProductTypes
               .technicalProfile,
           active:
-            crmProductTypes.active,
-        })
+          crmProductTypes.active,
+        metadata:
+          crmProductTypes.metadata,
+      })
         .from(crmProductTypes)
         .where(
           eq(

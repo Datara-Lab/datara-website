@@ -1,7 +1,8 @@
 export type DataraProduct =
   | "crm"
   | "analytics"
-  | "cloud";
+  | "cloud"
+  | "pos";
 
 export type PermissionAction =
   | "view"
