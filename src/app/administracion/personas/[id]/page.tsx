@@ -176,6 +176,11 @@ export default function PersonPage({
     ] = useState("");
 
     const [
+        professionalBio,
+        setProfessionalBio,
+    ] = useState("");
+
+    const [
         personType,
         setPersonType,
     ] = useState("employee");
@@ -364,6 +369,11 @@ export default function PersonPage({
 
                     setHiredAt(
                         loadedPerson.hiredAt ??
+                            "",
+                    );
+
+                    setProfessionalBio(
+                        loadedPerson.professionalBio ??
                             "",
                     );
 
@@ -636,8 +646,7 @@ export default function PersonPage({
                                 linkedInUrl:
                                     person.linkedInUrl,
 
-                                professionalBio:
-                                    person.professionalBio,
+                                professionalBio,
 
                                 hiredAt:
                                     person.hiredAt,
@@ -873,8 +882,7 @@ export default function PersonPage({
                                 linkedInUrl:
                                     person.linkedInUrl,
 
-                                professionalBio:
-                                    person.professionalBio,
+                                professionalBio,
 
                                 hiredAt,
 
@@ -1831,6 +1839,38 @@ export default function PersonPage({
                                                                 );
                                                             }}
                                                             className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50"
+                                                        />
+                                                    </label>
+
+                                                    <label className="block">
+                                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
+                                                            Perfil profesional
+                                                        </span>
+
+                                                        <textarea
+                                                            value={
+                                                                professionalBio
+                                                            }
+                                                            onChange={(
+                                                                event,
+                                                            ) => {
+                                                                setProfessionalBio(
+                                                                    event.target.value,
+                                                                );
+
+                                                                setSaveMessage(
+                                                                    null,
+                                                                );
+
+                                                                setSaveError(
+                                                                    null,
+                                                                );
+                                                            }}
+                                                            rows={
+                                                                4
+                                                            }
+                                                            className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-50"
+                                                            placeholder="Describe brevemente la experiencia, especialidad o enfoque profesional de esta persona."
                                                         />
                                                     </label>
                                                 </div>

@@ -440,10 +440,36 @@ export default function PublicCredentialPage({
                             ) : null}
                         </div>
 
+                        {person.hiredAt ? (
+                            <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
+                                <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                                    Fecha de ingreso
+                                </span>
+
+                                <span className="text-sm font-bold text-slate-700">
+                                    {new Intl.DateTimeFormat(
+                                        "es-MX",
+                                        {
+                                            day:
+                                                "2-digit",
+                                            month:
+                                                "long",
+                                            year:
+                                                "numeric",
+                                        },
+                                    ).format(
+                                        new Date(
+                                            `${person.hiredAt}T12:00:00`,
+                                        ),
+                                    )}
+                                </span>
+                            </div>
+                        ) : null}
+
                         {person.professionalBio ? (
                             <div className="mt-6 rounded-2xl bg-slate-50 p-4">
                                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                                    Perfil
+                                    Perfil profesional
                                 </p>
 
                                 <p className="mt-2 text-sm leading-6 text-slate-700">
