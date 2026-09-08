@@ -7,8 +7,14 @@
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
-	"keep_vars": true,
-	        "observability": {
+        "keep_vars": true,
+        "vars": {
+                "DATARA_ENVIRONMENT": "production",
+                "DATARA_EXPECTED_DATABASE_HOST": "ep-rapid-cherry-auerqx8r-pooler.c-10.us-east-1.aws.neon.tech",
+                "DATARA_PUBLIC_URL": "https://datara-lab.com",
+                "NEXT_PUBLIC_DATARA_ENVIRONMENT": "production"
+        },
+        "observability": {
                 "enabled": true,
                 "logs": {
                         "enabled": true,
